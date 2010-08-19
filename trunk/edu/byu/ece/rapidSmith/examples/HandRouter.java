@@ -51,8 +51,7 @@ public class HandRouter{
 	
 	/** 
 	 * Initialize the HandRouter with the design
-	 * @param inputFileName
-	 * @param outputFileName
+	 * @param inputFileName The input file to load
 	 */
 	public HandRouter(String inputFileName){
 		design = new Design();
