@@ -165,7 +165,7 @@ public class Instance implements Serializable{
 	/**
 	 * Sets the module instance  of this instance (the instance of a 
 	 * module to which this instance belongs).  
-	 * @param instanceModuleName The name of the module instance.
+	 * @param instanceModule The module instance of this instance.
 	 */
 	public void setModuleInstance(ModuleInstance instanceModule){
 		this.moduleInstance = instanceModule;
@@ -336,8 +336,8 @@ public class Instance implements Serializable{
 	}
 	
 	/**
-	 * Sets the instance location string and updates X and Y accordingly (if applicable)
-	 * @param loc The desired string to describe the instance location
+	 * Sets the instance location string and updates X and Y accordingly (if applicable).
+	 * @param site The desired site where this instance is to reside.
 	 */
 	private void setPrimitiveSite(PrimitiveSite site){
 		if(site == null){

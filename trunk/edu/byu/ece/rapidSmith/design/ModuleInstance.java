@@ -117,7 +117,7 @@ public class ModuleInstance{
 	}
 
 	/**
-	 * @param moduleType the moduleType to set
+	 * @param module the module to set.
 	 */
 	public void setModule(Module module){
 		this.module = module;

@@ -552,7 +552,6 @@ public class Design implements Serializable{
 	/**
 	 * Load a standard XDL file and return the XDL_Design object.
 	 * @param fileName The name of the xdl file to load.
-	 * @return The loaded XDL_Design object from the file, or null if an error occurred.
 	 */
 	public void loadXDLFile(String fileName){
 		DesignParser parser = null;

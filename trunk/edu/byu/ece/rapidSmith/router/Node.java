@@ -95,7 +95,7 @@ public class Node implements Comparable<Node>{
 	}
 
 	/**
-	 * @param Sets the number of hops from the source to this node
+	 * @param level the number of hops from the source to this node
 	 */
 	public void setLevel(int level) {
 		this.level = level;

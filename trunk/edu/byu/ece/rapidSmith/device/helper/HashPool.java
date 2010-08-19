@@ -58,9 +58,9 @@ public class HashPool<E> extends HashMap<Integer,ArrayList<E>> {
 	}
 	
 	/**
-	 * Gets the Integer enumeration of the object based on the HashPool
-	 * @param obj
-	 * @return
+	 * Gets the Integer enumeration of the object based on the HashPool.
+	 * @param obj The object to get an enumeration value for.
+	 * @return The enumeration value of the object obj, or -1 if none exists.
 	 */
 	public Integer getEnumerationValue(E obj){
 		ArrayList<Integer> enumerationMatches = enumerationMap.get(obj);
