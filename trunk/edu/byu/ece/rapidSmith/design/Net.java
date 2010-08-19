@@ -299,6 +299,14 @@ public class Net implements Comparable<Net>, Serializable {
 	}
 	
 	/**
+	 * Removes the source of the net.  This net is now
+	 * without a source.
+	 */
+	public void removeSource(){
+		this.source = null;
+	}
+	
+	/**
 	 * Replaces the current source with the new source and
 	 * adds it to the pin list in the net.
 	 * @param newSource The new source of the net.
