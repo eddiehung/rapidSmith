@@ -182,10 +182,9 @@ public class Device implements Serializable{
 	// Getter and Setter Methods
 	//========================================================================//
 	/**
-	 * Gets the external wire enumeration on the primitive primitiveName with pin name pinName. 
-	 * @param primitiveName Name of the primitive to check.
-	 * @param pinName Name of the pin to get wire enumeration.
-	 * @return The wire enumeration of the internal pin pinName on the primitive primitiveName.
+	 * Gets the external wire enumeration on the instance pin. 
+	 * @param pin The pin to get the external name from.
+	 * @return The wire enumeration of the internal pin on the instance primitive of pin.
 	 */
 	public Integer getPrimitiveExternalPin(Pin pin){
 		Integer extPin = pin.getInstance().getPrimitiveSite().getExternalPinName(pin.getName());

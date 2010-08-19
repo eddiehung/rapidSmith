@@ -363,7 +363,7 @@ public class Net implements Comparable<Net>, Serializable {
 
 	/**
 	 * Sets the module class this net implements.
-	 * @param instanceModuleTemplate The module which this net implements.
+	 * @param module The module which this net implements.
 	 */
 	public void setModuleTemplate(Module module){
 		this.moduleTemplate = module;
@@ -374,8 +374,8 @@ public class Net implements Comparable<Net>, Serializable {
 	 * @param moduleTemplateNet The template net in the module to which this
 	 * net corresponds.
 	 */
-	public void setModuleTemplateNet(Net moduleTemplateInstance){
-		this.moduleTemplateNet = moduleTemplateInstance;
+	public void setModuleTemplateNet(Net moduleTemplateNet){
+		this.moduleTemplateNet = moduleTemplateNet;
 	}
 
 	/**

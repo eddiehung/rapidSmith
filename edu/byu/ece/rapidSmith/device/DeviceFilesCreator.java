@@ -61,8 +61,8 @@ public class DeviceFilesCreator{
 	}
 	
 	/**
-	 * Either loads or creates the WireEnumerator for the family familyName.
-	 * @param familyName Name of the device architecture to create WireEnumerator for.
+	 * Either loads or creates the WireEnumerator for the family  of partName.
+	 * @param partName Name of the part to create WireEnumerator for.
 	 * @return The loaded or newly created WireEnumerator
 	 */
 	public static WireEnumerator createWireEnumerator(String partName){

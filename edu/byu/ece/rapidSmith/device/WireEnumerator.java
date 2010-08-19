@@ -82,7 +82,8 @@ public class WireEnumerator implements Serializable {
 	
 	/**
 	 * Parses the XDLRC files for all the wire names in a device architecture.
-	 * @param fileName The name of the XDLRC file to parse
+	 * @param fileNames The name of the XDLRC file to parse
+	 * @param outputFileName Name of the output wire enumerator file.
 	 */
 	public void parseXDLRCFiles(ArrayList<String> fileNames, String outputFileName){
 		SortedSet<String> wireSet = new TreeSet<String>();

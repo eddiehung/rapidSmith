@@ -50,9 +50,9 @@ public class DesignCompare{
 	 * This class compares xdl designs xdl1 and xdl2 and returns true if they
 	 * are identical, false otherwise.
 	 * 
-	 * @param xdl1
-	 * @param xdl2
-	 * @return
+	 * @param xdl1 The first design.
+	 * @param xdl2 The design to compare to the first design.
+	 * @return True if the designs match, false otherwise.
 	 */
 	public static boolean compare(Design xdl1, Design xdl2){
 		boolean identical = false;
