@@ -1,0 +1,773 @@
+/*
+ * Copyright (c) 2010 Brigham Young University
+ * 
+ * This file is part of the BYU RapidSmith Tools.
+ * 
+ * BYU RapidSmith Tools is free software: you may redistribute it 
+ * and/or modify it under the terms of the GNU General Public License 
+ * as published by the Free Software Foundation, either version 2 of 
+ * the License, or (at your option) any later version.
+ * 
+ * BYU RapidSmith Tools is distributed in the hope that it will be 
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ * General Public License for more details.
+ * 
+ * A copy of the GNU General Public License is included with the BYU 
+ * RapidSmith Tools. It can be found at doc/gpl2.txt. You may also 
+ * get a copy of the license at <http://www.gnu.org/licenses/>.
+ * 
+ */
+package edu.byu.ece.rapidSmith.util;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.channels.FileChannel;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+
+import com.caucho.hessian.io.Deflation;
+import com.caucho.hessian.io.Hessian2Input;
+import com.caucho.hessian.io.Hessian2Output;
+
+import edu.byu.ece.rapidSmith.device.Device;
+import edu.byu.ece.rapidSmith.device.PrimitivePinMap;
+import edu.byu.ece.rapidSmith.device.PrimitiveSite;
+import edu.byu.ece.rapidSmith.device.PrimitiveType;
+import edu.byu.ece.rapidSmith.device.Tile;
+import edu.byu.ece.rapidSmith.device.Wire;
+import edu.byu.ece.rapidSmith.device.WireEnumerator;
+import edu.byu.ece.rapidSmith.device.helper.HashPool;
+import edu.byu.ece.rapidSmith.device.helper.WireArray;
+import edu.byu.ece.rapidSmith.device.helper.WireConnection;
+import edu.byu.ece.rapidSmith.primitiveDefs.PrimitiveDefList;
+
+/**
+ * This class is specifically written to allow for efficient file import/export of different semi-primitive
+ * data types and structures.  The read and write functions of this class are only guaranteed to work with
+ * those specified in this class and none else.  The goal of this class is to load faster than Serialized
+ * Java and produce smaller files as well.
+ * 
+ * @author Chris Lavin
+ * Created on: Apr 22, 2010
+ */
+public class FileTools {
+
+	/** Environment Variable Name which points to the rapidSmith project on disk */
+	public static final String rapidSmithPathVariableName = "RAPIDSMITH_PATH";
+	/** Suffix of the device part files */
+	public static final String deviceFileSuffix = "_db.dat";
+	/** Suffix of the wireEnumerator files */
+	public static final String wireEnumeratorFileName = "wireEnumerator.dat";
+	/** Name of the family primitive definition files */
+	public static final String primitiveDefFileName = "primitiveDefs.dat";
+	/** Name of the Virtex 5 RAMB Primitive Pin Mapping Patch File */
+	public static final String v5RAMBPinMappingFileName = "v5RAMBPins.dat";
+	/** Folder where device files are kept */
+	public static final String deviceFolderName = "devices";
+	//===================================================================================//
+	/* Get Streams                                                                       */
+	//===================================================================================//
+	public static Hessian2Output getOutputStream(String fileName){
+		FileOutputStream fos;
+		try{
+			fos = new FileOutputStream(fileName);
+			BufferedOutputStream bos = new BufferedOutputStream(fos);
+			Hessian2Output hos = new Hessian2Output(bos);
+			Deflation dos = new Deflation();
+			return dos.wrap(hos);
+		}
+		catch(Exception e){
+			MessageGenerator.briefError("Problem opening stream for file: " + fileName);
+		}
+		return null;
+	}
+	
+	public static Hessian2Input getInputStream(String fileName){
+		FileInputStream fis;
+		try{
+			fis = new FileInputStream(fileName);
+			BufferedInputStream bis = new BufferedInputStream(fis);
+			Hessian2Input his = new Hessian2Input(bis);
+			Deflation dis = new Deflation();
+			return dis.unwrap(his);
+		}
+		catch(Exception e){
+			MessageGenerator.briefError("Problem opening stream for file: " + fileName);
+		}
+		return null;
+	}
+	
+	//===================================================================================//
+	/* Custom Read/Write File Functions for Device/WireEnumeration Class                 */
+	//===================================================================================//
+	public static HashMap<String,Integer> readHashMap(Hessian2Input dis){
+		int count;
+		HashMap<String,Integer> tileMap = null;
+		String[] keys;
+		try {
+			dis.readInt();//size = dis.readInt();
+			count = dis.readInt();
+			tileMap = new HashMap<String,Integer>(count);
+			keys = new String[count];
+			for(int i = 0; i < keys.length; i++){
+				keys[i] = dis.readString();
+			}
+			for(int i=0; i < count; i++){
+				tileMap.put(keys[i], dis.readInt());
+			}
+
+		} catch (IOException e) {
+			MessageGenerator.briefErrorAndExit("Error in readHashMap()");
+		}
+		return tileMap;
+	}
+	
+	public static boolean writeHashMap(Hessian2Output dos, HashMap<String,Integer> map){
+		try {
+			int size = 0;
+			for(String s : map.keySet()){
+				size += s.length() + 1;
+			}
+			dos.writeInt(size);
+			size = map.size();
+			dos.writeInt(size);
+			ArrayList<Integer> values = new ArrayList<Integer>(map.size());
+			for(String s : map.keySet()){
+				//dos.write(s.getBytes());
+				values.add(map.get(s));
+				dos.writeString(s);
+				//dos.write('\n');
+			}
+			for(Integer i : values){
+				dos.writeInt(i.intValue());
+			}
+		} catch (IOException e) {
+			return false;
+		}
+		return true;
+	}
+	
+	public static boolean writeStringArray(Hessian2Output dos, String[] stringArray){
+		int size = 0;
+		for(String s : stringArray){
+			size += s.length() + 1;
+		}
+		try {
+			dos.writeInt(stringArray.length);
+			for(int i=0; i<stringArray.length; i++){
+				dos.writeString(stringArray[i]);
+			}
+		} catch (IOException e){
+			return false;
+		}
+		return true;
+	}
+	
+	public static String[] readStringArray(Hessian2Input dis){
+		int size;
+		String[] wireArray = null;
+		try {
+			size = dis.readInt();
+			wireArray = new String[size];
+			for(int i = 0; i < wireArray.length; i++){
+				wireArray[i] = dis.readString();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+			MessageGenerator.briefErrorAndExit("Error in readStringArray()");
+		}
+		return wireArray;
+	}
+	
+	public static boolean writeIntArray(Hessian2Output dos, int[] intArray){
+		try{
+			if(intArray == null){
+				dos.writeInt(0);
+				return true;
+			}
+			dos.writeInt(intArray.length);
+			for(int i : intArray){
+				dos.writeInt(i);
+			}
+		} 
+		catch (IOException e){
+			return false;
+		}
+		
+		return true;
+	}
+	
+	public static int[] readIntArray(Hessian2Input dis){
+		int size;
+		//byte[] buffer;
+		int[] intArray = null;
+		try {
+			size = dis.readInt();
+			if(size == 0){
+				return null;
+			}
+			intArray = new int[size];
+			//buffer = new byte[size*4];
+			for(int i = 0; i < intArray.length; i++){
+				intArray[i] = dis.readInt();
+			}
+			//dis.read(buffer);
+			/*for(int i=0; i < buffer.length; i+=4){
+				intArray[i>>2] = (((buffer[i  ]) & 0xFF) << 24) + 
+								 (((buffer[i+1]) & 0xFF) << 16) + 
+							     (((buffer[i+2]) & 0xFF) << 8)  + 
+							     (( buffer[i+3]) & 0xFF);
+			}*/
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.out.println("Error in readIntArray()");
+			System.exit(1);
+		}
+		return intArray;
+	}
+	
+	public static boolean writeString(DataOutputStream dos, String str){
+		try {
+			dos.writeInt(str.length());
+			dos.write(str.getBytes());
+		} catch (IOException e) {
+			return false;
+		}
+		return true;
+	}
+	
+	public static String readString(DataInputStream dis){
+		byte[] buffer;
+		try {
+			buffer = new byte[dis.readInt()];
+			dis.read(buffer);
+		} catch (IOException e) {
+			return null;
+		}
+		return new String(buffer);
+	}
+
+	public static boolean writeIntegerHashSet(Hessian2Output dos, HashSet<Integer> ints) {
+		int[] nums = new int[ints.size()];
+		int idx = 0;
+		for(Integer i : ints){
+			nums[idx] = i;
+			idx++;
+		}
+		return writeIntArray(dos, nums);
+	}
+	
+	public static HashSet<Integer> readIntegerHashSet(Hessian2Input dis){
+		int[] nums = readIntArray(dis);
+		if(nums == null){
+			return new HashSet<Integer>();
+		}
+		HashSet<Integer> tmp = new HashSet<Integer>();
+		for(int i : nums){
+			tmp.add(i);
+		}
+		return tmp;
+	}
+	
+	public static boolean writePrimitiveSite(Hessian2Output dos, PrimitiveSite p, Device device, HashPool<PrimitivePinMap> primitivePinPool){
+		try {
+			// Write Name
+			dos.writeString(p.getName());
+			
+			// Write Type
+			dos.writeInt(p.getType().ordinal());
+			
+			// Write Tile (Unique Integer)
+			dos.writeInt(p.getTile().getUniqueAddress(device));
+		
+			// Write PinMap
+			dos.writeInt(primitivePinPool.getEnumerationValue(new PrimitivePinMap(p.getPins())));
+
+		} catch (IOException e){
+			return false;
+		}
+		return true;
+	}
+	
+	public static PrimitiveSite readPrimitiveSite(Hessian2Input dis, Device device, ArrayList<HashMap<String,Integer>> primitivePinMaps, PrimitiveType[] typeValues){
+		PrimitiveSite p = new PrimitiveSite();
+		
+		try {
+			p.setName(dis.readString());
+			p.setType(typeValues[dis.readInt()]);
+			Tile t = device.getTile(dis.readInt());
+			p.setTile(t);
+			p.setPins(primitivePinMaps.get(dis.readInt()));
+
+		} catch (IOException e) {
+			return null;
+		}
+		return p;
+	}
+
+	public static boolean writeWireHashMap(Hessian2Output dos, HashMap<Integer, Wire[]> wires, 
+			HashPool<WireArray> wireArrayPool, HashPool<WireConnection> wireConnectionPool) {
+
+		int[] wireConnections;
+		if(wires == null){
+			wireConnections = new int[0];
+		}
+		else{
+			wireConnections = new int[wires.size()];
+			int ndx = 0;
+			for(Integer key : wires.keySet()){
+				WireConnection tmp = new WireConnection(key,wireArrayPool.getEnumerationValue(new WireArray(wires.get(key))));
+				wireConnections[ndx] = wireConnectionPool.getEnumerationValue(tmp);
+				ndx++;
+			}
+		}
+		
+		writeIntArray(dos,wireConnections);
+		
+		return true;
+	}
+
+	public static HashMap<Integer, Wire[]> readWireHashMap(Hessian2Input dis, ArrayList<Wire[]> wires, ArrayList<WireConnection> wireConnections) {
+		HashMap<Integer, Wire[]> newMap = new HashMap<Integer, Wire[]>();
+		
+		int[] intArray = readIntArray(dis);
+		
+		if(intArray == null){
+			return null;
+		}
+		
+		for(int i : intArray){
+			WireConnection wc = wireConnections.get(i);
+			newMap.put(wc.wire, wires.get(wc.wireArrayEnum));
+		}
+
+		return newMap;
+	}
+
+	//===================================================================================//
+	/* Generic Read/Write Serialization Methods                                          */
+	//===================================================================================//	
+	/**
+	 * Loads a serialized Java object from fileName.
+	 * @param fileName The file to read from.
+	 * @return The Object de-serialized from the file or null if there was an error.
+	 */
+	public static Object loadFromFile(String fileName){
+		File inputFile = new File(fileName);
+		FileInputStream fis;
+		BufferedInputStream bis;
+		ObjectInputStream ois;
+		Object o; 
+		try {
+			fis = new FileInputStream(inputFile);
+			bis = new BufferedInputStream(fis);
+			ois = new ObjectInputStream(bis);
+			o = ois.readObject();
+			ois.close();
+			bis.close();
+			fis.close();
+		} 
+		catch (FileNotFoundException e) {
+			MessageGenerator.briefError("Could not open file: " + fileName + " , does it exist?");
+			return null;			
+		}
+		catch (IOException e) {
+			MessageGenerator.briefError("Trouble reading from file: " + fileName);
+			return null;						
+		}		
+		catch (ClassNotFoundException e) {
+			MessageGenerator.briefError("Improper file found: ");
+			return null;									
+		}
+		catch (OutOfMemoryError e){
+			MessageGenerator.briefError("The JVM ran out of memory trying to load the object in " +
+				fileName + ". Try using the JVM switch to increase the heap space (" +
+						"ex: java -Xmx1600M).");
+			return null;
+		}
+		return o;
+	}
+
+	/**
+	 * Serialize the Object o to a the file specified by fileName.
+	 * @param o The object to serialize.
+	 * @param fileName Name of the file to serialize the object to.
+	 * @return True if operation was successful, false otherwise.
+	 */
+	public static boolean saveToFile(Object o, String fileName){
+		FileOutputStream fos = null;
+		BufferedOutputStream bos = null;
+		ObjectOutputStream oos = null;
+		File objectFile = null;
+		
+		objectFile = new File(fileName);
+		try {
+			fos = new FileOutputStream(objectFile);
+			bos = new BufferedOutputStream(fos);
+			oos = new ObjectOutputStream(bos);
+			oos.writeObject(o);
+			oos.close();
+			bos.close();
+			fos.close();
+		} catch (FileNotFoundException e) {
+			return false;
+		} catch (IOException e) {
+			return false;
+		}
+		return true;
+	}
+
+	public static boolean saveToCompressedFile(Object o, String fileName){
+		Hessian2Output hos = getOutputStream(fileName);
+		try{
+			hos.writeObject(o);
+			hos.close();
+		}
+		catch(IOException e){
+			return false;
+		}
+		return true;
+	}
+	
+	public static Object loadFromCompressedFile(String fileName){
+		Hessian2Input his = getInputStream(fileName);
+		try{
+			Object o = his.readObject();
+			his.close();
+			return o;
+		}
+		catch(IOException e){
+			return null;
+		}
+	}
+	
+	//===================================================================================//
+	/* Generic File Manipulation Methods                                                 */
+	//===================================================================================//	
+
+	/**
+	 * Takes a file name and removes everything after the last '.' inclusive
+	 * @param fileName The input file name 
+	 * @return the substring of fileName if it contains a '.', it returns fileName otherwise
+	 */
+	public static String removeFileExtension(String fileName){
+		int endIndex = fileName.lastIndexOf('.');
+		if(endIndex != -1){
+			return fileName.substring(0, endIndex);
+		}
+		else{
+			return fileName;
+		}
+	}
+	
+	/**
+	 * Creates a directory in the current path called dirName.
+	 * @param dirName Name of the directory to be created.
+	 * @return True if the directory was created or already exists, false otherwise.
+	 */
+	public static boolean makeDir(String dirName){
+		File dir = new File(dirName); 
+		if(!(dir.exists())){
+			return dir.mkdir();
+		}
+		return true;
+	}
+	
+	/**
+	 * Creates a directory in the current path called dirName.
+	 * @param dirName Name of the directory to be created.
+	 * @return True if the directory and implicit parent directories were created, false otherwise.
+	 */
+	public static boolean makeDirs(String dirName){
+		return new File(dirName).mkdirs();
+	}
+	
+	/**
+	 * Gets the size of the file in bytes.
+	 * @param fileName Name of the file to get the size of.
+	 * @return The number of bytes used by the file.
+	 */
+	public static long getFileSize(String fileName){
+		return new File(fileName).length();
+	}
+	
+	/**
+	 * Delete the file/folder in the file system called fileName 
+	 * @param fileName Name of the file to delete
+	 * @return True for successful deletion, false otherwise.
+	 */
+	public static boolean deleteFile(String fileName){
+	    // A File object to represent the filename
+	    File f = new File(fileName);
+
+	    // Make sure the file or directory exists and isn't write protected
+	    if (!f.exists())
+	      throw new IllegalArgumentException(
+	          "Delete: no such file or directory: " + fileName);
+
+	    if (!f.canWrite())
+	      throw new IllegalArgumentException("Delete: write protected: "
+	          + fileName);
+
+	    // If it is a directory, make sure it is empty
+	    if (f.isDirectory()) {
+	      String[] files = f.list();
+	      if (files.length > 0)
+	        throw new IllegalArgumentException(
+	            "Delete: directory not empty: " + fileName);
+	    }
+
+	    // Attempt to delete it
+	    boolean success = f.delete();
+
+	    if (!success)
+	      throw new IllegalArgumentException("Delete: deletion failed");
+		
+		return success;
+	}
+
+	public static boolean renameFile(String oldFileName, String newFileName){
+		File oldFile = new File(oldFileName);
+		return oldFile.renameTo(new File(newFileName));
+	}
+	
+	/**
+	 * Copies a file from one location (src) to another (dst).  This implementation uses the java.nio
+	 * channels (because supposedly it is faster).
+	 * @param src Source file to read from
+	 * @param dst Destination file to write to
+	 */
+	public static void copyFile(String src, String dst){
+	    FileChannel inChannel = null;
+	    FileChannel outChannel = null;
+		try {
+			inChannel = new FileInputStream(new File(src)).getChannel();
+			outChannel = new FileOutputStream(new File(dst)).getChannel();
+			inChannel.transferTo(0, inChannel.size(), outChannel);
+		} 
+		catch (FileNotFoundException e) {
+			MessageGenerator.briefErrorAndExit("ERROR could not find/access file(s): " + src + " and/or " + dst);
+		} 
+		catch (IOException e){
+			MessageGenerator.briefErrorAndExit("ERROR copying file: " + src + " to " + dst);
+		}
+		finally {
+			try {
+				if(inChannel != null)
+					inChannel.close();
+				if(outChannel != null) 
+					outChannel.close();
+			} 
+			catch (IOException e) {
+				MessageGenerator.briefErrorAndExit("Error closing files involved in copying: " + src + " and " + dst);
+			}
+		}
+	}
+	
+	//===================================================================================//
+	/* Simple Device/WireEnumeration Load Methods & Helpers                              */
+	//===================================================================================//
+	
+	/**
+	 * This method removes the speed grade (ex: -10) from a conventional Xilinx part name.
+	 * @param partName The name of the part to remove the speed grade from.
+	 * @return The base part name with speed grade removed.  If no speed grade is present, returns
+	 * the original string.
+	 */
+	public static String removeSpeedGrade(String partName){
+		if(partName.contains("-")){
+			return partName.substring(0, partName.indexOf("-"));
+		}
+		else{
+			return partName;
+		}
+	}
+	
+	/**
+	 * Gets and returns the value of the environment variable rapidSmithPathVariableName
+	 * @return The string of the path to the rapidSmith project location
+	 */
+	public static String getRapidSmithPath(){
+		String path = System.getenv(rapidSmithPathVariableName);
+		if(path == null){
+			String nl = System.getProperty("line.separator");
+			MessageGenerator.briefErrorAndExit("Error: You do not have the " + rapidSmithPathVariableName +
+					" set in your environment." + nl + "  Please set this environment variable to the " +
+					"location of your rapidSmith project." + nl + "  For example: " + 
+					rapidSmithPathVariableName + "=" + "/home/fred/workspace/rapidSmith");
+		}
+		if(path.endsWith(File.separator)){
+			path.substring(0, path.length()-1);
+		}
+		return path;
+	}
+	
+	/**
+	 * Gets the root name (virtex4, spartan6, ...) from the String partName.  This only works with
+	 * current Xilinx devices supported in ISE 11.1+.
+	 * @param partName The name of the Xilinx part to get the root name from.
+	 * @return The root name of the device specified by partName.
+	 */
+	public static String getFamilyNameFromPart(String partName){
+		String number = partName.substring(2, 3);
+		String partType = partName.substring(3, 4).equals("v") ? "virtex" : "spartan";
+		return partType + number;
+	}
+	
+	/**
+	 * Gets and returns the path of the folder where the part files resides for partName.
+	 * @param partName Name of the part to get its corresponding folder path.
+	 * @return The path of the folder where the parts files resides.
+	 */
+	public static String getPartFolderPath(String partName){
+		return getRapidSmithPath() + 
+				File.separator +
+				deviceFolderName + 
+				File.separator + 
+				getFamilyNameFromPart(partName) + 
+				File.separator;
+	}
+	
+	/**
+	 * Gets the device file path and name for the given partName.
+	 * @param partName Name of the part to get corresponding device file for.
+	 * @return The full path to the device file specified by partName.
+	 */
+	public static String getDeviceFileName(String partName){
+		return getPartFolderPath(partName) +
+				removeSpeedGrade(partName) + 
+				deviceFileSuffix;
+	}
+	
+	/**
+	 * Loads the appropriate Device file based on the part name.  Accounts for speed grade in 
+	 * file name.
+	 * @param partName Name of the part or device to load the information for.
+	 * @return The device or null if there was an error.
+	 */
+	public static Device loadDevice(String partName){
+		String canonicalName = removeSpeedGrade(partName);
+		Device device = Device.getInstance(canonicalName);
+		String path = getDeviceFileName(canonicalName);
+		
+		// Don't reload the device if same part is already loaded
+		if(device.getPartName() != null){
+			return device;
+		}
+		
+		if(!device.readDeviceFromCompactFile(path)){
+			return null;
+		}
+		else{ 
+			return device;
+		}
+	}
+	
+	/**
+	 * Gets the wire enumerator file path and name for the given partName.
+	 * @param partName Name of the part to get corresponding wire enumerator file for.
+	 * @return The full path to the wire enumerator file specified by partName.
+	 */
+	public static String getWireEnumeratorFileName(String partName){
+		return getPartFolderPath(partName) +
+				File.separator + wireEnumeratorFileName;
+	}
+	
+	/**
+	 * Loads the appropriate WireEnumerator file based on the part name.  Accounts for 
+	 * speed grade in file name.
+	 * @param partName Name of the part or device to load the information for.
+	 * @return The WireEnumerator or null if there was an error.
+	 */
+	public static WireEnumerator loadWireEnumerator(String partName){
+		String familyName = getFamilyNameFromPart(partName);
+		WireEnumerator we = WireEnumerator.getInstance(familyName);
+		String path = getWireEnumeratorFileName(partName);
+		
+		if(we.getFamilyName() != null){
+			return we;
+		}
+		
+		if(!we.readCompactEnumFile(path, familyName)){
+			return null;
+		}
+		else{ 
+			return we;
+		}
+	}
+	
+	/**
+	 * Gets the primitive defs file path and name for the given partName.
+	 * @param partName Name of the part to get corresponding primitive defs file for.
+	 * @return The full path to the primitive defs file specified by partName.
+	 */
+	public static String getPrimitiveDefsFileName(String partName){
+		return getPartFolderPath(partName) + primitiveDefFileName;
+	}
+	
+	/**
+	 * Loads the primitiveDefs file for the appropriate family based on partName. 
+	 * @param partName The part name to load the primitiveDefs for.
+	 * @return The PrimitiveDefList object containing the primitives used in the family.
+	 */
+	public static PrimitiveDefList loadPrimitiveDefs(String partName){
+		String path = getPrimitiveDefsFileName(partName);
+		return (PrimitiveDefList) loadFromCompressedFile(path);
+	}
+	
+	/**
+	 * Checks for all device files present in the current RapidSmith path and returns
+	 * a list of strings of those part names available to be used by the tool.
+	 * @return A list of available Xilinx parts for use by the tools.
+	 */
+	public static ArrayList<String> getAvailableParts(){
+		ArrayList<String> allParts = new ArrayList<String>();
+		String pattern = "_db.dat";
+		File dir = new File(getRapidSmithPath() + File.separator + "devices");
+		for(String partFamily : dir.list()){
+			File partDir = new File(dir.getAbsolutePath() + File.separator + partFamily);
+			for(String part : partDir.list()){
+				if(part.endsWith(pattern)){
+					allParts.add(part.replace(pattern, ""));
+				}
+			}
+		}
+		return allParts;
+	}
+	
+	/**
+	 * Looks at the current device file for the part name specified and retrieves
+	 * its current device version.
+	 * @param partName The part name of the file to check.
+	 * @return The version of the device file, null if part does not exist or is invalid.
+	 */
+	public static String getDeviceVersion(String partName){
+		String fileName = getDeviceFileName(partName);
+		String version;
+		try{
+			Hessian2Input his = FileTools.getInputStream(fileName);
+			version = his.readString();
+			his.close();
+		}
+		catch (FileNotFoundException e){
+			return null;
+		} 
+		catch (IOException e){
+			return null;
+		}
+		
+		return version;
+	}
+}

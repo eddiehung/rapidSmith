@@ -1,0 +1,829 @@
+/*
+ * Copyright (c) 2010 Brigham Young University
+ * 
+ * This file is part of the BYU RapidSmith Tools.
+ * 
+ * BYU RapidSmith Tools is free software: you may redistribute it 
+ * and/or modify it under the terms of the GNU General Public License 
+ * as published by the Free Software Foundation, either version 2 of 
+ * the License, or (at your option) any later version.
+ * 
+ * BYU RapidSmith Tools is distributed in the hope that it will be 
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ * General Public License for more details.
+ * 
+ * A copy of the GNU General Public License is included with the BYU 
+ * RapidSmith Tools. It can be found at doc/gpl2.txt. You may also 
+ * get a copy of the license at <http://www.gnu.org/licenses/>.
+ * 
+ */
+ options {
+  LOOKAHEAD=1;
+  DEBUG_PARSER = false;
+  STATIC = false;
+}
+
+PARSER_BEGIN(DesignParser)
+
+package edu.byu.ece.rapidSmith.design.parser;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import edu.byu.ece.rapidSmith.device.*;
+import edu.byu.ece.rapidSmith.design.*;
+import edu.byu.ece.rapidSmith.util.FileTools;
+import edu.byu.ece.rapidSmith.util.StringPool;
+
+public class DesignParser{
+  Device dev;
+  WireEnumerator we; 
+  Utils util = Utils.getInstance();
+  Design xdlDesign = null;
+  Instance currInst = null;
+  Module currModule = null;
+  String currModuleAnchorName = null;
+  Net currNet = null;
+  Pin currPin = null;
+  PIP currPIP = null;
+  Boolean inDesignCfg = true;
+  Boolean inModuleCfg = false;
+  StringPool pool = new StringPool();
+  String currModuleInstanceName = null;
+  ArrayList<String> portNames = null;
+  ArrayList<String> portInstanceNames = null;
+  ArrayList<String> portPinNames = null;
+  HashMap<String,Pin> modPinMap = null;
+  
+  
+	  public void setDesign(Design design){
+		    xdlDesign = design;
+	  }
+
+  public Device getDevice(){
+  	  return dev;
+  }	
+
+  public WireEnumerator getWireEnumerator(){
+    return we;
+  }
+}
+PARSER_END(DesignParser)
+
+SKIP : {
+  " "
+| "\t"
+| "\n"
+| "\r"
+| <"#" (~["\n"])* ("\n")>
+}
+
+TOKEN : {
+  <DOUBLEQUOTE: "\"">
+| <COMMA: ",">
+| <PERIOD: ".">
+| <COLON: ":">
+| <SEMICOLON: ";">
+| <VER: "v">
+| <PIP0: "==">
+| <PIP1: "=-">
+| <PIP2: "=>">
+| <PIP3: "->">
+| <VCC :"vcc">
+| <VDD :"vdd">
+| <GND :"gnd">
+| <CFG :"cfg">
+| <PIP :"pip">
+| <NET :"net">
+| <LOAD :"load">
+| <WIRE :"wire">
+| <PORT :"port">
+| <INST :"inst">
+| <INPIN :"inpin">
+| <POWER :"power">
+| <PLACED :"placed">
+| <BONDED :"bonded">
+| <GROUND :"ground">
+| <MODULE :"module">
+| <ENDMODULE : "endmodule"> 
+| <DESIGN :"design">
+| <OUTPIN :"outpin">
+| <DRIVER :"driver">
+| <UNPLACED :"unplaced">
+| <UNBONDED :"unbonded">
+| <INSTANCE :"instance">
+}
+
+TOKEN : {
+  <STRING: <UNQUOTED_STRING> | <QUOTED_STRING>>
+    | <UNQUOTED_STRING: (~[" ","\r","\n","\t","\"",","])+>
+    | <QUOTED_STRING: <DOUBLEQUOTE> (~["\r","\n","\t","\"",",",":"])* <DOUBLEQUOTE>>
+}
+
+
+// <file>            ::= <design> <statements> ;
+void XDL_File() : {}
+{
+	Design() Statements() <EOF>
+}
+
+// <design>          ::= "design" <name> <part>  <ncd_version> ";"
+//                     | "design" <name> <device> <package> <speed> <ncd_version> ";"
+//                     ;
+
+// NOTE: This is different than XDL 1.6
+void Design() : {}
+{
+	  try{
+  		  (<DESIGN> DesignName() Part() NCDVersion() <COMMA> InstanceConfiguration() <SEMICOLON>)
+	  }
+	  catch(ParseException e){
+		    if(e.currentToken.toString().equals("cfg")){
+			      Token tmp = null;
+			      // I think the cfg string is empty, can we ignore this?
+			      tmp = getNextToken();
+			      tmp = getNextToken();
+			      if(!tmp.image.equals(";")){
+				        // I guessed wrong, throw the exception
+				        throw e;
+			      }			
+		    }
+	  }
+}
+
+void DesignName() : 
+{
+	  	String s = getToken(1).image;
+	  s = s.substring(1,s.length()-1); // Remove the "quotes"
+	  xdlDesign.setName(pool.getUnique(s));
+	  if(s.equals(Design.hardMacroDesignName)){
+	    xdlDesign.setIsHardMacro(true);
+	  }
+}
+{
+	  <STRING>
+}
+
+void Part() : 
+{
+  String partName = pool.getUnique(getToken(1).image.replace(";",""));
+	  xdlDesign.setPartName(partName);
+	  we = xdlDesign.getWireEnumerator();
+	  dev = xdlDesign.getDevice();
+}
+{
+	  <STRING>
+}
+
+//<ncd_version>     ::= "v"<digits>"."<digits>
+void NCDVersion() : 
+{
+	  xdlDesign.setNCDVersion(pool.getUnique(getToken(1).image));
+}
+{
+  <STRING>
+}
+
+// <statements>      ::=<statement>
+//                     | <statements> <statement>
+//                     ;
+void Statements() : 
+{
+	  inDesignCfg = false;
+}
+{
+	  (Statement())*
+}
+
+// <statement>       ::= <module>
+//                     | <inst>
+//                     | <net>
+//                     ;
+void Statement() : {}
+{
+	  (Module() | Instance() | Net())
+}
+
+// <module>          ::= <module_beg> <module_ports> <module_stmts> <module_end> ;
+void Module() : 
+{
+	  currModule = new Module();
+	  portNames = new ArrayList<String>();
+  portInstanceNames = new ArrayList<String>();
+  portPinNames = new ArrayList<String>();
+  modPinMap = new HashMap<String,Pin>();
+}
+{
+	  (ModuleBeg() ModulePorts() ModuleStatements() ModuleEnd())
+}
+
+//<module_beg>      ::="module" <module_name> ";"          # no anchor specified
+//                    | "module" <module_name> <anchor_name> ";"
+//                    ;
+void ModuleBeg() : {}
+{
+	  (<MODULE> ModuleName() AnchorName() <COMMA> ModuleConfiguration() <SEMICOLON>)
+}
+
+void ModuleName() : 
+{
+	  currModule.setName(getToken(1).image.substring(1,getToken(1).image.length()-1));
+}
+{
+	  <STRING>
+}
+
+void AnchorName() : 
+{
+  String anchorName = getToken(1).image.substring(1,getToken(1).image.length()-1);
+  currModuleAnchorName = pool.getUnique(anchorName);
+}
+{
+	  <STRING>	
+}
+
+
+//<module_ports>    ::= <module_port>
+//                    | <module_ports> <module_port>
+void ModulePorts() : 
+{
+	  inModuleCfg = false;
+}
+{
+	  ((ModulePort())*)
+}
+
+void ModulePort() : 
+{
+	  //currPort = new Port();
+	  //currModule.getPortList().add(currPort);
+}
+{
+	 (<PORT> ModulePortName() ModulePortInstName() ModulePortInstPin() <SEMICOLON>)
+}
+
+void ModulePortName() : 
+{
+  String portName = getToken(1).image.substring(1,getToken(1).image.length()-1);
+	  //currPort.setName(pool.getUnique(portName));
+	  portNames.add(pool.getUnique(portName));
+}
+{
+	  <STRING>
+}
+void ModulePortInstName() : 
+{
+  String instName = getToken(1).image.substring(1,getToken(1).image.length()-1);
+	  //currPort.setInstanceName(pool.getUnique(instName));
+	  portInstanceNames.add(pool.getUnique(instName));
+}
+{
+	  <STRING>
+}
+void ModulePortInstPin() : 
+{
+  String pinName = getToken(1).image.substring(1,getToken(1).image.length()-1);
+	  //currPort.setPinName(pool.getUnique(pinName));
+	  portPinNames.add(pool.getUnique(pinName));
+	  //currPort = null;
+}
+{
+	<STRING>
+}
+
+// <module_stmts>    ::= <module_stmt>
+//                    | <module_stmts> <module_stmt>
+void ModuleStatements() : 
+{
+	  inModuleCfg = false;
+}
+{
+	(ModuleStatement())*
+}
+// <module_stmt>     ::= <inst>
+//                     | <net>
+void ModuleStatement() : {}
+{
+	(Instance() | Net())
+}
+
+// <module_end>      ::= "endmodule" <module_name> ";" ;
+void ModuleEnd() : 
+{
+	  String s = getToken(2).image.substring(1,getToken(2).image.length()-1); 
+	  if(!s.equals(currModule.getName())){
+		    System.out.println("1=" +getToken(1).image);
+		    System.out.println("2=" +getToken(2).image);
+		    System.out.println("3=" +getToken(3).image);
+		    System.out.println("Error: This modules name is not consistent with the endmodule token.");
+		    System.out.println("BeginningModuleName=" + currModule.getName() + ", EndModuleName=" + getToken(2).image);
+		    System.exit(1);
+	  }
+		  xdlDesign.addModule(currModule);
+
+		  for(int i=0; i<portNames.size(); i++)
+		  {
+		    String key = portInstanceNames.get(i) + portPinNames.get(i);
+		    Port port = new Port(portNames.get(i), modPinMap.get(key));
+		    currModule.getPortList().add(port);
+		  }
+
+  portNames = null;
+  portInstanceNames = null;
+  portPinNames = null;
+  modPinMap = null;
+		  currModuleAnchorName = null;
+	  currModule = null;		
+}
+{
+	  (<ENDMODULE> <STRING> <SEMICOLON>)
+}
+
+//<inst>            ::= <inst_prefix> <inst_stmts> ";" ;
+void Instance() : {}
+{
+	  (InstancePrefix() InstanceStatement() <SEMICOLON>)
+}
+
+//<inst_prefix>     ::= <inst_prefix_id><inst_name> <inst_type> ;
+void InstancePrefix() : {}
+{
+	  (InstancePrefixID() InstanceName() InstanceType() <COMMA>)
+}
+
+//<inst_prefix_id>  ::= "inst"    # convenient abbreviation
+//                    | "instance"
+//                    ;
+void InstancePrefixID(): 
+{
+	  inDesignCfg = false;
+	  currInst = new Instance();
+	  currInst.setDesign(xdlDesign);
+}
+{
+	  (<INST> | <INSTANCE>)
+}
+
+//<inst_name>       ::= <string> ;
+void InstanceName() : 
+{
+	  String s = getToken(1).image;
+	  s = s.substring(1,s.length()-1); // Remove the "quotes"
+  	currInst.setName(pool.getUnique(s));
+
+  		if(currModule == null){
+	    xdlDesign.addInstance(currInst);  	
+	  }
+	  else{
+	    currModule.addInstance(currInst);
+	    	currInst.setModuleTemplate(currModule);	
+	    if(currInst.getName().equals(currModuleAnchorName)){
+	      currModule.setAnchor(currInst);
+	    }
+	  }
+}
+{
+	  <STRING>
+}
+
+//<inst_type>       ::= <string> ;
+void InstanceType() : 
+{
+	 String s = getToken(1).image;
+	  s = s.substring(1,s.length()-1); // Remove the "quotes"
+	  PrimitiveType t = util.createPrimitiveType(s);
+	  if(t == null){
+		    System.out.println("Failed parsing Instance type: \"" + s + "\"");
+		    System.exit(1);
+	  }
+  	currInst.setType(t);
+}
+{
+	  <STRING>
+}
+
+// <inst_stmt>       ::= <COMMA> <inst_placement>
+//                     | <COMMA> <inst_module>
+//                     | <COMMA> <inst_cfg>
+//                     ;
+void InstanceStatement() : {}
+{
+	  (InstancePlacement() [ModuleInstance()] InstanceConfiguration())
+}
+
+void ModuleInstance() : {}
+{
+	  (<MODULE> ModuleInstanceName() ModuleTemplate() ModuleTemplateInstance() <COMMA>)
+}
+void ModuleInstanceName() : 
+{
+	  String s = getToken(1).image;
+	  s = s.substring(1,s.length()-1); // Remove the "quotes"
+	  //currInst.setModuleInstanceName(pool.getUnique(s));
+	  currModuleInstanceName = pool.getUnique(s);
+}
+{
+	<STRING>
+}
+void ModuleTemplate() : 
+{
+	  String s = getToken(1).image;
+	  s = s.substring(1,s.length()-1); // Remove the "quotes"
+  if(currModule == null)
+  {
+    Module m = xdlDesign.getModule(pool.getUnique(s));
+	    currInst.setModuleTemplate(m);
+	  }
+}
+{
+	<STRING>
+}
+void ModuleTemplateInstance() : 
+{
+	  String s = getToken(1).image;
+	  s = s.substring(1,s.length()-1); // Remove the "quotes"
+  	currInst.setModuleTemplateInstance(currInst.getModuleTemplate().getInstance(s));
+	  ModuleInstance modInst = xdlDesign.addInstanceToModuleInstances(currInst, currModuleInstanceName);
+	  //System.out.println(currInst.getModuleTemplateInstance().getName() +" =?= " + currInst.getModuleTemplate().getAnchor().getName());
+	  if(currInst.getModuleTemplateInstance().equals(currInst.getModuleTemplate().getAnchor()))
+	  {
+	    modInst.setAnchor(currInst);
+	  }
+}
+{
+	  <STRING>
+}
+
+// <inst_placement>  ::= <inst_placed>
+//                     | <inst_unplaced>
+//                     ;
+void InstancePlacement() : {}
+{
+	  (InstancePlaced() | InstanceUnplaced())
+}
+
+//<inst_placed>     ::= "placed" <tile_name> <primitive_site> ;
+void InstancePlaced() : 
+{
+}
+{
+	  (<PLACED> TileName() PrimitiveSite() <COMMA>)
+}
+
+//<tile_name>       ::= <string> ;
+void TileName() : 
+{
+	  Tile tile = dev.getTile(getToken(1).image);
+	  if(tile.getType()==null){
+  	  System.out.println("Invalid tile type:" + getToken(1).image);
+  	  System.exit(1);
+	  }   
+	  //currInst.setTile(tile);
+}
+{
+	<STRING>
+}
+
+//<primitive_site>  ::= <string> ;
+void PrimitiveSite() : 
+{
+	  currInst.place(dev.getPrimitiveSite(getToken(1).image));
+}
+{
+	<STRING>
+}
+
+
+// <inst_unplaced>   ::= "unplaced"
+//                     | "unplaced" "bonded"
+//                     | "unplaced" "unbonded"
+//                     ;
+void InstanceUnplaced() : 
+{
+	  String next = getToken(2).image;
+	
+	  if(next.equals("bonded")){
+	    currInst.setBonded(true);
+	  }
+	  else if(next.equals("unbonded")){
+	    currInst.setBonded(false);
+	  }
+	  else{
+	    currInst.setBonded(null);
+	  }
+}
+{
+	  (<UNPLACED> [<BONDED> | <UNBONDED>] <COMMA>)
+}
+
+//<module_cfg>        ::= "cfg" <DOUBLEQUOTE><cfg_string><DOUBLEQUOTE> ;
+void ModuleConfiguration() : 
+{
+	  inModuleCfg = true;
+}
+{
+	  (<CFG> <DOUBLEQUOTE> ConfigurationString() <DOUBLEQUOTE>)		
+}
+
+//<inst_cfg>        ::= "cfg" <DOUBLEQUOTE><cfg_string><DOUBLEQUOTE> ;
+void InstanceConfiguration() : {}
+{
+	  (<CFG> <DOUBLEQUOTE> ConfigurationString() <DOUBLEQUOTE>)		
+}
+
+// <cfg_string>      ::= <bel_cfg>
+//                     | <cfg_string > <bel_cfg>
+//                     ;
+void ConfigurationString() : {}
+{
+	  (BelConfiguration())*
+}
+
+//<bel_cfg>         ::= <physical_name> ":" <logical_name> ":" <cfg_val> ;
+void BelConfiguration() : 
+{
+	  String belCfg = getToken(1).image;
+	  int break1, break2;
+	  Boolean backslash = false;
+	  break1 = belCfg.indexOf(':');
+	  break2 = belCfg.indexOf(':',break1+1);
+	  String phy_name = pool.getUnique(belCfg.substring(0,break1));
+	  String log_name = pool.getUnique(belCfg.substring(break1+1,break2));
+	  String cfg_value = pool.getUnique(belCfg.substring(break2+1,belCfg.length()));
+	
+	  try{
+		    if(phy_name.equals("_INST_PROP")){ // Look out, this case is nasty
+			      char curr = jj_input_stream.readChar();
+	      	while(!(curr == '\n' || curr == '\r' || (curr == ' ' && !backslash))){
+				        if(curr == '\\'){
+			  		        backslash = true;
+				        }
+				        else{
+					          backslash = false;
+				        }		      
+				        cfg_value += curr;
+				        curr = jj_input_stream.readChar();
+			      }
+		    }
+	  }
+	  catch (java.io.IOException e){
+		    System.out.println("IOException during parsing.");
+		    System.exit(1);
+	  }
+	
+	
+	  if(inDesignCfg){ // If this is the design configuration
+		    xdlDesign.addAttribute(phy_name,log_name,cfg_value);
+	  }
+	  else if(currModule != null && inModuleCfg){
+		    currModule.addAttribute(phy_name,log_name,cfg_value);
+	  }
+	  else{ // This is an instance configuration
+		    currInst.addAttribute(phy_name,log_name,cfg_value);
+	  }
+}
+{
+	  <STRING>
+}
+
+//<inst_pin_name>   ::= <string> ;
+void InstancePinName() : 
+{
+  	currPin.setPinName(pool.getUnique(getToken(1).image));
+  	if(currModule != null)
+  	{
+  	  modPinMap.put(currPin.getInstanceName()+currPin.getName(), currPin);
+  	}	
+}
+{
+	  <STRING>
+}
+
+// <net>             ::= "net" <net_name> <net_type> <net_stmts> ";"
+//                     | "net" <net_name> <net_type> ";"
+//                     | "net" <net_name> <net_stmts> ";"
+//                     ;
+void Net() : {}
+{
+	  (<NET> NetName() (LOOKAHEAD(2) NetType() <COMMA> NetStatements() | NetType() | <COMMA> NetStatements())  <SEMICOLON>)
+}
+
+//<net_name>        ::= <string> ;
+void NetName() : 
+{
+	  currNet = new Net();
+	  String s = getToken(1).image;
+	  s = s.substring(1,s.length()-1); // Remove the "quotes"
+  	currNet.setName(pool.getUnique(s));
+
+  	if(currModule == null){
+		    xdlDesign.addNet(currNet);
+	  }
+	  else{
+		    currModule.addNet(currNet);
+	  }
+  	
+}
+{
+	  <STRING>
+}
+
+// <net_type>        ::= "vcc"           #power
+//                     | "vdd"           # power
+//                     | "power"         # power
+//                     | "gnd"           # ground
+//                     | "ground"        # ground
+//                     | "wire"          # wire (optional)
+//                     ;
+void NetType() : 
+{
+	  String type = getToken(1).image;
+	  if(type.equals("") || type == null || type.equalsIgnoreCase("wire")){
+	    currNet.setType(NetType.WIRE);
+	  }
+	  else if(type.equalsIgnoreCase("vcc") || type.equalsIgnoreCase("vdd") || type.equalsIgnoreCase("power")){
+	  	  currNet.setType(NetType.VCC);
+	  }
+	  else if(type.equalsIgnoreCase("gnd") || type.equalsIgnoreCase("ground")){
+	    currNet.setType(NetType.GND);
+	  }
+	  else{
+	  	  currNet.setType(NetType.UNKNOWN);
+	  }
+}
+{
+	  (<VCC> | <VDD> | <POWER> | <GND> | <GROUND> | <WIRE>)
+}
+
+
+// <net_stmts>       ::= <net_stmt>
+//                     | <net_stmts> <net_stmt>
+//                     ;
+void NetStatements() : {}
+{
+	  (NetStatement() <COMMA>)* 
+}
+
+// <net_stmt>        ::= <COMMA> <net_inpin>
+//                     | <COMMA> <net_outpin>
+//                     | <COMMA> <net_pip>
+//                     ;
+void NetStatement() : {}
+{
+	  ((NetInPin() | NetOutPin() | NetPIP() | NetCfg()))
+}
+
+// <net_inpin>       ::= "inpin" <inst_name> <inst_pin_name>
+//                     | "load"  <inst_name> <inst_pin_name>
+//                     ;
+void NetInPin() : 
+{
+	  currPin = new Pin();
+	  currPin.setIsOutputPin(false);
+}
+{
+	  ((<INPIN> | <LOAD>) InstanceName_Net() InstancePinName())
+}
+
+// <net_outpin>      ::="outpin" <inst_name> <inst_pin_name>
+//                     | "driver" <inst_name> <inst_pin_name>
+//                     ;
+void NetOutPin() : 
+{
+	  currPin = new Pin();
+	  currPin.setIsOutputPin(true);
+	  if(currNet.getSource() != null){
+		    System.out.println("This net has 2 sources, this shouldn't be valid: " + currNet);
+	  }
+}
+{
+	  ((<OUTPIN> | <DRIVER>) InstanceName_Net() InstancePinName())
+}
+
+void InstanceName_Net():
+{
+	  String s = getToken(1).image;
+	  s = s.substring(1,s.length()-1); // Remove the "quotes"
+  Instance inst;
+  if(currModule == null){
+		    inst = xdlDesign.getInstance(s);    
+  }
+  else{
+    inst = currModule.getInstance(s);
+  }
+
+  				currPin.setInstance(inst);
+  				currNet.addPin(currPin);  
+  inst.addToNetList(currNet);
+}
+{
+  <STRING>
+}
+
+
+//<net_pip>         ::= "pip" <tile> <wire0> <pip_direction> <wire1> ;
+void NetPIP() : 
+{
+	  currPIP = new PIP();
+	  currNet.getPIPs().add(currPIP);
+}
+{
+	  (<PIP> Tile() Wire0() PIPDirection() Wire1())
+}
+
+void NetCfg(): {}
+{
+	  (<CFG> <DOUBLEQUOTE> NetCfgValue() <DOUBLEQUOTE>)
+}
+
+void NetCfgValue(): 
+{
+	  Boolean backslash = false;
+	  String netCfg = getToken(1).image;
+	  try{
+		    char curr = jj_input_stream.readChar();
+		    if(curr == ','){ // Look out, this case is nasty
+			      while(!(curr == '\n' || curr == '\r' || (curr == ' ' && !backslash) || curr == '\"')){
+				        if(curr == '\\'){
+					          backslash = true;
+				        }
+				        else{
+					          backslash = false;
+				        }
+				        netCfg += curr;
+				        curr = jj_input_stream.readChar();
+			      }
+		    }
+		    if(curr == '\"'){
+			      jj_input_stream.backup(1);
+		    }
+	  }
+	  catch (java.io.IOException e){
+		    System.out.println("IOException during parsing.");
+	  }  
+		  int break1 = netCfg.indexOf(':');
+	  int break2 = netCfg.indexOf(':',break1+1);
+	  String phy_name = pool.getUnique(netCfg.substring(0,break1));
+	  String log_name = pool.getUnique(netCfg.substring(break1+1,break2));
+	  String cfg_value = pool.getUnique(netCfg.substring(break2+1,netCfg.length()));
+	  currNet.addAttribute(phy_name,log_name,cfg_value);
+	  if(phy_name.equals("_MACRO")){
+	    ModuleInstance mi = xdlDesign.getModuleInstance(cfg_value);
+    currNet.setModuleInstance(mi);
+    mi.addNet(currNet);
+    Module module = mi.getModule();
+    currNet.setModuleTemplate(module);
+    currNet.setModuleTemplateNet(module.getNet(currNet.getName().replaceFirst(mi.getName()+"/","")));
+  }
+}
+{
+  <STRING>
+}
+
+//<tile>            ::= <string> ;
+void Tile() : 
+{
+	  Tile tile = dev.getTile(getToken(1).image);
+	  if(tile.getType()==null){
+		    System.out.println("Invalid tile type:" + getToken(1).image);
+		    System.exit(1);
+	  }   
+	  currPIP.setTile(tile);
+}
+{
+	  <STRING>
+}
+
+//<wire0>           ::= <string> ;
+void Wire0() : 
+{
+	  currPIP.setStartWire(we.getWireEnum(getToken(1).image));
+}
+{
+	  <STRING>
+}
+
+// <pip_direction>   ::= "=="      # Bidirectional, unbuffered,
+//                     | "=>"       # Bidirectional, buffered (node0 onto node1)
+//                     | "=-"       # Bidirectional, buffered (both directions)
+//                     | "->"       # Directional, buffered (node0 onto node1)
+//                     ;
+void PIPDirection() : 
+{
+	  //currPIP.setDirection(getToken(1).image);
+}
+{
+	  (<PIP0>|<PIP1>|<PIP2>|<PIP3>)
+}	
+
+
+//<wire1>           ::= <string> ;
+void Wire1() : 
+{
+	  currPIP.setEndWire(we.getWireEnum(getToken(1).image));
+}
+{
+	  <STRING>
+}
+
