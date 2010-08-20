@@ -520,10 +520,9 @@ public class Module implements Serializable{
 			// That way there will be no compatibility problems
 			check = his.readString();	
 			if(!check.equals(moduleFileVersion)){
-				MessageGenerator.briefErrorAndExit("Error, the current version of RAPIDSMITH is not" +
-					"compatible with the device files present on this installation.  Run the Installer " +
-					"again to regenerate new device files.\nCurrent RAPIDSMITH module file version: " + 
-					moduleFileVersion +", existing module file version: " + check + ".");
+				MessageGenerator.briefErrorAndExit("ERROR: Current RAPIDSMITH module file version: " + 
+					moduleFileVersion +", existing module file version: " + check + ".  Please" +
+					"clean and regenerate the module cache.");
 			}
 			
 			// Read in the device name so we can load it
