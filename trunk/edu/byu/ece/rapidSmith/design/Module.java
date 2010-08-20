@@ -49,7 +49,7 @@ public class Module implements Serializable{
 
 	private static final long serialVersionUID = 7127893920489370872L;
 	/** This is the current module file version (saved in file to ensure proper compatibility) */
-	public static final String moduleFileVersion = "0.1";
+	public static final String moduleFileVersion = "0.2";
 	/** Unique name of this module */
 	private String name;
 	/** All of the attributes in this module */
@@ -291,7 +291,9 @@ public class Module implements Serializable{
 			instancePool.add(inst);
 			
 			stringPool.add(inst.getName());
-			stringPool.add(inst.getPrimitiveSiteName());
+			if(inst.getPrimitiveSiteName() != null){
+				stringPool.add(inst.getPrimitiveSiteName());
+			}
 			
 			for(Attribute attr : inst.getAttributes()){
 				stringPool.add(attr.getPhysicalName());
@@ -378,7 +380,13 @@ public class Module implements Serializable{
 				hos.writeInt(mask | instance.getType().ordinal());
 				
 				//PrimitiveSite site;
-				hos.writeInt(stringPool.getEnumerationValue(instance.getPrimitiveSiteName()));
+				if(instance.getPrimitiveSiteName() == null){
+					hos.writeInt(-1);
+				}
+				else{
+					hos.writeInt(stringPool.getEnumerationValue(instance.getPrimitiveSiteName()));
+				}
+				
 				
 				// Module moduleTemplate; -> reference back to this
 			}
@@ -555,7 +563,10 @@ public class Module implements Serializable{
 				PrimitiveType[] instanceType = PrimitiveType.values();
 				instance.setType(instanceType[type & 0x3FFFFFFF]);
 				
-				instance.place(dev.getPrimitiveSite(strings[his.readInt()]));
+				int primSite = his.readInt();
+				if(primSite != -1){
+					instance.place(dev.getPrimitiveSite(strings[primSite]));
+				}
 				
 				instance.setModuleTemplate(this);
 								
