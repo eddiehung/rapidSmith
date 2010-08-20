@@ -65,7 +65,7 @@ public class RunXilinxTools {
 	 */
 	public static boolean generateXDLRCFile(String partName, String optionalOutputFileName, boolean briefFile){
 		String fileNameSuffix = briefFile ? "_brief.xdlrc" : "_full.xdlrc";
-		String defaultFileName = FileTools.getFamilyNameFromPart(partName) + partName + fileNameSuffix;
+		String defaultFileName = partName + fileNameSuffix;
 		String xdlrcFileName = optionalOutputFileName==null ? defaultFileName : optionalOutputFileName;
 		String commandParameters = briefFile ? "" : "-pips -all_conns "; 
 		String command = "xdl -report " + commandParameters + FileTools.removeSpeedGrade(partName) + " " + xdlrcFileName;
