@@ -77,10 +77,6 @@ public class RunXilinxTools {
 		}
 		
 		try{
-			// Create the directory if it doesn't exist
-			if(optionalOutputFileName==null){
-				FileTools.makeDir(FileTools.removeSpeedGrade(partName));
-			}
 			// Run the XDL command
 			Process p = Runtime.getRuntime().exec(command);
 			if(p.waitFor() != 0){
