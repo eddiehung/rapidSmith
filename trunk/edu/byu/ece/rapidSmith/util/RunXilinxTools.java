@@ -27,7 +27,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 /**
- * This is a generic class which has several static methods to call Xilinx tools from within the XDL TOOLS
+ * This is a generic class which has several static methods to call Xilinx tools from within the RapidSmith
  * framework.  
  * @author Chris Lavin
  */
@@ -101,6 +101,38 @@ public class RunXilinxTools {
 		return true;
 	}
 
+	/**
+	 * A generic method to run a command from the system command line.
+	 * @param command The command to execute.  This method blocks until the command finishes.
+	 * @param verbose When true, it will first print to std.out the command and also all of the 
+	 * command's output (both std.out and std.err) to std.out.  
+	 * @return The return value of the process if it terminated, if there was a problem it returns null.
+	 */
+	public static Integer runCommand(String command, boolean verbose){
+		if(verbose) System.out.println(command);
+		int returnValue = 0;
+		try {
+			Process p = Runtime.getRuntime().exec(command);
+			StreamGobbler input = new StreamGobbler(p.getInputStream(), verbose);
+			StreamGobbler err = new StreamGobbler(p.getErrorStream(), verbose);
+			input.start();
+			err.start();
+			try {
+				returnValue = p.waitFor();
+				p.destroy();
+			} catch (InterruptedException e){
+				e.printStackTrace();
+				MessageGenerator.briefError("ERROR: The command was interrupted: \"" + command + "\"");
+				return null;
+			}
+		} catch (IOException e){
+			e.printStackTrace();
+			MessageGenerator.briefError("ERROR: In running the command\"" + command + "\"");
+			return null;
+		}
+		return returnValue;
+	}
+	
 	/**
 	 * An easy way to just get one family of part names at a time.
 	 * See getPartNames(String[] familyNames, boolean includeSpeedGrades)
