@@ -309,7 +309,7 @@ public class XDLRCParser{
 			}
 			else if(line.startsWith("(xdl_resource_report ")){
 				parts = line.split("\\s");
-				dev.setPartName(parts[2]);
+				dev.setPartName(FileTools.removeSpeedGrade(parts[2]));
 				we = FileTools.loadWireEnumerator(parts[2]);
 			}
 			else if(line.startsWith("(primitive_defs ")){

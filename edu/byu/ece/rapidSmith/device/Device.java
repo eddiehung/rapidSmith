@@ -367,7 +367,7 @@ public class Device implements Serializable{
 	 * @return the partName The part name of this device.
 	 */
 	public String getPartName(){
-		return partName;
+		return FileTools.removeSpeedGrade(partName);
 	}
 
 	/**

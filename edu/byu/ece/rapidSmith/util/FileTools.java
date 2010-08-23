@@ -587,7 +587,7 @@ public class FileTools {
 	 * the original string.
 	 */
 	public static String removeSpeedGrade(String partName){
-		if(partName.contains("-")){
+		if(partName != null && partName.contains("-")){
 			return partName.substring(0, partName.indexOf("-"));
 		}
 		else{
@@ -661,7 +661,7 @@ public class FileTools {
 		String canonicalName = removeSpeedGrade(partName);
 		Device device = Device.getInstance(canonicalName);
 		String path = getDeviceFileName(canonicalName);
-		
+
 		// Don't reload the device if same part is already loaded
 		if(device.getPartName() != null){
 			return device;
