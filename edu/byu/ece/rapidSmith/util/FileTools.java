@@ -537,6 +537,31 @@ public class FileTools {
 		
 		return success;
 	}
+	
+	/**
+	 * Delete the folder and recursively files and folders below
+	 * @param folderName
+	 * @return true for successful deletion, false otherwise
+	 */
+	public static boolean deleteFolder(String folderName){
+		// A file object to represent the filename
+		File f = new File(folderName);
+		
+		if(!f.exists() || !f.isDirectory()){
+			throw new IllegalArgumentException("Delete: no such directory: " + folderName);
+		}
+		
+		for(File i: f.listFiles()){
+			if(i.isDirectory()){
+				deleteFolder(i.getAbsolutePath());
+			}else if(i.isFile()){
+				if(!i.delete()){
+					throw new IllegalArgumentException("Delete: deletion failed: " + i.getAbsolutePath());
+				}
+			}
+		}
+		return deleteFile(folderName);
+	}
 
 	public static boolean renameFile(String oldFileName, String newFileName){
 		File oldFile = new File(oldFileName);
