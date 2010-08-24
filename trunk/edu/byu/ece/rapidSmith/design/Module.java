@@ -575,7 +575,7 @@ public class Module implements Serializable{
 				instanceMap.put(instance.getName(), instance);
 			}
 			
-			
+			// reading pinPool
 			Pin[] pins = new Pin[his.readInt()];
 			for(int i = 0; i < pins.length; i++){
 				String name = strings[his.readInt()];
