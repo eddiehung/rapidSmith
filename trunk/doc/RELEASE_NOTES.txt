@@ -1,0 +1,11 @@
+Release Notes for BYU RapidSmith Tools
+
+ - Version 0.1.5 (25 AUG 2010) - 
+A few minor bug fixes such as device files now no longer are loaded
+repetitively for the same device (this saves a significant amount of
+time when loading several designs).  Device files no longer include
+speed grade.  Added a recursive delete folder function in the
+FileTools class.  The documentation format is better in this release.
+
+ - Version 0.1.4 (19 AUG 2010) - 
+The initial public release.
