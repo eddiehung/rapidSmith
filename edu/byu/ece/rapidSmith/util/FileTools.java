@@ -761,6 +761,10 @@ public class FileTools {
 		ArrayList<String> allParts = new ArrayList<String>();
 		String pattern = "_db.dat";
 		File dir = new File(getRapidSmithPath() + File.separator + "devices");
+		if(!dir.exists()){
+			MessageGenerator.briefErrorAndExit("ERROR: No part files exist.  Please run " + 
+					Installer.class.getCanonicalName() +" to create part files.");
+		}
 		for(String partFamily : dir.list()){
 			File partDir = new File(dir.getAbsolutePath() + File.separator + partFamily);
 			for(String part : partDir.list()){
