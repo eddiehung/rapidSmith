@@ -33,6 +33,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.channels.FileChannel;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -798,5 +799,17 @@ public class FileTools {
 		}
 		
 		return version;
+	}
+	
+	/**
+	 * This method will get and return the current time as a string
+	 * formatted in the same way used in most Xilinx report and XDL
+	 * files.  The format used in the using the same syntax as SimpleDateFormat
+	 * which is "EEE MMM dd HH:mm:ss yyyy".
+	 * @return Current date and time as a formatted string.
+	 */
+	public static String getTimeString(){
+		SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy");
+		return formatter.format(new java.util.Date());
 	}
 }
