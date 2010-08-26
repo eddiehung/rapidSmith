@@ -28,7 +28,6 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -589,11 +588,10 @@ public class Design implements Serializable{
 		try{
 			BufferedWriter bw = new BufferedWriter(new FileWriter(fileName));
 
-			SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy");
 			if(addComments){
 				bw.write(nl+"# ======================================================="+nl);
 				bw.write("# "+this.getClass().getCanonicalName()+" XDL Generation $Revision: 1.01$"+nl);
-				bw.write("# time: "+ formatter.format(new java.util.Date()) +nl+nl);
+				bw.write("# time: "+ FileTools.getTimeString() +nl+nl);
 				bw.write("# ======================================================="+nl+nl+nl);
 				
 				bw.write("# ======================================================="+nl);
