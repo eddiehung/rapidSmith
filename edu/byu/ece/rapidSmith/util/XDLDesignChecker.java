@@ -27,9 +27,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import edu.byu.ece.rapidSmith.design.Design;
+import edu.byu.ece.rapidSmith.design.Instance;
 import edu.byu.ece.rapidSmith.design.Net;
 import edu.byu.ece.rapidSmith.design.NetType;
 import edu.byu.ece.rapidSmith.design.PIP;
+import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.router.Node;
 
 /**
@@ -37,7 +39,7 @@ import edu.byu.ece.rapidSmith.router.Node;
  * is not quite complete, but will check for a few kinds of errors.
  * @author Chris Lavin
  */
-public class XDLDebugger{
+public class XDLDesignChecker{
 
 	
 	public static ArrayList<Net> setNets(ArrayList<Net> nets, int size){
@@ -143,6 +145,26 @@ public class XDLDebugger{
 
 		Design design = new Design();
 		design.loadXDLFile(args[0]);
+		
+		// Check for unique placement of primitives
+		MessageGenerator.printHeader("CHECKING FOR UNIQUE PRIMITIVE PLACEMENTS ... ");
+		HashMap<PrimitiveSite, Instance> usedSites = new HashMap<PrimitiveSite, Instance>();
+		for(Instance inst : design.getInstances()){
+			if(inst.getPrimitiveSite() == null){
+				System.out.println("Warning: " + inst.getName() +" is unplaced.");
+			}
+			else if(usedSites.containsKey(inst.getPrimitiveSite())){
+				System.out.println("ERROR: Placement conflict at site: " + inst.getPrimitiveSiteName() +" (tile: "+inst.getTile()+")");
+				System.out.println("  Involving at least these two instances:");
+				System.out.println("    " + inst.getName());
+				System.out.println("    " + usedSites.get(inst.getPrimitiveSite()).getName());
+			}
+			else{
+				usedSites.put(inst.getPrimitiveSite(), inst);
+			}
+		}
+		
+		
 		
 		// Check for duplicate PIPs
 		HashMap<PIP,Net> pipMap = new HashMap<PIP, Net>();
