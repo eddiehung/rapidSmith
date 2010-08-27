@@ -181,9 +181,20 @@ public class ModuleInstance{
 	 * if none exists.
 	 */
 	public Tile getCorrespondingTile(Tile templateTile, Tile newAnchorTile, Device dev){
-		int x = templateTile.getColumn() - module.getAnchor().getTile().getColumn();
-		int y = templateTile.getRow() - module.getAnchor().getTile().getRow();
-		Tile newTile = dev.getTile(newAnchorTile.getRow() + y, newAnchorTile.getColumn() + x);		
+		//If this function does not work, uncomment and use this code instead
+		/*
+		int xOffset = templateTile.getColumn() - module.getAnchor().getTile().getColumn();
+		int yOffset = templateTile.getRow() - module.getAnchor().getTile().getRow();
+		Tile newTile = dev.getTile(newAnchorTile.getRow() + yOffset, newAnchorTile.getColumn() + xOffset);
+		return newTile;
+		*/
+		int tileXOffset = templateTile.getTileXCoordinate() - module.getAnchor().getTile().getTileXCoordinate();
+		int tileYOffset = templateTile.getTileYCoordinate() - module.getAnchor().getTile().getTileYCoordinate();
+		int newTileX = newAnchorTile.getTileXCoordinate() + tileXOffset;
+		int newTileY = newAnchorTile.getTileYCoordinate() + tileYOffset;
+		String oldName = templateTile.getName();
+		String newName = oldName.substring(0, oldName.lastIndexOf('_')) + "_X"+newTileX+"Y"+newTileY;
+		Tile newTile = dev.getTile(newName);
 		// TODO: Update this method to account for moving over clock rows
 		/*int tileY = templateTile.getTileYCoordinate() - module.getAnchor().getTile().getTileYCoordinate();
 		  if(y != -tileY && newTile.getName().equals("INT_X13Y89")){
