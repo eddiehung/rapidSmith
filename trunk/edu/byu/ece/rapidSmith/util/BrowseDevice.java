@@ -46,7 +46,8 @@ public class BrowseDevice{
 			System.out.println(" 3: List RouteThrough wires");
 			System.out.println(" 4: Follow wire connections");
 			System.out.println(" 5: List primitives of a tile");
-			System.out.println(" 6: Exit");
+			System.out.println(" 6: Get tile of a primitive site");
+			System.out.println(" 7: Exit");
 			try {
 				Integer cmd = Integer.parseInt(br.readLine().trim());
 				switch(cmd){
@@ -130,6 +131,17 @@ public class BrowseDevice{
 					
 						break;
 					case 6:
+						System.out.println("Enter tile name: ");
+						String siteName = br.readLine().trim();
+						PrimitiveSite site = dev.getPrimitiveSite(siteName);
+						if(site == null){
+							System.out.println("No primitive site called \"" + siteName +  "\" exists.");
+						}
+						else {
+							System.out.println(site.getTile());
+						}
+						break;
+					case 7:
 						System.exit(0);
 						
 				}
