@@ -193,31 +193,9 @@ public class ModuleInstance{
 		int newTileX = newAnchorTile.getTileXCoordinate() + tileXOffset;
 		int newTileY = newAnchorTile.getTileYCoordinate() + tileYOffset;
 		String oldName = templateTile.getName();
-		String newName = oldName.substring(0, oldName.lastIndexOf('_')) + "_X"+newTileX+"Y"+newTileY;
-		Tile newTile = dev.getTile(newName);
-		// TODO: Update this method to account for moving over clock rows
-		/*int tileY = templateTile.getTileYCoordinate() - module.getAnchor().getTile().getTileYCoordinate();
-		  if(y != -tileY && newTile.getName().equals("INT_X13Y89")){
-			System.out.println("*********************");
-			System.out.println(newTile + " = " + newAnchorTile + " + (" + templateTile + " - " + module.getAnchor().getTile() + ")");
-			System.out.println(t(newTile) + " = " + t(newAnchorTile) + " + (" + t(templateTile) + " - " + t(module.getAnchor().getTile()) + ")");
-			System.out.println("y = " + y + ", tileY=" + tileY);
-			if(y > 0){
-				newTile = dev.getTile(newTile.getRow() + (y + tileY), newTile.getColumn());
-			}
-			else{
-				newTile = dev.getTile(newTile.getRow() - (y + tileY), newTile.getColumn());
-			}
-			
-			//System.out.println("Is this the correct tile: " + dev.getTile(newTile.getRow() - (y + tileY), newTile.getColumn()) );
-		}*/
- 
-		return newTile;
+		String newName = oldName.substring(0, oldName.lastIndexOf('X')+1) + newTileX + "Y" + newTileY;
+		return dev.getTile(newName);
 	}
-	
-	/*private String t(Tile t){
-		return "(" + t.getColumn() + "," + t.getRow() + ")";
-	}*/
 	
 	/**
 	 * Places the module instance anchor at the newAnchorSite as well as all other 
@@ -307,4 +285,38 @@ public class ModuleInstance{
 			net.getPIPs().clear();
 		}
 	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode(){
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		return result;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj){
+		if(this == obj)
+			return true;
+		if(obj == null)
+			return false;
+		if(getClass() != obj.getClass())
+			return false;
+		ModuleInstance other = (ModuleInstance) obj;
+		if(name == null){
+			if(other.name != null)
+				return false;
+		}
+		else if(!name.equals(other.name))
+			return false;
+		return true;
+	}
+	
+	
 }
