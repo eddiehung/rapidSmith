@@ -216,6 +216,16 @@ public class Instance implements Serializable{
 	}
 
 	/**
+	 * This method will detach and remove all reference of the instance to a module 
+	 * or module instance.
+	 */
+	public void detachFromModule(){
+		this.moduleInstance = null;
+		this.moduleTemplate = null;
+		this.moduleTemplateInstance = null;
+	}
+	
+	/**
 	 * Gets the user name of the instance
 	 * @return The user assigned name of the instance
 	 */
