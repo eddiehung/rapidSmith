@@ -418,6 +418,7 @@ public class Net implements Comparable<Net>, Serializable {
 		this.moduleInstance = null;
 		this.moduleTemplate = null;
 		this.moduleTemplateNet = null;
+		this.setAttributes(null);
 	}
 	
 	/**
