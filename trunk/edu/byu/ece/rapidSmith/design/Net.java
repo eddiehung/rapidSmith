@@ -411,6 +411,16 @@ public class Net implements Comparable<Net>, Serializable {
 	}
 
 	/**
+	 * This method will detach and remove all reference of the net to a module 
+	 * or module instance.
+	 */
+	public void detachFromModule(){
+		this.moduleInstance = null;
+		this.moduleTemplate = null;
+		this.moduleTemplateNet = null;
+	}
+	
+	/**
 	 * Compares two nets based on fan-out.
 	 */
 	@Override

@@ -83,7 +83,12 @@ public class Design implements Serializable{
 
 	/** This is the special design name used by Xilinx to denote an XDL design as a hard macro */
 	public static final String hardMacroDesignName = "__XILINX_NMC_MACRO";
-	
+	/** Keeps track of all slice primitive types, initialized statically */
+	public static HashSet<PrimitiveType> sliceTypes;
+	/** Keeps track of all DSP48 primitive types, initialized statically  */
+	public static HashSet<PrimitiveType> dspTypes;
+	/** Keeps track of all BRAM primitive types, initialized statically  */
+	public static HashSet<PrimitiveType> bramTypes;
 	
 	/**
 	 * Constructor which initializes all member data structures. Sets partName to null.
@@ -548,6 +553,22 @@ public class Design implements Serializable{
 		}
 	}
 	
+	public void flattenDesign(){
+		if(isHardMacro){
+			MessageGenerator.briefError("ERROR: Cannot flatten a hard macro design");
+			return;
+		}
+		for(ModuleInstance mi : moduleInstances.values()){
+			for(Instance instance : mi.getInstances()){
+				instance.detachFromModule();
+			}
+			for(Net net : mi.getNets()){
+				net.detachFromModule();
+			}
+		}
+		modules.clear();
+	}
+	
 	/**
 	 * Load a standard XDL file and return the XDL_Design object.
 	 * @param fileName The name of the xdl file to load.
@@ -809,11 +830,30 @@ public class Design implements Serializable{
 				bw.write(nl);
 				
 				if(addComments){
+					int sliceCount = 0;
+					int bramCount = 0;
+					int dspCount = 0;
+					for(Instance instance : instances.values()){
+						PrimitiveType type = instance.getType();
+						if(sliceTypes.contains(type)){
+							sliceCount++;
+						}
+						else if(dspTypes.contains(type)){
+							dspCount++;
+						}
+						else if(bramTypes.contains(type)){
+							bramCount++;
+						}
+					}
+					
 					bw.write("# ======================================================="+nl);
 					bw.write("# SUMMARY"+nl);
 					bw.write("# Number of Module Defs: " + modules.size() + nl);
 					bw.write("# Number of Module Insts: " + moduleInstances.size() + nl);
 					bw.write("# Number of Primitive Insts: "+ instances.size() +nl);
+					bw.write("#     Number of SLICES: "+ sliceCount +nl);
+					bw.write("#     Number of DSP48s: "+ dspCount +nl);
+					bw.write("#     Number of BRAMs: "+ bramCount +nl);
 					bw.write("# Number of Nets: " + nets.size() + nl);
 					bw.write("# ======================================================="+nl+nl+nl);
 				}
@@ -849,5 +889,35 @@ public class Design implements Serializable{
 			MessageGenerator.briefErrorAndExit("Error writing XDL file: " +
 				fileName + File.separator + e.getMessage());
 		}
+	}
+	
+	static {
+		sliceTypes = new HashSet<PrimitiveType>();
+		sliceTypes.add(PrimitiveType.SLICEL);
+		sliceTypes.add(PrimitiveType.SLICEM);
+		sliceTypes.add(PrimitiveType.SLICEX);
+		
+		dspTypes = new HashSet<PrimitiveType>();
+		dspTypes.add(PrimitiveType.DSP48);
+		dspTypes.add(PrimitiveType.DSP48A);
+		dspTypes.add(PrimitiveType.DSP48A1);
+		dspTypes.add(PrimitiveType.DSP48E);
+		dspTypes.add(PrimitiveType.DSP48E1);
+		
+		bramTypes = new HashSet<PrimitiveType>();
+		bramTypes.add(PrimitiveType.RAMB16);
+		bramTypes.add(PrimitiveType.RAMB16BWE);
+		bramTypes.add(PrimitiveType.RAMB16BWER);
+		bramTypes.add(PrimitiveType.RAMB18E1);
+		bramTypes.add(PrimitiveType.RAMB18X2);
+		bramTypes.add(PrimitiveType.RAMB18X2SDP);
+		bramTypes.add(PrimitiveType.RAMB36_EXP);
+		bramTypes.add(PrimitiveType.RAMB36E1);
+		bramTypes.add(PrimitiveType.RAMB36SDP_EXP);
+		bramTypes.add(PrimitiveType.RAMB8BWER);
+		bramTypes.add(PrimitiveType.RAMBFIFO18);
+		bramTypes.add(PrimitiveType.RAMBFIFO18_36);
+		bramTypes.add(PrimitiveType.RAMBFIFO36);
+		bramTypes.add(PrimitiveType.RAMBFIFO36E1);
 	}
 }
