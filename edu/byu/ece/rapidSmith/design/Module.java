@@ -20,6 +20,8 @@
  */
 package edu.byu.ece.rapidSmith.design;
 
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -49,7 +51,7 @@ public class Module implements Serializable{
 
 	private static final long serialVersionUID = 7127893920489370872L;
 	/** This is the current module file version (saved in file to ensure proper compatibility) */
-	public static final String moduleFileVersion = "0.2";
+	public static final String moduleFileVersion = "0.3";
 	/** Unique name of this module */
 	private String name;
 	/** All of the attributes in this module */
@@ -505,6 +507,40 @@ public class Module implements Serializable{
 		
 		
 	}
+	
+	public boolean checkVersion(String fileName) throws IOException{
+		
+		FileInputStream fis = null;
+		BufferedInputStream bis = null;
+		Hessian2Input his = null;
+		try{
+			fis = new FileInputStream(fileName);
+			
+			bis = new BufferedInputStream(fis);
+			his = new Hessian2Input(bis);
+			Deflation dis = new Deflation();
+			his = dis.unwrap(his);
+			
+			String version = his.readString();
+			
+			if(version.equals(moduleFileVersion)){
+				return true;
+			}
+			
+			return false;
+			
+			
+		} catch(FileNotFoundException e){
+			return false;
+		}
+		finally{
+			if(fis != null){
+				fis.close();
+			}
+		}
+	}
+	
+	
 	/**
 	 * Loads the module from memory and is stored in this object.
 	 * 
