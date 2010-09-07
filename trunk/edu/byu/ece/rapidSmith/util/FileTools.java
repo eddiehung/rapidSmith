@@ -540,6 +540,37 @@ public class FileTools {
 	}
 	
 	/**
+	 * Deletes everything in the directory given by path, but does not
+	 * delete the folder itself.
+	 * @param path The path to the folder where all its contents will be deleted.
+	 * @return True if operation was successful, false otherwise.
+	 */
+	public static boolean deleteFolderContents(String path){
+		File currDirectory = new File(path);
+		if(currDirectory.exists()){
+			try {
+				for(File file : currDirectory.listFiles()){
+					if(file.isDirectory()){
+						if(!deleteFolder(file.getCanonicalPath())){
+							return false;
+						}
+					}
+					else{
+						if(!deleteFile(file.getCanonicalPath())){
+							return false;
+						}
+					}
+				}				
+			}
+			catch(IOException e){
+				return false;
+			}
+			return true;
+		}
+		return false;
+	}
+	
+	/**
 	 * Delete the folder and recursively files and folders below
 	 * @param folderName
 	 * @return true for successful deletion, false otherwise
@@ -574,8 +605,9 @@ public class FileTools {
 	 * channels (because supposedly it is faster).
 	 * @param src Source file to read from
 	 * @param dst Destination file to write to
+	 * @return True if operation was successful, false otherwise.
 	 */
-	public static void copyFile(String src, String dst){
+	public static boolean copyFile(String src, String dst){
 	    FileChannel inChannel = null;
 	    FileChannel outChannel = null;
 		try {
@@ -583,11 +615,13 @@ public class FileTools {
 			outChannel = new FileOutputStream(new File(dst)).getChannel();
 			inChannel.transferTo(0, inChannel.size(), outChannel);
 		} 
-		catch (FileNotFoundException e) {
-			MessageGenerator.briefErrorAndExit("ERROR could not find/access file(s): " + src + " and/or " + dst);
+		catch (FileNotFoundException e){
+			MessageGenerator.briefError("ERROR could not find/access file(s): " + src + " and/or " + dst);
+			return false;
 		} 
 		catch (IOException e){
-			MessageGenerator.briefErrorAndExit("ERROR copying file: " + src + " to " + dst);
+			MessageGenerator.briefError("ERROR copying file: " + src + " to " + dst);
+			return false;
 		}
 		finally {
 			try {
@@ -597,9 +631,83 @@ public class FileTools {
 					outChannel.close();
 			} 
 			catch (IOException e) {
-				MessageGenerator.briefErrorAndExit("Error closing files involved in copying: " + src + " and " + dst);
+				MessageGenerator.briefError("Error closing files involved in copying: " + src + " and " + dst);
+				return false;
 			}
 		}
+		return true;
+	}
+	
+	/**
+	 * Copies a folder and its files from the path defined in srcDirectoryPath to a new folder
+	 * at dstDirectoryPath.  If the recursive flag is set it will also recursively copy subfolders
+	 * from the source to the destination.
+	 * @param srcDirectoryPath The name of the source folder to copy.
+	 * @param dstDirectoryPath The destination of where the copy of the folder should be located.
+	 * @param recursive A flag denoting if the sub folders of source should be copied.
+	 * @return True if operation was successful, false otherwise.
+	 */
+	public static boolean copyFolder(String srcDirectoryPath, String dstDirectoryPath, boolean recursive){
+		File srcDirectory = new File(srcDirectoryPath);
+		File dstDirectory = new File(dstDirectoryPath + File.separator + srcDirectory.getName());
+		if(srcDirectory.exists() && srcDirectory.isDirectory()){
+			if(!dstDirectory.exists()){
+				dstDirectory.mkdirs();
+			}
+			for(File file : srcDirectory.listFiles()){
+				if(!file.isDirectory()){
+					if(!copyFile(file.getAbsolutePath(), dstDirectory.getAbsolutePath() + File.separator + file.getName())){
+						return false;
+					}
+				}
+				else if(file.isDirectory() && recursive){
+					if(!copyFolder(file.getAbsolutePath(), dstDirectory.getAbsolutePath(), true)){
+						return false;
+					}
+				}
+
+			}
+			return true;
+		}
+		MessageGenerator.briefError("ERROR: copyFolder() - Cannot find directory: " + srcDirectoryPath);
+		return false;
+	}
+	
+	/**
+	 * Copies the folder contents of the folder specified by src to folder specified as dst.  It will
+	 * copy all files in it to the new location.  If the recursive
+	 * flag is set, it will copy everything recursively in the folder src to dst.
+	 * @param src The source folder to copy.
+	 * @param dst The location of where the copy of the contents of src will be located.
+	 * @param recursive A flag indicating if sub folders and their contents should be
+	 * copied.
+	 * @return True if operation is successful, false otherwise.
+	 */
+	public static boolean copyFolderContents(String src, String dst, boolean recursive){
+		File srcDirectory = new File(src);
+		File dstDirectory = new File(dst);
+		if(srcDirectory.exists() && srcDirectory.isDirectory()){
+			if(!dstDirectory.exists()){
+				MessageGenerator.briefError("ERROR: Could find destination directory " + dstDirectory.getAbsolutePath());
+			}
+			for(File file : srcDirectory.listFiles()){
+				if(!file.isDirectory()){
+					if(!copyFile(file.getAbsolutePath(), dstDirectory.getAbsolutePath())){
+						return false;
+					}
+				}
+				else if(file.isDirectory() && recursive){
+					if(!copyFolder(file.getAbsolutePath(), dst, true)){
+						MessageGenerator.briefError("ERROR: While copying folder " + file.getAbsolutePath() +
+								" to " + dst + File.separator + file.getName());
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+		MessageGenerator.briefError("ERROR: copyFolderContents() - Cannot find directory: " + src);
+		return false;
 	}
 	
 	//===================================================================================//
