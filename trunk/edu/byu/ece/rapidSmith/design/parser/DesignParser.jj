@@ -136,7 +136,7 @@ void XDL_File() : {}
 void Design() : {}
 {
 	  try{
-  		  (<DESIGN> DesignName() Part() NCDVersion() <COMMA> InstanceConfiguration() <SEMICOLON>)
+  		  (<DESIGN> DesignName() Part() NCDVersion() [<COMMA> InstanceConfiguration()] <SEMICOLON>)
 	  }
 	  catch(ParseException e){
 		    if(e.currentToken.toString().equals("cfg")){
