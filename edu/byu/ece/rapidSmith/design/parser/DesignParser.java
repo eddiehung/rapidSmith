@@ -80,8 +80,15 @@ public class DesignParser implements DesignParserConstants {
       DesignName();
       Part();
       NCDVersion();
-      jj_consume_token(COMMA);
-      InstanceConfiguration();
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case COMMA:
+        jj_consume_token(COMMA);
+        InstanceConfiguration();
+        break;
+      default:
+        jj_la1[0] = jj_gen;
+        ;
+      }
       jj_consume_token(SEMICOLON);
     } catch (ParseException e) {
                     if(e.currentToken.toString().equals("cfg")){
@@ -136,7 +143,7 @@ public class DesignParser implements DesignParserConstants {
         ;
         break;
       default:
-        jj_la1[0] = jj_gen;
+        jj_la1[1] = jj_gen;
         break label_1;
       }
       Statement();
@@ -160,7 +167,7 @@ public class DesignParser implements DesignParserConstants {
       Net();
       break;
     default:
-      jj_la1[1] = jj_gen;
+      jj_la1[2] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -213,7 +220,7 @@ public class DesignParser implements DesignParserConstants {
         ;
         break;
       default:
-        jj_la1[2] = jj_gen;
+        jj_la1[3] = jj_gen;
         break label_2;
       }
       ModulePort();
@@ -262,7 +269,7 @@ public class DesignParser implements DesignParserConstants {
         ;
         break;
       default:
-        jj_la1[3] = jj_gen;
+        jj_la1[4] = jj_gen;
         break label_3;
       }
       ModuleStatement();
@@ -281,7 +288,7 @@ public class DesignParser implements DesignParserConstants {
       Net();
       break;
     default:
-      jj_la1[4] = jj_gen;
+      jj_la1[5] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -348,7 +355,7 @@ public class DesignParser implements DesignParserConstants {
       jj_consume_token(INSTANCE);
       break;
     default:
-      jj_la1[5] = jj_gen;
+      jj_la1[6] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -397,7 +404,7 @@ public class DesignParser implements DesignParserConstants {
       ModuleInstance();
       break;
     default:
-      jj_la1[6] = jj_gen;
+      jj_la1[7] = jj_gen;
       ;
     }
     InstanceConfiguration();
@@ -455,7 +462,7 @@ public class DesignParser implements DesignParserConstants {
       InstanceUnplaced();
       break;
     default:
-      jj_la1[7] = jj_gen;
+      jj_la1[8] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -513,13 +520,13 @@ public class DesignParser implements DesignParserConstants {
         jj_consume_token(UNBONDED);
         break;
       default:
-        jj_la1[8] = jj_gen;
+        jj_la1[9] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
       break;
     default:
-      jj_la1[9] = jj_gen;
+      jj_la1[10] = jj_gen;
       ;
     }
     jj_consume_token(COMMA);
@@ -553,7 +560,7 @@ public class DesignParser implements DesignParserConstants {
         ;
         break;
       default:
-        jj_la1[10] = jj_gen;
+        jj_la1[11] = jj_gen;
         break label_4;
       }
       BelConfiguration();
@@ -640,7 +647,7 @@ public class DesignParser implements DesignParserConstants {
         NetStatements();
         break;
       default:
-        jj_la1[11] = jj_gen;
+        jj_la1[12] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -705,7 +712,7 @@ public class DesignParser implements DesignParserConstants {
       jj_consume_token(WIRE);
       break;
     default:
-      jj_la1[12] = jj_gen;
+      jj_la1[13] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -727,7 +734,7 @@ public class DesignParser implements DesignParserConstants {
         ;
         break;
       default:
-        jj_la1[13] = jj_gen;
+        jj_la1[14] = jj_gen;
         break label_5;
       }
       NetStatement();
@@ -756,7 +763,7 @@ public class DesignParser implements DesignParserConstants {
       NetCfg();
       break;
     default:
-      jj_la1[14] = jj_gen;
+      jj_la1[15] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -776,7 +783,7 @@ public class DesignParser implements DesignParserConstants {
       jj_consume_token(LOAD);
       break;
     default:
-      jj_la1[15] = jj_gen;
+      jj_la1[16] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -801,7 +808,7 @@ public class DesignParser implements DesignParserConstants {
       jj_consume_token(DRIVER);
       break;
     default:
-      jj_la1[16] = jj_gen;
+      jj_la1[17] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -922,7 +929,7 @@ public class DesignParser implements DesignParserConstants {
       jj_consume_token(PIP3);
       break;
     default:
-      jj_la1[17] = jj_gen;
+      jj_la1[18] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -980,7 +987,7 @@ public class DesignParser implements DesignParserConstants {
   private Token jj_scanpos, jj_lastpos;
   private int jj_la;
   private int jj_gen;
-  final private int[] jj_la1 = new int[18];
+  final private int[] jj_la1 = new int[19];
   static private int[] jj_la1_0;
   static private int[] jj_la1_1;
   static {
@@ -988,10 +995,10 @@ public class DesignParser implements DesignParserConstants {
       jj_la1_init_1();
    }
    private static void jj_la1_init_0() {
-      jj_la1_0 = new int[] {0x82200000,0x82200000,0x1000000,0x2200000,0x2200000,0x2000000,0x80000000,0x10000000,0x20000000,0x20000000,0x0,0x48870080,0x48870000,0x4580000,0x4580000,0x4400000,0x0,0xf000,};
+      jj_la1_0 = new int[] {0x80,0x82200000,0x82200000,0x1000000,0x2200000,0x2200000,0x2000000,0x80000000,0x10000000,0x20000000,0x20000000,0x0,0x48870080,0x48870000,0x4580000,0x4580000,0x4400000,0x0,0xf000,};
    }
    private static void jj_la1_init_1() {
-      jj_la1_1 = new int[] {0x40,0x40,0x0,0x40,0x40,0x40,0x0,0x10,0x20,0x20,0x80,0x0,0x0,0xc,0xc,0x0,0xc,0x0,};
+      jj_la1_1 = new int[] {0x0,0x40,0x40,0x0,0x40,0x40,0x40,0x0,0x10,0x20,0x20,0x80,0x0,0x0,0xc,0xc,0x0,0xc,0x0,};
    }
   final private JJCalls[] jj_2_rtns = new JJCalls[1];
   private boolean jj_rescan = false;
@@ -1008,7 +1015,7 @@ public class DesignParser implements DesignParserConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 18; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -1023,7 +1030,7 @@ public class DesignParser implements DesignParserConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 18; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -1034,7 +1041,7 @@ public class DesignParser implements DesignParserConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 18; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -1045,7 +1052,7 @@ public class DesignParser implements DesignParserConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 18; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -1055,7 +1062,7 @@ public class DesignParser implements DesignParserConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 18; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -1065,7 +1072,7 @@ public class DesignParser implements DesignParserConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 18; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -1182,7 +1189,7 @@ public class DesignParser implements DesignParserConstants {
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 18; i++) {
+    for (int i = 0; i < 19; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1<<j)) != 0) {
