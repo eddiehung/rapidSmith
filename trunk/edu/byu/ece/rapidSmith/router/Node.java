@@ -50,25 +50,45 @@ public class Node implements Comparable<Node>{
 	protected int history;
 	/** Determines if this node connected to the node after it creates a PIP */
 	protected boolean isPIP;
+	/** Keeps track of the wires that this node connects to */
+	protected Wire[] wires;
+	
+	/**
+	 * Empty constructor, sets tile and wires to null. Sets wire and cost to -1.
+	 * level and history are set to 0 and isPIP is set to false.
+	 */
 	public Node(){
 		tile = null;
 		wire = -1;
+		wires = null;
 		cost = -1;
 		level = 0;
 		history = 0;
 		isPIP = false;
 	}
 	
+	/**
+	 * A quick population constructor.
+	 * @param tile The tile of the new node.
+	 * @param wire The wire of the new node.
+	 * @param parent The parent of the new node, or null if none.
+	 * @param level The number of nodes between this node and the source node.
+	 */
 	public Node(Tile tile, int wire, Node parent, int level){
-		this.tile = tile;
-		this.wire = wire;
-		this.parent = parent;
-		this.level = level;
+		setTile(tile);
+		setWire(wire);
+		setParent(parent);
+		setLevel(level);
 	}
 	
+	/**
+	 * A quick setter method for the tile and wire.
+	 * @param tile The new tile of the node.
+	 * @param wire The new wire of the node.
+	 */
 	public void setTileAndWire(Tile tile, int wire){
-		this.tile = tile;
-		this.wire = wire;
+		setTile(tile);
+		setWire(wire);
 	}
 	
 	/**
@@ -76,7 +96,7 @@ public class Node implements Comparable<Node>{
 	 * @return The list of all possible connections leaving this node 
 	 */
 	public Wire[] getWires(){
-		return this.tile.getWires().get(wire);
+		return wires;
 	}
 	
 	/**
@@ -90,57 +110,58 @@ public class Node implements Comparable<Node>{
 	/**
 	 * @return the number of hops from the source this node is
 	 */
-	public int getLevel() {
+	public int getLevel(){
 		return level;
 	}
 
 	/**
 	 * @param level the number of hops from the source to this node
 	 */
-	public void setLevel(int level) {
+	public void setLevel(int level){
 		this.level = level;
 	}
 
 	/**
 	 * @return the tile
 	 */
-	public Tile getTile() {
+	public Tile getTile(){
 		return tile;
 	}
 
 	/**
 	 * @param tile the tile to set
 	 */
-	public void setTile(Tile tile) {
+	public void setTile(Tile tile){
 		this.tile = tile;
 	}
 
 	/**
 	 * @return the parent
 	 */
-	public Node getParent() {
+	public Node getParent(){
 		return parent;
 	}
 
 	/**
 	 * @param parent the parent to set
 	 */
-	public void setParent(Node parent) {
+	public void setParent(Node parent){
 		this.parent = parent;
 	}
 
 	/**
 	 * @return the wire
 	 */
-	public int getWire() {
+	public int getWire(){
 		return wire;
 	}
 
 	/**
 	 * @param wire the wire to set
 	 */
-	public void setWire(int wire) {
+	public void setWire(int wire){
 		this.wire = wire;
+		this.wires = tile.getWires().get(wire);
 	}
 
 	public SinkPin getSinkPin(){
@@ -165,7 +186,7 @@ public class Node implements Comparable<Node>{
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
-	public int hashCode() {
+	public int hashCode(){
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((tile == null) ? 0 : tile.hashCode());
@@ -177,7 +198,7 @@ public class Node implements Comparable<Node>{
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(Object obj){
 		if (this == obj)
 			return true;
 		if (obj == null)
@@ -185,12 +206,12 @@ public class Node implements Comparable<Node>{
 		if (getClass() != obj.getClass())
 			return false;
 		Node other = (Node) obj;
-		if (tile == null) {
+		if (wire != other.wire)
+			return false;
+		if (tile == null){
 			if (other.tile != null)
 				return false;
 		} else if (!tile.equals(other.tile))
-			return false;
-		if (wire != other.wire)
 			return false;
 		return true;
 	}
