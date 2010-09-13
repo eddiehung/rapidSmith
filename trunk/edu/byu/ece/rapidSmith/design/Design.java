@@ -190,11 +190,12 @@ public class Design implements Serializable{
 		ModuleInstance modInst = new ModuleInstance(name, this);
 		moduleInstances.put(modInst.getName(), modInst);
 		modInst.setModule(module);
-		
+		String prefix = modInst.getName()+"/";
 		HashMap<String, Instance> instanceMap = new HashMap<String, Instance>();
+		HashMap<Instance,Instance> inst2instMap = new HashMap<Instance, Instance>();
 		for(Instance templateInst : module.getInstances()){
 			Instance inst = new Instance();
-			inst.setName(modInst.getName()+"/"+templateInst.getName());
+			inst.setName(prefix+templateInst.getName());
 			inst.setModuleTemplate(module);
 			inst.setModuleTemplateInstance(templateInst);
 			inst.setAttributes(new ArrayList<Attribute>(templateInst.getAttributes()));
@@ -207,7 +208,7 @@ public class Design implements Serializable{
 			if(templateInst.equals(module.getAnchor())){
 				modInst.setAnchor(inst);
 			}
-			instanceMap.put(inst.getName(), inst);
+			inst2instMap.put(templateInst,inst);
 		}
 		
 		HashMap<Pin,Port> pinToPortMap = new HashMap<Pin,Port>();
@@ -216,16 +217,16 @@ public class Design implements Serializable{
 		}
 		
 		for(Net templateNet : module.getNets()){
-			Net net = new Net(modInst.getName()+"/"+templateNet.getName(), templateNet.getType());
+			Net net = new Net(prefix+templateNet.getName(), templateNet.getType());
 			
 			HashSet<Instance> instanceList = new HashSet<Instance>();
 			Port port = null;
 			for(Pin templatePin : templateNet.getPins()){
 				Port temp = pinToPortMap.get(templatePin);
 				port = (temp != null)? temp : port;
-				Instance inst = instanceMap.get(modInst.getName()+"/"+templatePin.getInstanceName());
+				Instance inst = inst2instMap.get(templatePin.getInstance());
 				if(inst == null)
-					System.out.println("DEBUG: could not find Instance "+modInst.getName()+"/"+templatePin.getInstanceName());
+					System.out.println("DEBUG: could not find Instance "+prefix+templatePin.getInstanceName());
 				instanceList.add(inst);
 				Pin pin = new Pin(templatePin.isOutPin(), templatePin.getName(), inst);
 				net.addPin(pin);
@@ -238,7 +239,7 @@ public class Design implements Serializable{
 				net.setModuleTemplate(module);
 				net.setModuleTemplateNet(templateNet);
 			}else{
-				net.setName(modInst.getName()+"/"+port.getName());
+				net.setName(prefix+port.getName());
 			}
 			this.addNet(net);
 			for(Instance inst : instanceList){
