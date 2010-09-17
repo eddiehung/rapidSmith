@@ -308,14 +308,22 @@ public class Design implements Serializable{
 	}
 	
 	/**
+	 * Gets and returns the Collection of all of the module instances in this design.
+	 * @return All the module instances in this design.
+	 */
+	public Collection<ModuleInstance> getModuleInstances(){
+		return moduleInstances.values();
+	}
+
+	/**
 	 * Gets and returns the HashMap of all of the module instance members separated by
 	 * module instance name.
 	 * @return The HashMap containing all current module instances.
 	 */
-	public HashMap<String,ModuleInstance> getModuleInstances(){
+	public HashMap<String, ModuleInstance> getModuleInstanceMap(){
 		return moduleInstances;
 	}
-
+	
 	/**
 	 * This will return the part name with speed grade of the part this design or 
 	 * hard macro targets (ex: xc4vsx35ff668-10).
@@ -323,6 +331,16 @@ public class Design implements Serializable{
 	 */
 	public String getPartName(){
 		return this.partName;
+	}
+	
+	/**
+	 * Gets and returns the Xilinx family name of the part this design targets.
+	 * A Xilinx family name (virtex4, spartan3, virtex5, ...) can be extracted
+	 * from the part name.
+	 * @return The Xilinx family name of the part this design targets.
+	 */
+	public String getFamilyName(){
+		return FileTools.getFamilyNameFromPart(partName);
 	}
 	
 	/**
