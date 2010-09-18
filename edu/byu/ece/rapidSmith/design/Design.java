@@ -191,7 +191,6 @@ public class Design implements Serializable{
 		moduleInstances.put(modInst.getName(), modInst);
 		modInst.setModule(module);
 		String prefix = modInst.getName()+"/";
-		HashMap<String, Instance> instanceMap = new HashMap<String, Instance>();
 		HashMap<Instance,Instance> inst2instMap = new HashMap<Instance, Instance>();
 		for(Instance templateInst : module.getInstances()){
 			Instance inst = new Instance();

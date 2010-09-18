@@ -662,8 +662,7 @@ public class Device implements Serializable{
 		debugPrintUniquePoolCount(primitivePinPool, "PrimitivePinMap");
 	}
 	
-	@SuppressWarnings("unchecked")
-	private void debugPrintUniquePoolCount(HashPool p, String name){
+	private void debugPrintUniquePoolCount(@SuppressWarnings("rawtypes") HashPool p, String name){
 		System.out.printf("%10d : Unique %s\n",p.getEnumerations().size(),name);
 	}
 	
