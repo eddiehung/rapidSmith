@@ -142,6 +142,7 @@ public class PartTileBrowserScene extends QGraphicsScene {
 
 		painter.end();
 		QGraphicsPixmapItem background = addPixmap(qpm);
+		background.setAcceptsHoverEvents(true);
 		background.setZValue(-1);
 	}
 
