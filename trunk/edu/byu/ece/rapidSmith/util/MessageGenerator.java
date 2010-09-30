@@ -175,4 +175,30 @@ public class MessageGenerator{
 			briefErrorAndExit("Error reading user input");
 		}
 	}
+	
+	/**
+	 * This will prompt the user to type y or n to either continue
+	 * with a process or to exit.
+	 */
+	public static void agreeToContinue(){
+		System.out.print("(y/n)? ");
+		int ch;
+		try{
+			ch = System.in.read();
+			while(ch != 'y' && ch != 'n' && ch != 'Y' && ch != 'N'){
+				while((ch = System.in.read()) != '\n');
+				System.out.print("Would you like to continue(y/n)? ");
+				ch = System.in.read();
+			}
+			if(ch == 'y' || ch == 'Y'){
+				return;
+			}
+			else{
+				System.exit(1);
+			}
+		}
+		catch(IOException e){
+			briefErrorAndExit("Error reading user input");
+		}
+	}
 }

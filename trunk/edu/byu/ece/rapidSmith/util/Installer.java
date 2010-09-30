@@ -36,6 +36,13 @@ import edu.byu.ece.rapidSmith.device.DeviceFilesCreator;
  * @author Chris Lavin
  */
 public class Installer{
+	public static String nl = System.getProperty("line.separator");
+	public static String disclaimer = 
+		"This material is based upon work supported by the National" + nl + 
+		"Science Foundation under Grant No. 0801876. Any opinions," + nl + 
+		"findings, and conclusions or recommendations expressed in this" + nl + 
+		"material are those of the author(s) and do not necessarily" + nl + 
+		"reflect the views of the National Science Foundation.";
 	
 	/**
 	 * Parses the text file passed in through main() containing the
@@ -70,7 +77,7 @@ public class Installer{
 	}
 	
 	public static void main(String[] args){
-		MessageGenerator.printHeader("Rapid Smith Release " + Device.rapidSmithVersion +" - Installer");
+		MessageGenerator.printHeader("RapidSmith Release " + Device.rapidSmithVersion +" - Installer");
 		String[] names = null;
 		if(args.length == 0){
 			String nl = System.getProperty("line.separator");
@@ -82,6 +89,13 @@ public class Installer{
 					"      \"virtex4 xc5vlx20tff323\"" + nl +
 					"      \"listOfpartsAndFamiliesFile.txt\" (each parameter on a separate line)" + nl);
 		}
+		
+		System.out.println("DISCLAIMER:");
+		System.out.println(disclaimer + nl + nl);
+		
+		System.out.println("Have you read the above disclaimer and agree to the GPLv2 license" + nl +
+				"agreement accompanying this software (/docs/gpl2.txt)");
+		MessageGenerator.agreeToContinue();
 		
 		// Check if user supplied file with parameters
 		File tmp = new File(args[0]);
