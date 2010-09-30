@@ -63,7 +63,7 @@ public class Device implements Serializable{
 	/** Serializable Version */
 	private static final long serialVersionUID = 6336619462392618775L;
 	/** The current release of the tools */
-	public static final String rapidSmithVersion = "0.1.5";
+	public static final String rapidSmithVersion = "0.1.6";
 	/** This is the current device file version (saved in file to ensure proper compatibility) */
 	public static final String deviceFileVersion = "0.3";
 	
@@ -662,7 +662,8 @@ public class Device implements Serializable{
 		debugPrintUniquePoolCount(primitivePinPool, "PrimitivePinMap");
 	}
 	
-	private void debugPrintUniquePoolCount(@SuppressWarnings("rawtypes") HashPool p, String name){
+	@SuppressWarnings("unchecked")
+	private void debugPrintUniquePoolCount(HashPool p, String name){
 		System.out.printf("%10d : Unique %s\n",p.getEnumerations().size(),name);
 	}
 	

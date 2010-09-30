@@ -1,5 +1,13 @@
 Release Notes for BYU RapidSmith Tools
 
+ - Version 0.1.6 (30 SEP 2010) -
+Fixed a few more bugs. Upgraded to a newer version of Qt Jambi (4.6.3).
+Fixed an XDL parser bug that would not parse XDL files without a 'cfg ""' 
+entry in the design. Added a few more diagrams to the documentation.
+Moved all license files to /doc/ folder and includes the NSF disclaimer
+in the installer with a prompt for the user to agree to the license with
+RapidSmith.
+
  - Version 0.1.5 (25 AUG 2010) - 
 A few minor bug fixes such as device files now no longer are loaded
 repetitively for the same device (this saves a significant amount of
