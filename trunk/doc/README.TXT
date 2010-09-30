@@ -27,6 +27,14 @@ FPGAs. Based on XDL, its objective is to serve as a rapid prototyping platform
 for research ideas and algorithms relating to low level FPGA CAD tools.
 
 ==============================================================================
+==                                Disclaimer                                ==
+==============================================================================
+This material is based upon work supported by the National Science Foundation
+under Grant No. 0801876. Any opinions, findings, and conclusions or 
+recommendations expressed in this material are those of the author(s) and do
+not necessarily reflect the views of the National Science Foundation.
+
+==============================================================================
 ==                      Installation and Documentation                      ==
 ==============================================================================
 For installation instructions and complete documentation on RapidSmith please
