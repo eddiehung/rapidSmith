@@ -57,8 +57,6 @@ public class Net implements Comparable<Net>, Serializable {
 	private Module moduleTemplate;
 	/** The net in the module template corresponding to this net */
 	private Net moduleTemplateNet;
-	/** The port  that indirectly references this net */
-	private Port port;
 	
 	/**
 	 * Default Constructor
@@ -73,7 +71,6 @@ public class Net implements Comparable<Net>, Serializable {
 		moduleInstance = null;
 		moduleTemplate = null;
 		moduleTemplateNet = null;
-		this.port = null;
 	}
 	
 	/**
@@ -91,7 +88,6 @@ public class Net implements Comparable<Net>, Serializable {
 		moduleInstance = null;
 		moduleTemplate = null;
 		moduleTemplateNet = null;
-		this.port = null;
 	}
 	
 	/**
@@ -412,22 +408,6 @@ public class Net implements Comparable<Net>, Serializable {
 	 */
 	public ModuleInstance getModuleInstance(){
 		return moduleInstance;
-	}
-	
-	/**
-	 * Sets the port which this net indirectly references.
-	 * @param port
-	 */
-	public void setPort(Port port){
-		this.port = port;
-	}
-	
-	/**
-	 * Gets and returns the port that indirectly references this net.
-	 * @return
-	 */
-	public Port getPort(){
-		return port;
 	}
 
 	/**
