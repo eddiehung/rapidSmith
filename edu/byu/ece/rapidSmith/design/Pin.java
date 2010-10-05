@@ -40,6 +40,8 @@ public class Pin implements Serializable, Cloneable {
 	private String name;
 	/** The instance where the pin is located */
 	private Instance instance;
+	/** The Port that references this pin, if there is one */
+	private Port port;
 	
 	/**
 	 * Constructor setting things to null and false.
@@ -48,6 +50,7 @@ public class Pin implements Serializable, Cloneable {
 		this.isOutputPin = false;
 		this.name = null;
 		this.setInstance(null);
+		this.port = null;
 	}
 	
 	/**
@@ -60,6 +63,7 @@ public class Pin implements Serializable, Cloneable {
 		this.isOutputPin = isOutputPin;
 		this.name = pinName;
 		this.instance = instance;
+		this.port = null;
 	}
 
 	/**
@@ -123,6 +127,22 @@ public class Pin implements Serializable, Cloneable {
 	 */
 	public void setInstance(Instance instance){
 		this.instance = instance;
+	}
+	
+	/**
+	 * Sets the port that references this pin.
+	 * @param port the port that references this pin.
+	 */
+	public void setPort(Port port){
+		this.port = port;
+	}
+	
+	/**
+	 * Gets the port that references this pin.  Null if there is none
+	 * @return The port that references this pin.
+	 */
+	public Port getPort(){
+		return this.port;
 	}
 	
 	/**
