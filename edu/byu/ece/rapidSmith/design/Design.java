@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
 import edu.byu.ece.rapidSmith.design.parser.DesignParser;
 import edu.byu.ece.rapidSmith.design.parser.ParseException;
@@ -127,9 +128,11 @@ public class Design implements Serializable{
 	/**
 	 * Marks a primitive site as used by a particular instance.
 	 * @param site The site to be marked as used.
-	 * @param inst The instance using the site.
+	 * @param inst The instance using the site or null if the primitive site
+	 * is null.
 	 */
 	protected Instance setPrimitiveSiteUsed(PrimitiveSite site, Instance inst){
+		if(site == null) return null;
 		return usedPrimitiveSites.put(site, inst);
 	}
 	
@@ -372,7 +375,7 @@ public class Design implements Serializable{
 	 */
 	public void addInstance(Instance inst){
 		if(inst.isPlaced()){
-			usedPrimitiveSites.put(inst.getPrimitiveSite(), inst);
+			setPrimitiveSiteUsed(inst.getPrimitiveSite(), inst);
 		}
 		inst.setDesign(this);
 		instances.put(inst.getName(), inst);
@@ -449,6 +452,15 @@ public class Design implements Serializable{
 	 */
 	public HashMap<String,Instance> getInstanceMap(){
 		return instances;
+	}
+	
+	/**
+	 * Returns the set of used primitive sites occupied by this
+	 * design's instances and module instances.
+	 * @return The set of used primitive sites in this design.
+	 */
+	public Set<PrimitiveSite> getUsedPrimitiveSites(){
+		return usedPrimitiveSites.keySet();
 	}
 	
 	/**

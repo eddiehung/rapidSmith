@@ -41,7 +41,8 @@ public class Instance implements Serializable{
 
 	/** Unique name of this instance */
 	private String name;
-	/** The XDL Design this instance belongs to */
+	/** The XDL Design this instance belongs to, 
+	 * it is null if this instance is part of a module definition */
 	private transient Design design;
 	/** All of the attributes in this instance */
 	private ArrayList<Attribute> attributes;
@@ -285,7 +286,8 @@ public class Instance implements Serializable{
 	}
 	
 	/**
-	 * Sets the design which this instance is a part of.
+	 * Sets the design which this instance is a part of. The design should
+	 * be null if it is a module definition.
 	 * @param design the new design of this instance.
 	 */
 	public void setDesign(Design design){
@@ -294,7 +296,8 @@ public class Instance implements Serializable{
 
 	/**
 	 * Gets and returns the design which this instance is a part of.
-	 * @return the design this instance is a part of.
+	 * @return the design this instance is a part of, null if this instance
+	 * is a member of a module definition.
 	 */
 	public Design getDesign(){
 		return design;
@@ -354,6 +357,7 @@ public class Instance implements Serializable{
 			instanceX = -1;
 			instanceY = -1;
 			this.site = site;
+			if(design != null) design.setPrimitiveSiteUsed(site, this);
 			return;
 		}
 		String name = site.getName();
