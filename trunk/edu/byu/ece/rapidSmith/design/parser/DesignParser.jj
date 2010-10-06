@@ -357,9 +357,11 @@ void InstancePrefix() : {}
 //                    ;
 void InstancePrefixID(): 
 {
-	  inDesignCfg = false;
-	  currInst = new Instance();
-	  currInst.setDesign(xdlDesign);
+	inDesignCfg = false;
+	currInst = new Instance();
+  	if(currModule == null){
+		currInst.setDesign(xdlDesign);
+	}
 }
 {
 	  (<INST> | <INSTANCE>)
@@ -368,20 +370,20 @@ void InstancePrefixID():
 //<inst_name>       ::= <string> ;
 void InstanceName() : 
 {
-	  String s = getToken(1).image;
-	  s = s.substring(1,s.length()-1); // Remove the "quotes"
+	String s = getToken(1).image;
+	s = s.substring(1,s.length()-1); // Remove the "quotes"
   	currInst.setName(pool.getUnique(s));
 
-  		if(currModule == null){
+  	if(currModule == null){
 	    xdlDesign.addInstance(currInst);  	
-	  }
-	  else{
-	    currModule.addInstance(currInst);
-	    	currInst.setModuleTemplate(currModule);	
+	}
+	else{
+		currModule.addInstance(currInst);
+	    currInst.setModuleTemplate(currModule);	
 	    if(currInst.getName().equals(currModuleAnchorName)){
-	      currModule.setAnchor(currInst);
+	    	currModule.setAnchor(currInst);
 	    }
-	  }
+	}
 }
 {
 	  <STRING>
