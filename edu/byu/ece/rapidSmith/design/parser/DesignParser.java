@@ -344,9 +344,11 @@ public class DesignParser implements DesignParserConstants {
 //                    | "instance"
 //                    ;
   final public void InstancePrefixID() throws ParseException {
-          inDesignCfg = false;
-          currInst = new Instance();
-          currInst.setDesign(xdlDesign);
+        inDesignCfg = false;
+        currInst = new Instance();
+        if(currModule == null){
+                currInst.setDesign(xdlDesign);
+        }
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case INST:
       jj_consume_token(INST);
@@ -363,20 +365,20 @@ public class DesignParser implements DesignParserConstants {
 
 //<inst_name>       ::= <string> ;
   final public void InstanceName() throws ParseException {
-          String s = getToken(1).image;
-          s = s.substring(1,s.length()-1); // Remove the "quotes"
+        String s = getToken(1).image;
+        s = s.substring(1,s.length()-1); // Remove the "quotes"
         currInst.setName(pool.getUnique(s));
 
-                if(currModule == null){
+        if(currModule == null){
             xdlDesign.addInstance(currInst);
-          }
-          else{
-            currModule.addInstance(currInst);
-                currInst.setModuleTemplate(currModule);
+        }
+        else{
+                currModule.addInstance(currInst);
+            currInst.setModuleTemplate(currModule);
             if(currInst.getName().equals(currModuleAnchorName)){
-              currModule.setAnchor(currInst);
+                currModule.setAnchor(currInst);
             }
-          }
+        }
     jj_consume_token(STRING);
   }
 
