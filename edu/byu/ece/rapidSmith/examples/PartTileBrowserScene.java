@@ -29,9 +29,11 @@ import com.trolltech.qt.gui.QGraphicsPixmapItem;
 import com.trolltech.qt.gui.QGraphicsRectItem;
 import com.trolltech.qt.gui.QGraphicsScene;
 import com.trolltech.qt.gui.QGraphicsSceneMouseEvent;
+import com.trolltech.qt.gui.QImage;
 import com.trolltech.qt.gui.QPainter;
 import com.trolltech.qt.gui.QPen;
 import com.trolltech.qt.gui.QPixmap;
+import com.trolltech.qt.gui.QImage.Format;
 
 import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.Tile;
@@ -47,6 +49,7 @@ public class PartTileBrowserScene extends QGraphicsScene {
 	Device device;
 	public Signal0 updateStatus = new Signal0();
 	private QGraphicsRectItem highlit;
+	private QImage qImage;
 
 	public PartTileBrowserScene(Device device) {
 		this.device = device;
@@ -88,10 +91,18 @@ public class PartTileBrowserScene extends QGraphicsScene {
 	private void drawSliceBackground() {
 
 		setBackgroundBrush(new QBrush(QColor.black));
-		// Draw colored tiles onto QPixMap
+		//Create transparent QPixmap that accepts hovers 
+		//  so that moveMouseEvent is triggered
 		QPixmap qpm = new QPixmap(new QSize((numCols + 1) * (tileSize + 1),
 				(numRows + 1) * (tileSize + 1)));
-		QPainter painter = new QPainter(qpm);
+		qpm.fill(new QColor(255, 255,255, 0));
+		QGraphicsPixmapItem background = addPixmap(qpm);
+		background.setAcceptsHoverEvents(true);
+		background.setZValue(-1);
+		// Draw colored tiles onto QImage		
+		qImage = new QImage(new QSize((numCols + 1) * (tileSize + 1),
+				(numRows + 1) * (tileSize + 1)), Format.Format_RGB16);
+		QPainter painter = new QPainter(qImage);
 
 		painter.setPen(new QPen(QColor.black, lineWidth));
 		// Draw lines between tiles
@@ -141,9 +152,12 @@ public class PartTileBrowserScene extends QGraphicsScene {
 		}
 
 		painter.end();
-		QGraphicsPixmapItem background = addPixmap(qpm);
-		background.setAcceptsHoverEvents(true);
-		background.setZValue(-1);
+		
+	}
+	
+	public void drawBackground(QPainter painter, QRectF rect){
+		super.drawBackground(painter, rect);
+		painter.drawImage(0, 0, qImage);
 	}
 
 	@Override

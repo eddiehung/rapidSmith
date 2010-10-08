@@ -22,7 +22,6 @@ package edu.byu.ece.rapidSmith.examples;
 
 import com.trolltech.qt.core.QPoint;
 import com.trolltech.qt.core.QPointF;
-import com.trolltech.qt.core.QRectF;
 import com.trolltech.qt.core.Qt;
 import com.trolltech.qt.core.Qt.CursorShape;
 import com.trolltech.qt.core.Qt.Key;
@@ -31,7 +30,6 @@ import com.trolltech.qt.gui.QGraphicsScene;
 import com.trolltech.qt.gui.QGraphicsView;
 import com.trolltech.qt.gui.QKeyEvent;
 import com.trolltech.qt.gui.QMouseEvent;
-import com.trolltech.qt.gui.QResizeEvent;
 import com.trolltech.qt.gui.QWheelEvent;
 
 /**
@@ -45,64 +43,17 @@ public class PartTileBrowserView extends QGraphicsView {
 	private boolean rightPressed;
 	double zoomMin;
 	double zoomMax;
+	static double scaleFactor = 1.15;//how fast we zoom
 
 	public PartTileBrowserView(QGraphicsScene scene) {
 		super(scene);
-		setCenter(new QPointF(sceneRect().right() / 2, sceneRect().bottom() / 2));
 		zoomMin = 0.05;
 		zoomMax = 30;
 	}
 
-	public void setCenter(QPointF centerPoint) {
-		// Get the rectangle of the visible area in scene coords
-		QRectF visibleArea = mapToScene(rect()).boundingRect();
+	
 
-		// Get the scene area
-		QRectF sceneBounds = sceneRect();
-
-		double boundX = visibleArea.width() / 2.0;
-		double boundY = visibleArea.height() / 2.0;
-		double boundWidth = sceneBounds.width() - 2.0 * boundX;
-		double boundHeight = sceneBounds.height() - 2.0 * boundY;
-
-		// The max boundary that the centerPoint can be to
-		QRectF bounds = new QRectF(boundX, boundY, boundWidth, boundHeight);
-
-		if (bounds.contains(centerPoint)) {
-			// We are within the bounds
-			currCenter = centerPoint;
-		} else {
-			// We need to clamp or use the center of the screen
-			if (visibleArea.contains(sceneBounds)) {
-				// Use the center of scene ie. we can see the whole scene
-				currCenter = sceneBounds.center();
-			} else {
-
-				currCenter = centerPoint;
-
-				// We need to clamp the center. The centerPoint is too large
-				if (centerPoint.x() > bounds.x() + bounds.width()) {
-					currCenter.setX(bounds.x() + bounds.width());
-				} else if (centerPoint.x() < bounds.x()) {
-					currCenter.setX(bounds.x());
-				}
-
-				if (centerPoint.y() > bounds.y() + bounds.height()) {
-					currCenter.setY(bounds.y() + bounds.height());
-				} else if (centerPoint.y() < bounds.y()) {
-					currCenter.setY(bounds.y());
-				}
-
-			}
-		}
-
-		// Update the scrollbars
-		centerOn(currCenter);
-	}
-
-	public QPointF getCenter() {
-		return currCenter;
-	}
+	
 
 	public void mousePressEvent(QMouseEvent event) {
 		if (event.button().equals(Qt.MouseButton.RightButton)) {
@@ -132,11 +83,10 @@ public class PartTileBrowserView extends QGraphicsView {
 						(int) event.pos().y()));
 				QPointF delta = new QPointF(s1.x() - s2.x(), s1.y() - s2.y());
 				lastPan = event.pos();
-
-				// Update the center ie. do the pan
-				setCenter(new QPointF(getCenter().x() + delta.x(), getCenter()
-						.y()
-						+ delta.y()));
+				// Scroll the scrollbars ie. do the pan
+				double zoom = this.matrix().m11();
+				this.horizontalScrollBar().setValue((int) (this.horizontalScrollBar().value()+zoom*delta.x()));
+				this.verticalScrollBar().setValue((int) (this.verticalScrollBar().value()+zoom*delta.y()));
 			}
 		}
 		super.mouseMoveEvent(event);
@@ -146,18 +96,15 @@ public class PartTileBrowserView extends QGraphicsView {
 		// Get the position of the mouse before scaling, in scene coords
 		QPointF pointBeforeScale = mapToScene(event.pos());
 
-		// Get the original screen centerpoint
-		QPointF screenCenter = getCenter();
-
 		// Scale the view ie. do the zoom
-		double scaleFactor = 1.15; // How fast we zoom
+		double zoom = this.matrix().m11();
 		if (event.delta() > 0) {
 			// Zoom in (if not at limit)
-			if(this.matrix().m11() < zoomMax)
+			if(zoom < zoomMax)
 				scale(scaleFactor, scaleFactor);
 		} else {
 			// Zoom out (if not at limit)
-			if(this.matrix().m11() > zoomMin)
+			if(zoom > zoomMin)
 				scale(1.0 / scaleFactor, 1.0 / scaleFactor);
 		}
 
@@ -169,20 +116,10 @@ public class PartTileBrowserView extends QGraphicsView {
 				pointBeforeScale.x() - pointAfterScale.x(), pointBeforeScale
 						.y()
 						- pointAfterScale.y());
-
-		// Adjust to the new center for correct zooming
-		QPointF newCenter = new QPointF(screenCenter.x() + offset.x(),
-				screenCenter.y() + offset.y());
-		setCenter(newCenter);
+		this.horizontalScrollBar().setValue((int) (this.horizontalScrollBar().value()+zoom*offset.x()));
+		this.verticalScrollBar().setValue((int) (this.verticalScrollBar().value()+zoom*offset.y()));
 	}
 
-	public void resizeEvent(QResizeEvent event) {
-		// Get the rectangle of the visible area in scene coords
-		QRectF visibleArea = mapToScene(rect()).boundingRect();
-		setCenter(visibleArea.center());
-		// Call the subclass resize so the scrollbars are updated correctly
-		super.resizeEvent(event);
-	}
 	
 	public void keyPressEvent(QKeyEvent event){
 		double scaleFactor = 1.15; 
