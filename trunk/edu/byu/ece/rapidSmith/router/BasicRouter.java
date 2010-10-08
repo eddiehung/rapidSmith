@@ -165,8 +165,8 @@ public class BasicRouter extends AbstractRouter{
 	
 	/**
 	 * This method routes all the connections within a net.  
-	 * @param i
-	 * @return
+	 * @param i The number of the net (in sequence from the beginning)
+	 * @return The list of PIPs used in the routing of this net.
 	 */
 	public ArrayList<PIP> routeNet(int i){
 		Pin currSource = currNet.getSource();

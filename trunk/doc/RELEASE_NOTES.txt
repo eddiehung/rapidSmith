@@ -1,5 +1,13 @@
 Release Notes for BYU RapidSmith Tools
 
+ - Version 0.2.0 (8 OCT 2010) -
+This is a major revision upgrade as preliminary support for Virtex 6 parts
+has been added.  An abstract router class as well as an example basic 
+router has been added to the router package.  Although it is a full design
+router, it still is quite basic and unoptimized.  A few fixes have been
+made to the PartTileBrowser to work with Virtex 6 parts and how the scene
+is rendered.  Fixed a bug with used primitive sites in the Design class.
+
  - Version 0.1.6 (30 SEP 2010) -
 Fixed a few more bugs. Upgraded to a newer version of Qt Jambi (4.6.3).
 Fixed an XDL parser bug that would not parse XDL files without a 'cfg ""' 

@@ -87,8 +87,7 @@ public class StaticSourceHandler{
 	
 	/**
 	 * Constructor
-	 * @param dev Device from router
-	 * @param we WireEnumerator from router
+	 * @param router The router to be used with this static source handler.
 	 */
 	public StaticSourceHandler(AbstractRouter router){
 		this.router = router;
@@ -620,7 +619,7 @@ public class StaticSourceHandler{
 	/**
 	 * Creates a new net based on the staticNet and will contain the newPinList
 	 * @param staticNet Parent net to create new net from
-	 * @param newPinList The new set of pins for the new net
+	 * @param newPin The new pin of the new net
 	 * @return The newly created net
 	 */
 	private Net createNewNet(Net staticNet, Pin newPin){
