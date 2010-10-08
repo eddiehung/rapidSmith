@@ -40,43 +40,14 @@ import edu.byu.ece.rapidSmith.util.MessageGenerator;
  * @author Chris Lavin
  */
 public class BasicRouter extends AbstractRouter{
-	/** Current sink node to be routed */
-	private Node currSink;
-	/** Current net to be routed */
-	private Net currNet;
-	/** Current sink pin to be routed */ 
-	private Pin currPin;
-	/** PIPs of the current net being routed */
-	private ArrayList<PIP> netPIPs;
-	/** Possible intermediate sources to start routing from for a given connection */
-	private HashSet<Node> currSources;	
-	/** PIPs that are part of ground nets */
-	private ArrayList<PIP> gndPIPs;
-	/** PIPs that are part of power nets */
-	private ArrayList<PIP> vccPIPs;
-	/** PIPs that are part of ground nets */
-	private ArrayList<PIP> pipList;
-	/** A flag indicating if the current connection was routed successfully */
-	private boolean successfulRoute;
-	/** A flag which determines if the current sink is a clock wire */
-	private boolean isCurrSinkAClkWire;
-	/** Counts the number of nodes processed in the routing session */
-	private int nodesProcessed;
 
-	
 	/**
 	 * Constructor to initialize router
 	 */
 	public BasicRouter(){
 		super();
 		MessageGenerator.printHeader(this.getClass().getCanonicalName());
-
-		// Initialize variables
-		currSink = new Node();
-		gndPIPs = new ArrayList<PIP>();
-		vccPIPs = new ArrayList<PIP>();
 	}
-	
 	
 	/**
 	 * Cost function, used to set each node's cost to be prioritized by the queue 
@@ -126,6 +97,7 @@ public class BasicRouter extends AbstractRouter{
 		}
 		// Do the actual routing
 		route();
+		totalNodesProcessed += nodesProcessed;
 	}
 	
 	/**
@@ -137,7 +109,7 @@ public class BasicRouter extends AbstractRouter{
 		// Iterate through all of the nodes in the queue, adding potential candidate nodes 
 		// as we go along. We are finished when we find the sink node.
 		while(!queue.isEmpty()){
-			if(nodesProcessed > 100000){
+			if(nodesProcessed > 1000000){
 				// If we haven't found a route by now, we probably never will
 				return;
 			}
@@ -244,11 +216,12 @@ public class BasicRouter extends AbstractRouter{
 				currSources.add(n);
 			}
 			else{
-				// Add only useful starting point sources to begin the route 
+				// Add starting point sources taken from previous routings to begin the route 
 				getSourcesFromPIPs(pipList, sources);
 			}
 
 			// Route the current sink node
+			totalConnections++;
 			routeConnection(sources);
 
 			// Check if it was a successful routing
@@ -278,6 +251,7 @@ public class BasicRouter extends AbstractRouter{
 				}
 			} 
 			else{
+				failedConnections++;
 				MessageGenerator.briefError("\tFAILED TO ROUTE: net: " + currNet.getName() + " inpin: " + currPin.getName() +
                    " (" + we.getWireName(currSink.wire) + ") on instance: " + currPin.getInstanceName());				
 			}
@@ -297,12 +271,17 @@ public class BasicRouter extends AbstractRouter{
 		}
 	}
 	
+	/**
+	 * This the central method for routing the design in this class.  This prepares
+	 * the nets for routing.
+	 * @return The final routed design.
+	 */
 	public Design routeDesign(){
 		netList = new ArrayList<Net>();
 		netList.addAll(design.getNets());
 		
 		// Deal with static nets (vcc/gnd)
-		BasicStaticSourceHandler ssHandler = new BasicStaticSourceHandler(this);
+		StaticSourceHandler ssHandler = new StaticSourceHandler(this);
 		ssHandler.separateStaticSourceNets();
 		
 		// Start Routing
@@ -315,6 +294,13 @@ public class BasicRouter extends AbstractRouter{
 			if(currNet.getSource() == null){
 				MessageGenerator.briefError("ERROR: " + currNet.getName() + " does not have a source pins associated with it.");
 				continue;
+			}
+			
+			// release some reservedNodes
+			ArrayList<Node> rNodes = reservedNodes.get(currNet);
+			
+			if(rNodes != null){
+				usedNodes.removeAll(rNodes);
 			}
 			
 			// netPIPs are the pips that belong to a particular net, however, 
@@ -374,6 +360,10 @@ public class BasicRouter extends AbstractRouter{
 		// Print out runtime summary
 		System.out.println();
 		System.out.println("----------------- SUMMARY --------------------");
+		System.out.println("         Total Nodes Processed : " + router.totalNodesProcessed);
+		System.out.println("             Total Connections : " + router.totalConnections);
+		System.out.println("      Total Failed Connections : " + router.failedConnections);
+		System.out.println("----------------------------------------------");
 		System.out.printf("    Loading Design/Device Time : %8.3fs %s", runtimes[1]/1000000000.0, nl);
 		System.out.printf("                  Routing Time : %8.3fs %s", runtimes[2]/1000000000.0, nl);
 		System.out.printf("            Saving Design Time : %8.3fs %s", runtimes[3]/1000000000.0, nl);

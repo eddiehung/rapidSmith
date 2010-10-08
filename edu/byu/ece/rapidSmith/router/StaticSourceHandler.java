@@ -46,14 +46,13 @@ import edu.byu.ece.rapidSmith.router.PinSorter.StaticSink;
 import edu.byu.ece.rapidSmith.util.MessageGenerator;
 
 /**
- * This class separates the static nets into separate nets so they can be routed
- * more easily by the router.  This is a necessary step before beginning the actual
- * routing as several TIEOFFs and SLICEs will need to be instanced to supply static
- * sources (VCC/GND).  This same process happens in Xilinx PAR during the routing
+ * This class separates the static nets in to separate nets so they can be routed
+ * more easily by the router.  This same process happens in Xilinx PAR during the routing
  * phase.
  * @author Chris Lavin
+ * Created on: Jun 10, 2010
  */
-public class BasicStaticSourceHandler{
+public class StaticSourceHandler{
 
 	/** Current Router */
 	private AbstractRouter router;
@@ -73,9 +72,12 @@ public class BasicStaticSourceHandler{
 	String slicePin;
 	/** Just a node that is used so it doesn't have to be created over and over */
 	private Node tempNode;
-	
-	
+	/** Map to help retrieve the FAN and BOUNCE connections in Virtex 5 */
 	private static HashMap<String,String[]> fanBounceMap;
+	/** List of OMUX Top Wires in Virtex 4 Switch Box */
+	private static String[] v4TopOmuxs = {"OMUX14","OMUX9","OMUX8","OMUX13","OMUX11","OMUX15","OMUX12","OMUX10"};
+	/** List of OMUX Bottom Wires in Virtex 4 Switch Box */
+	private static String[] v4BottomOmuxs = {"OMUX0","OMUX4","OMUX3","OMUX5","OMUX2","OMUX7","OMUX6","OMUX1"};
 	
 	// Attributes used in creating TIEOFFs
 	private Attribute noUserLogicAttr;
@@ -88,7 +90,7 @@ public class BasicStaticSourceHandler{
 	 * @param dev Device from router
 	 * @param we WireEnumerator from router
 	 */
-	public BasicStaticSourceHandler(AbstractRouter router){
+	public StaticSourceHandler(AbstractRouter router){
 		this.router = router;
 		dev = router.dev;
 		we = router.we;
@@ -105,7 +107,8 @@ public class BasicStaticSourceHandler{
 			slicePin = "Y";
 		}
 		else{
-			MessageGenerator.briefErrorAndExit("Sorry, this architecture is yet not supported.");
+			System.out.println("Sorry, this architecture is not supported.");
+			System.exit(1);
 		}
 		
 		// Initialize attributes
@@ -113,6 +116,16 @@ public class BasicStaticSourceHandler{
 		hard1Attr = new Attribute("_VCC_SOURCE","","HARD1");
 		keep1Attr = new Attribute("_VCC_SOURCE","","KEEP1");
 		keep0Attr = new Attribute("_GND_SOURCE","","KEEP0");
+	}
+	
+	private void addReservedNode(Node node, Net net){
+		ArrayList<Node> nodes = router.reservedNodes.get(net);
+		if(nodes == null){
+			nodes = new ArrayList<Node>();
+			router.reservedNodes.put(net, nodes);
+		}
+		nodes.add(node);
+		router.usedNodes.add(node);
 	}
 	
 	public Node getSwitchBoxWire(Net net){
@@ -147,6 +160,7 @@ public class BasicStaticSourceHandler{
 	public void separateStaticSourceNets(){
 		ArrayList<Net> netList = router.netList;
 		ArrayList<Net> staticNetList = new ArrayList<Net>();
+		HashMap<Tile, ArrayList<Net>> sourceCount = new HashMap<Tile, ArrayList<Net>>();
 		
 		// Normalize static source nets type name and separate them from design
 		for(int i = 0; i < netList.size(); i++){			
@@ -186,9 +200,169 @@ public class BasicStaticSourceHandler{
 														" does not have a driver (outpin).");
 				}
 			}
+			else{ // Let's look at the other nets, reserve nodes that they will need
+				if(net.isStaticNet()){
+					MessageGenerator.briefErrorAndExit("ERROR: Static Net found with a source: " + net.getName());
+				}
+				
+				ArrayList<Node> rNodes = new ArrayList<Node>();
+				for(Pin p : net.getPins()){
+					if(!p.isOutPin()){
+						int extPin = dev.getPrimitiveExternalPin(p);
+						tempNode.setTileAndWire(p.getInstance().getTile(), extPin);
+						Node reserved = tempNode.getSwitchBoxSink(dev);
+						if(reserved.wire == -1) continue;
+						if(router.usedNodes.contains(reserved)) continue;
+						String name = we.getWireName(reserved.wire); 
+						if(name.startsWith("BYP_INT_B")){
+							rNodes.add(reserved);
+						}
+						else if(name.startsWith("BYP_B")){
+							reserved.setWire(we.getWireEnum("BYP" + name.charAt(name.length()-1)));
+							rNodes.add(reserved);
+						}
+						else if(name.startsWith("CTRL_B")){
+							reserved.setWire(we.getWireEnum("CTRL" + name.charAt(name.length()-1)));
+							rNodes.add(reserved);
+						}
+						else if(name.startsWith("FAN_B")){
+							reserved.setWire(we.getWireEnum("FAN" + name.charAt(name.length()-1)));
+							rNodes.add(reserved);
+						}
+					}
+					else{
+						ArrayList<Net> nets = sourceCount.get(p.getTile());
+						if(nets == null) {
+							nets = new ArrayList<Net>();
+							sourceCount.put(p.getTile(), nets);
+						}
+						nets.add(net);
+					}
+				}
+				if(rNodes.size() > 0){
+					ArrayList<Node> nodes = router.reservedNodes.get(net);
+					if(nodes == null){
+						nodes = new ArrayList<Node>();
+						router.reservedNodes.put(net,rNodes);
+					}
+					nodes.addAll(rNodes);
+
+					router.usedNodes.addAll(rNodes);
+				}
+			}
 		}
 		
+		/*
+		 * Reserve OMUX wires for congested Virtex 4 switch boxes 
+		 */
+		if(dev.getPartName().startsWith("xc4v")){
+			HashMap<Tile, ArrayList<Net>> switchMatrixSources = new HashMap<Tile, ArrayList<Net>>();
+			for(Tile t : sourceCount.keySet()){
+				ArrayList<Net> nets = sourceCount.get(t);
+				for(Net n : nets){
+					Node node = getSwitchBoxWire(n);
+					if(node == null) continue;
+					ArrayList<Net> tmp = switchMatrixSources.get(node.tile);
+					if(tmp == null){
+						tmp = new ArrayList<Net>();
+						switchMatrixSources.put(node.tile,tmp);
+					}
+					tmp.add(n);
+				}
+			}
+			for(Tile t : switchMatrixSources.keySet()){
+				ArrayList<Net> nets = switchMatrixSources.get(t);
+				boolean debug = false;
+				if(nets.size() > 8){
 
+					int reservedTop = 0;
+					int reservedBot = 0;
+					
+					ArrayList<Net> secondaryNets = new ArrayList<Net>();
+					for(Net n : nets){
+						if(n.getPIPs().size() > 0) continue;
+						Node node = getSwitchBoxWire(n);
+						if(debug) System.out.println("Debugging " + t.getName() + " net: " + n.getName() + " node: " + node.toString(we));
+						if(debug) System.out.println("NET: " + n.toString(we));
+						if(node == null) continue;
+						String wireName = we.getWireName(node.getWire()); 
+						if(wireName.startsWith("HALF")){
+							if(wireName.contains("TOP")){
+								if(reservedTop > 7){
+									break;
+								}
+								Node newNode = new Node(node.tile, we.getWireEnum(v4TopOmuxs[reservedTop]), null, 0);
+								while(router.usedNodes.contains(newNode)){
+									if(debug) System.out.println("HALF Reserved Top "+ reservedTop + " for " + v4TopOmuxs[reservedTop] + " net: " + n.getName() + " " + n.getSource().getName());
+									reservedTop++;
+									if(reservedTop > 7) {
+										break;
+									}
+									newNode = new Node(node.tile, we.getWireEnum(v4TopOmuxs[reservedTop]), null, 0);
+								}
+								addReservedNode(newNode, n);
+								if(debug) System.out.println("HALF Reserved Top "+ reservedTop + " for " + v4TopOmuxs[reservedTop] + " net: " + n.getName() + " " + n.getSource().getName());
+								reservedTop++;									
+							}
+							else if(wireName.contains("BOT")){
+								if(reservedBot > 7){
+									break;
+								}
+								Node newNode = new Node(node.tile, we.getWireEnum(v4BottomOmuxs[reservedBot]), null, 0);
+								while(router.usedNodes.contains(newNode)){
+									if(debug) System.out.println("HALF Reserved Bot "+ reservedTop + " for " + v4BottomOmuxs[reservedBot] + " net: " + n.getName() + " " + n.getSource().getName());
+									reservedBot++;
+									if(reservedBot > 7){
+										break;
+									}
+									newNode = new Node(node.tile, we.getWireEnum(v4BottomOmuxs[reservedBot]), null, 0);
+								}
+								addReservedNode(newNode, n);
+								if(debug) System.out.println("HALF Reserved Bot "+ reservedTop + " for " + v4BottomOmuxs[reservedBot] + " net: " + n.getName() + " " + n.getSource().getName());
+								reservedBot++;
+							}
+						}
+						else if(wireName.startsWith("SECONDARY")){
+							secondaryNets.add(n);
+						}
+					}
+					for(Net n : secondaryNets){
+						Node node = getSwitchBoxWire(n);
+						if(node == null) continue;
+						if(reservedTop < 8){
+							Node newNode = new Node(node.tile, we.getWireEnum(v4TopOmuxs[reservedTop]), null, 0);
+							while(router.usedNodes.contains(newNode)){
+								if(debug) System.out.println("SEC Reserved Top "+ reservedTop + " for " + v4TopOmuxs[reservedTop] + " net: " + n.getName() + " " + n.getSource().getName());
+								reservedTop++;
+								if(reservedTop > 7) break;
+								newNode = new Node(node.tile, we.getWireEnum(v4TopOmuxs[reservedTop]), null, 0);
+							}
+							addReservedNode(newNode, n);
+							if(debug) System.out.println("SEC Reserved Top "+ reservedTop + " for " + v4TopOmuxs[reservedTop] + " net: " + n.getName() + " " + n.getSource().getName());
+							reservedTop++;						
+						}
+						else if(reservedBot < 8){
+							Node newNode = new Node(node.tile, we.getWireEnum(v4BottomOmuxs[reservedBot]), null, 0);
+							while(router.usedNodes.contains(newNode)){
+								if(debug) System.out.println("SEC Reserved Bot "+ reservedBot + " for " + v4BottomOmuxs[reservedBot] + " net: " + n.getName() + " " + n.getSource().getName());
+								reservedBot++;
+								if(reservedBot > 7) {
+									break;
+								}
+								newNode = new Node(node.tile, we.getWireEnum(v4BottomOmuxs[reservedBot]), null, 0);
+							}
+							addReservedNode(newNode, n);							
+							if(debug) System.out.println("SEC Reserved Bot "+ reservedBot + " for " + v4BottomOmuxs[reservedBot] + " net: " + n.getName() + " " + n.getSource().getName());
+							reservedBot++;												
+						}
+						else{
+							break;
+						}
+					}
+				}
+			}			
+		}		
+		
 		// Remove all static source'd nets afterwards from original design
 		netList.removeAll(staticNetList);
 		
@@ -390,7 +564,7 @@ public class BasicStaticSourceHandler{
 	 * @return The created/updated TIEOFF.
 	 */
 	private Instance updateTIEOFF(Tile tile, Net net, boolean needHard1){
-		String tileSuffix = tile.getTileNameSuffix();
+		String tileSuffix = tile.getTileNameSuffix();//findClosestSwitchBox(net);
 		String instName = "XDL_DUMMY_INT" + tileSuffix + "_TIEOFF" + tileSuffix;
 		Instance currInst = router.design.getInstance(instName);
 		Attribute vccAttr = needHard1 ? hard1Attr : keep1Attr;
@@ -517,7 +691,14 @@ public class BasicStaticSourceHandler{
 		System.exit(1);
 		return null;
 	}
-		
+	
+	/**
+	 * This method generates a set of wires that will require the TIEOFF HARD1 pin rather than
+	 * the KEEP1 pin.  
+	 * @param partName Name of the part to generate the set for.
+	 * @param we The wire enumerator corresponding to the supplied part.
+	 * @return A set of switch box wires the require a TIEOFF HARD1 pin connection based on the supplied part. 
+	 */
 	public static HashSet<Integer> getPinsNeedingHardPowerSource(String partName, WireEnumerator we){
 		HashSet<Integer> set = new HashSet<Integer>();
 		if(partName.startsWith("xc4v")){
@@ -541,6 +722,13 @@ public class BasicStaticSourceHandler{
 		}
 	}
 	
+	/**
+	 * This method generates a set of wires in a particular part switch box that require
+	 * a SLICE to supply the static source.  This is true of CLB_B wires in Virtex 4.
+	 * @param partName Name of the part to generate the set for.
+	 * @param we The wire enumerator corresponding to the supplied part.
+	 * @return The set of all switch matrix wires that require a SLICE to supply a static source.
+	 */
 	public static HashSet<Integer> getPinsNeedingNonTIEOFFSource(String partName, WireEnumerator we){
 		HashSet<Integer> set = new HashSet<Integer>();
 		if(partName.startsWith("xc4v")){
@@ -575,15 +763,14 @@ public class BasicStaticSourceHandler{
 				vccNets.add(net);
 			}
 			else{
-				System.out.println("Error: found non-static net in static netlist.");
-				new Exception().printStackTrace();
-				System.exit(1); 
+				MessageGenerator.briefErrorAndExit("Error: found non-static net in static netlist.");
 			}
 		}
 		gndNets.addAll(vccNets);
 		return gndNets;
 	}
-
+	
+	// This is to help remove routing conflicts
 	static {
 		fanBounceMap = new HashMap<String, String[]>();
 		String[] array0 = {"FAN2", "FAN7", };

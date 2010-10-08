@@ -30,6 +30,7 @@ import java.util.PriorityQueue;
 import edu.byu.ece.rapidSmith.design.Design;
 import edu.byu.ece.rapidSmith.design.Net;
 import edu.byu.ece.rapidSmith.design.PIP;
+import edu.byu.ece.rapidSmith.design.Pin;
 import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.Tile;
 import edu.byu.ece.rapidSmith.device.Wire;
@@ -53,15 +54,58 @@ public abstract class AbstractRouter{
 	public ArrayList<Net> netList;
 	/** A Priority Queue for nodes to be processed */
 	protected PriorityQueue<Node> queue;
+	/** Some nodes are reserved for particular routes to minimize routing conflicts later */
+	HashMap<Net,ArrayList<Node>> reservedNodes;
+
+	/** PIPs that are part of ground nets */
+	protected ArrayList<PIP> gndPIPs;
+	/** PIPs that are part of power nets */
+	protected ArrayList<PIP> vccPIPs;
+	/** PIPs that are part of the most recently routed connection */
+	protected ArrayList<PIP> pipList;
 	
+	/** Keeps track of all current sources for a given net (to avoid the RUG CREATION PROBLEM) */
+	protected HashSet<Node> currSources;
+	/** Current sink node to be routed */
+	protected Node currSink;
+	/** Current net to be routed */
+	protected Net currNet;
+	/** Current sink pin to be routed */ 
+	protected Pin currPin;
+	/** PIPs of the current net being routed */
+	protected ArrayList<PIP> netPIPs;
+
+	/** A flag indicating if the current connection was routed successfully */
+	protected boolean successfulRoute;
+	/** A flag which determines if the current sink is a clock wire */
+	protected boolean isCurrSinkAClkWire;
+	
+	// Statistic variables
+	/** Total number of connections in design */
+	protected int totalConnections;
+	/** Counts the total number of nodes that were examined in routing */
+	protected int totalNodesProcessed;
+	/** Counts number of nodes processed during a route */
+	protected int nodesProcessed;
+	/** Counts the number of times the router failed to route a connection */
+	protected int failedConnections;
 	
 	public AbstractRouter() {
 		// Initialize variables
 		usedNodes = new HashSet<Node>();
 		usedNodesMap = new HashMap<Node, LinkedList<Net>>();
+		reservedNodes = new HashMap<Net, ArrayList<Node>>();
 		// Create a compare function based on node's cost
 		queue = new PriorityQueue<Node>(16, new Comparator<Node>() {
 			public int compare(Node i, Node j) {return i.cost - j.cost;}});
+
+		totalConnections = 0;
+		totalNodesProcessed = 0;
+		nodesProcessed = 0;
+		failedConnections = 0;
+		gndPIPs = new ArrayList<PIP>();
+		vccPIPs = new ArrayList<PIP>();
+		currSink = new Node();
 	}
 	
 	/**
