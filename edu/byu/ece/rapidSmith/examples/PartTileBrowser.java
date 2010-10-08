@@ -118,6 +118,17 @@ public class PartTileBrowser extends QMainWindow {
 		QTreeWidgetItem xc5vtx = new QTreeWidgetItem(xc5);
 		xc5vtx.setText(0, tr("TX"));
 		
+		QTreeWidgetItem xc6 = new QTreeWidgetItem(treeWidget);
+		xc6.setText(0, tr("Virtex6"));
+		QTreeWidgetItem xc6vcx = new QTreeWidgetItem(xc6);
+		xc6vcx.setText(0, tr("CX"));
+		QTreeWidgetItem xc6vhx = new QTreeWidgetItem(xc6);
+		xc6vhx.setText(0, tr("HX"));
+		QTreeWidgetItem xc6vlx = new QTreeWidgetItem(xc6);
+		xc6vlx.setText(0, tr("LX"));
+		QTreeWidgetItem xc6vsx = new QTreeWidgetItem(xc6);
+		xc6vsx.setText(0, tr("SX"));
+		
 		for(String partName : FileTools.getAvailableParts()){
 			QTreeWidgetItem partItem= null;
 			if(partName.startsWith("xc4vfx"))
@@ -134,6 +145,14 @@ public class PartTileBrowser extends QMainWindow {
 				partItem = new QTreeWidgetItem(xc5vsx);
 			else if(partName.startsWith("xc5vtx"))
 				partItem = new QTreeWidgetItem(xc5vtx);
+			else if(partName.startsWith("xc6vcx"))				
+				partItem = new QTreeWidgetItem(xc6vcx);
+			else if(partName.startsWith("xc6vhx"))
+				partItem = new QTreeWidgetItem(xc6vhx);			
+			else if(partName.startsWith("xc6vlx"))
+				partItem = new QTreeWidgetItem(xc6vlx);
+			else if(partName.startsWith("xc6vsx"))
+				partItem = new QTreeWidgetItem(xc6vsx);
 			else
 				partItem = new QTreeWidgetItem(treeWidget);
 	        partItem.setText(0, tr(partName));
