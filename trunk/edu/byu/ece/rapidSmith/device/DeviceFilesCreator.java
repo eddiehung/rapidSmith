@@ -85,6 +85,10 @@ public class DeviceFilesCreator{
 			partNames.add("xc5vfx30tff665");
 			partNames.add("xc5vtx150tff1156");
 		}
+		else if(familyName.equalsIgnoreCase("virtex6")){
+			partNames.add("xc6vhx255tff1155");
+			partNames.add("xc6vcx75tff484");			
+		}
 		else{
 			MessageGenerator.briefErrorAndExit("Sorry, the device family "+ familyName+
 					" is currently not supported.");

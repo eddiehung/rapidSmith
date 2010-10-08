@@ -736,10 +736,10 @@ public class Device implements Serializable{
 			hos.writeInt(wireArrayPool.getEnumerations().size());
 			for(WireArray wireArray : wireArrayPool.getEnumerations()){
 				hos.writeInt(wireArray.array.length);
-				if(wireArray.array.length > 128){
+				/*if(wireArray.array.length > 128){
 					System.out.println("Bad Assumption");
 					System.exit(1);
-				}
+				}*/
 				for(Wire w : wireArray.array){
 					hos.writeInt(wirePool.getEnumerationValue(w));
 				}
