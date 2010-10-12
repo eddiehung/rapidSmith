@@ -68,6 +68,46 @@ public class DesignParser{
   public WireEnumerator getWireEnumerator(){
     return we;
   }
+  
+  void processAttribute(String attribute){
+	  int break1, break2;
+	  Boolean backslash = false;
+	  break1 = attribute.indexOf(':');
+	  break2 = attribute.indexOf(':',break1+1);
+	  String phy_name = pool.getUnique(attribute.substring(0,break1));
+	  String log_name = pool.getUnique(attribute.substring(break1+1,break2));
+	  String cfg_value = pool.getUnique(attribute.substring(break2+1,attribute.length()));
+	
+	  try{
+		    if(phy_name.equals("_INST_PROP")){ // Look out, this case is nasty
+			      char curr = jj_input_stream.readChar();
+	      	while(!(curr == '\n' || curr == '\r' || (curr == ' ' && !backslash))){
+				        if(curr == '\\'){
+			  		        backslash = true;
+				        }
+				        else{
+					          backslash = false;
+				        }		      
+				        cfg_value += curr;
+				        curr = jj_input_stream.readChar();
+			      }
+		    }
+	  }
+	  catch (java.io.IOException e){
+		    System.out.println("IOException during parsing.");
+		    System.exit(1);
+	  }
+	
+	  if(inDesignCfg){ // If this is the design configuration
+		    xdlDesign.addAttribute(phy_name,log_name,cfg_value);
+	  }
+	  else if(currModule != null && inModuleCfg){
+		    currModule.addAttribute(phy_name,log_name,cfg_value);
+	  }
+	  else{ // This is an instance configuration
+		    currInst.addAttribute(phy_name,log_name,cfg_value);
+	  }
+}
 }
 PARSER_END(DesignParser)
 
@@ -115,12 +155,15 @@ TOKEN : {
 | <INSTANCE :"instance">
 }
 
+//TOKEN : {
+//  <STRING: <UNQUOTED_STRING> | <QUOTED_STRING>>
+//    | <UNQUOTED_STRING: (~[" ","\r","\n","\t","\"",","])+>
+//    | <QUOTED_STRING: <DOUBLEQUOTE> (~["\r","\n","\t","\"",",",":"])* <DOUBLEQUOTE>>
+//}
 TOKEN : {
-  <STRING: <UNQUOTED_STRING> | <QUOTED_STRING>>
-    | <UNQUOTED_STRING: (~[" ","\r","\n","\t","\"",","])+>
-    | <QUOTED_STRING: <DOUBLEQUOTE> (~["\r","\n","\t","\"",",",":"])* <DOUBLEQUOTE>>
+     <UNQUOTED_STRING: (~[" ","\r","\n","\t","\"",","])+>
+    | <QUOTED_STRING: <DOUBLEQUOTE> (~["\r","\n","\t","\"",","])* <DOUBLEQUOTE>>
 }
-
 
 // <file>            ::= <design> <statements> ;
 void XDL_File() : {}
@@ -162,7 +205,7 @@ void DesignName() :
 	  }
 }
 {
-	  <STRING>
+	  <QUOTED_STRING>
 }
 
 void Part() : 
@@ -173,7 +216,7 @@ void Part() :
 	  dev = xdlDesign.getDevice();
 }
 {
-	  <STRING>
+	  <UNQUOTED_STRING>
 }
 
 //<ncd_version>     ::= "v"<digits>"."<digits>
@@ -182,7 +225,7 @@ void NCDVersion() :
 	  xdlDesign.setNCDVersion(pool.getUnique(getToken(1).image));
 }
 {
-  <STRING>
+  <UNQUOTED_STRING>
 }
 
 // <statements>      ::=<statement>
@@ -231,7 +274,7 @@ void ModuleName() :
 	  currModule.setName(getToken(1).image.substring(1,getToken(1).image.length()-1));
 }
 {
-	  <STRING>
+	  <QUOTED_STRING>
 }
 
 void AnchorName() : 
@@ -240,7 +283,7 @@ void AnchorName() :
   currModuleAnchorName = pool.getUnique(anchorName);
 }
 {
-	  <STRING>	
+	  <QUOTED_STRING>
 }
 
 
@@ -270,7 +313,7 @@ void ModulePortName() :
 	  portNames.add(pool.getUnique(portName));
 }
 {
-	  <STRING>
+	  <QUOTED_STRING>
 }
 void ModulePortInstName() : 
 {
@@ -279,7 +322,7 @@ void ModulePortInstName() :
 	  portInstanceNames.add(pool.getUnique(instName));
 }
 {
-	  <STRING>
+	  <QUOTED_STRING>
 }
 void ModulePortInstPin() : 
 {
@@ -289,7 +332,7 @@ void ModulePortInstPin() :
 	  //currPort = null;
 }
 {
-	<STRING>
+	<UNQUOTED_STRING>
 }
 
 // <module_stmts>    ::= <module_stmt>
@@ -337,7 +380,7 @@ void ModuleEnd() :
 	  currModule = null;		
 }
 {
-	  (<ENDMODULE> <STRING> <SEMICOLON>)
+	  (<ENDMODULE> <QUOTED_STRING> <SEMICOLON>)
 }
 
 //<inst>            ::= <inst_prefix> <inst_stmts> ";" ;
@@ -386,7 +429,7 @@ void InstanceName() :
 	}
 }
 {
-	  <STRING>
+	  <QUOTED_STRING>
 }
 
 //<inst_type>       ::= <string> ;
@@ -402,7 +445,7 @@ void InstanceType() :
   	currInst.setType(t);
 }
 {
-	  <STRING>
+	  <QUOTED_STRING>
 }
 
 // <inst_stmt>       ::= <COMMA> <inst_placement>
@@ -426,7 +469,7 @@ void ModuleInstanceName() :
 	  currModuleInstanceName = pool.getUnique(s);
 }
 {
-	<STRING>
+	<QUOTED_STRING>
 }
 void ModuleTemplate() : 
 {
@@ -439,7 +482,7 @@ void ModuleTemplate() :
 	  }
 }
 {
-	<STRING>
+	<QUOTED_STRING>
 }
 void ModuleTemplateInstance() : 
 {
@@ -454,7 +497,7 @@ void ModuleTemplateInstance() :
 	  }
 }
 {
-	  <STRING>
+	  <QUOTED_STRING>
 }
 
 // <inst_placement>  ::= <inst_placed>
@@ -484,7 +527,7 @@ void TileName() :
 	  //currInst.setTile(tile);
 }
 {
-	<STRING>
+	<UNQUOTED_STRING>
 }
 
 //<primitive_site>  ::= <string> ;
@@ -493,7 +536,7 @@ void PrimitiveSite() :
 	  currInst.place(dev.getPrimitiveSite(getToken(1).image));
 }
 {
-	<STRING>
+	<UNQUOTED_STRING>
 }
 
 
@@ -531,8 +574,33 @@ void ModuleConfiguration() :
 //<inst_cfg>        ::= "cfg" <DOUBLEQUOTE><cfg_string><DOUBLEQUOTE> ;
 void InstanceConfiguration() : {}
 {
-	  (<CFG> <DOUBLEQUOTE> ConfigurationString() <DOUBLEQUOTE>)		
+	  (<CFG> (<DOUBLEQUOTE> ConfigurationString() <DOUBLEQUOTE> | alternateBelConfiguration()))		
 }
+
+// This has to be used because XDL syntax isn't very good and I am not a JavaCC master.
+// One line cfg strings will fall to this method
+void alternateBelConfiguration() : 
+{
+	String cfgString = getToken(1).image;
+	String[] attributeStrings = cfgString.split("\\s+");
+	for(String s : attributeStrings){
+	  if(!s.equals("\"")){
+		if(s.charAt(0) == '\"'){
+          processAttribute(s.substring(1));
+        }
+        else if(s.charAt(s.length()-1) == '\"'){
+          processAttribute(s.substring(0,s.length()-1));
+        }
+        else{
+          processAttribute(s);
+        }
+	  }
+	}
+}
+{
+	  <QUOTED_STRING>
+}
+
 
 // <cfg_string>      ::= <bel_cfg>
 //                     | <cfg_string > <bel_cfg>
@@ -545,19 +613,20 @@ void ConfigurationString() : {}
 //<bel_cfg>         ::= <physical_name> ":" <logical_name> ":" <cfg_val> ;
 void BelConfiguration() : 
 {
-	  String belCfg = getToken(1).image;
+	  String attribute = getToken(1).image;
 	  int break1, break2;
 	  Boolean backslash = false;
-	  break1 = belCfg.indexOf(':');
-	  break2 = belCfg.indexOf(':',break1+1);
-	  String phy_name = pool.getUnique(belCfg.substring(0,break1));
-	  String log_name = pool.getUnique(belCfg.substring(break1+1,break2));
-	  String cfg_value = pool.getUnique(belCfg.substring(break2+1,belCfg.length()));
+	  break1 = attribute.indexOf(':');
+	  break2 = attribute.indexOf(':',break1+1);
+	  String phy_name = pool.getUnique(attribute.substring(0,break1));
+	  String log_name = pool.getUnique(attribute.substring(break1+1,break2));
+	  String cfg_value = pool.getUnique(attribute.substring(break2+1,attribute.length()));
 	
 	  try{
 		    if(phy_name.equals("_INST_PROP")){ // Look out, this case is nasty
 			      char curr = jj_input_stream.readChar();
 	      	while(!(curr == '\n' || curr == '\r' || (curr == ' ' && !backslash))){
+	      	//System.out.println("curr=" + curr);
 				        if(curr == '\\'){
 			  		        backslash = true;
 				        }
@@ -574,7 +643,6 @@ void BelConfiguration() :
 		    System.exit(1);
 	  }
 	
-	
 	  if(inDesignCfg){ // If this is the design configuration
 		    xdlDesign.addAttribute(phy_name,log_name,cfg_value);
 	  }
@@ -586,7 +654,7 @@ void BelConfiguration() :
 	  }
 }
 {
-	  <STRING>
+	 <UNQUOTED_STRING>
 }
 
 //<inst_pin_name>   ::= <string> ;
@@ -599,7 +667,7 @@ void InstancePinName() :
   	}	
 }
 {
-	  <STRING>
+	  <UNQUOTED_STRING>
 }
 
 // <net>             ::= "net" <net_name> <net_type> <net_stmts> ";"
@@ -628,7 +696,7 @@ void NetName() :
   	
 }
 {
-	  <STRING>
+	  <QUOTED_STRING>
 }
 
 // <net_type>        ::= "vcc"           #power
@@ -720,7 +788,7 @@ void InstanceName_Net():
   inst.addToNetList(currNet);
 }
 {
-  <STRING>
+  <QUOTED_STRING>
 }
 
 
@@ -780,7 +848,7 @@ void NetCfgValue():
   }
 }
 {
-  <STRING>
+  <UNQUOTED_STRING>
 }
 
 //<tile>            ::= <string> ;
@@ -794,7 +862,7 @@ void Tile() :
 	  currPIP.setTile(tile);
 }
 {
-	  <STRING>
+	  <UNQUOTED_STRING>
 }
 
 //<wire0>           ::= <string> ;
@@ -803,7 +871,7 @@ void Wire0() :
 	  currPIP.setStartWire(we.getWireEnum(getToken(1).image));
 }
 {
-	  <STRING>
+	 <UNQUOTED_STRING>
 }
 
 // <pip_direction>   ::= "=="      # Bidirectional, unbuffered,
@@ -826,6 +894,6 @@ void Wire1() :
 	  currPIP.setEndWire(we.getWireEnum(getToken(1).image));
 }
 {
-	  <STRING>
+	  <UNQUOTED_STRING>
 }
 
