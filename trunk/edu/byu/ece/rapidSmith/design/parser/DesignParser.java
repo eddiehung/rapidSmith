@@ -62,6 +62,46 @@ public class DesignParser implements DesignParserConstants {
     return we;
   }
 
+  void processAttribute(String attribute){
+          int break1, break2;
+          Boolean backslash = false;
+          break1 = attribute.indexOf(':');
+          break2 = attribute.indexOf(':',break1+1);
+          String phy_name = pool.getUnique(attribute.substring(0,break1));
+          String log_name = pool.getUnique(attribute.substring(break1+1,break2));
+          String cfg_value = pool.getUnique(attribute.substring(break2+1,attribute.length()));
+
+          try{
+                    if(phy_name.equals("_INST_PROP")){ // Look out, this case is nasty
+                              char curr = jj_input_stream.readChar();
+                while(!(curr == '\u005cn' || curr == '\u005cr' || (curr == ' ' && !backslash))){
+                                        if(curr == '\u005c\u005c'){
+                                                backslash = true;
+                                        }
+                                        else{
+                                                  backslash = false;
+                                        }
+                                        cfg_value += curr;
+                                        curr = jj_input_stream.readChar();
+                              }
+                    }
+          }
+          catch (java.io.IOException e){
+                    System.out.println("IOException during parsing.");
+                    System.exit(1);
+          }
+
+          if(inDesignCfg){ // If this is the design configuration
+                    xdlDesign.addAttribute(phy_name,log_name,cfg_value);
+          }
+          else if(currModule != null && inModuleCfg){
+                    currModule.addAttribute(phy_name,log_name,cfg_value);
+          }
+          else{ // This is an instance configuration
+                    currInst.addAttribute(phy_name,log_name,cfg_value);
+          }
+}
+
 // <file>            ::= <design> <statements> ;
   final public void XDL_File() throws ParseException {
     Design();
@@ -111,7 +151,7 @@ public class DesignParser implements DesignParserConstants {
           if(s.equals(Design.hardMacroDesignName)){
             xdlDesign.setIsHardMacro(true);
           }
-    jj_consume_token(STRING);
+    jj_consume_token(QUOTED_STRING);
   }
 
   final public void Part() throws ParseException {
@@ -119,13 +159,13 @@ public class DesignParser implements DesignParserConstants {
           xdlDesign.setPartName(partName);
           we = xdlDesign.getWireEnumerator();
           dev = xdlDesign.getDevice();
-    jj_consume_token(STRING);
+    jj_consume_token(UNQUOTED_STRING);
   }
 
 //<ncd_version>     ::= "v"<digits>"."<digits>
   final public void NCDVersion() throws ParseException {
           xdlDesign.setNCDVersion(pool.getUnique(getToken(1).image));
-    jj_consume_token(STRING);
+    jj_consume_token(UNQUOTED_STRING);
   }
 
 // <statements>      ::=<statement>
@@ -200,13 +240,13 @@ public class DesignParser implements DesignParserConstants {
 
   final public void ModuleName() throws ParseException {
           currModule.setName(getToken(1).image.substring(1,getToken(1).image.length()-1));
-    jj_consume_token(STRING);
+    jj_consume_token(QUOTED_STRING);
   }
 
   final public void AnchorName() throws ParseException {
   String anchorName = getToken(1).image.substring(1,getToken(1).image.length()-1);
   currModuleAnchorName = pool.getUnique(anchorName);
-    jj_consume_token(STRING);
+    jj_consume_token(QUOTED_STRING);
   }
 
 //<module_ports>    ::= <module_port>
@@ -239,21 +279,21 @@ public class DesignParser implements DesignParserConstants {
   String portName = getToken(1).image.substring(1,getToken(1).image.length()-1);
           //currPort.setName(pool.getUnique(portName));
           portNames.add(pool.getUnique(portName));
-    jj_consume_token(STRING);
+    jj_consume_token(QUOTED_STRING);
   }
 
   final public void ModulePortInstName() throws ParseException {
   String instName = getToken(1).image.substring(1,getToken(1).image.length()-1);
           //currPort.setInstanceName(pool.getUnique(instName));
           portInstanceNames.add(pool.getUnique(instName));
-    jj_consume_token(STRING);
+    jj_consume_token(QUOTED_STRING);
   }
 
   final public void ModulePortInstPin() throws ParseException {
   String pinName = getToken(1).image.substring(1,getToken(1).image.length()-1);
           //currPort.setPinName(pool.getUnique(pinName));
           portPinNames.add(pool.getUnique(pinName));
-    jj_consume_token(STRING);
+    jj_consume_token(UNQUOTED_STRING);
   }
 
 // <module_stmts>    ::= <module_stmt>
@@ -321,7 +361,7 @@ public class DesignParser implements DesignParserConstants {
                   currModuleAnchorName = null;
           currModule = null;
     jj_consume_token(ENDMODULE);
-    jj_consume_token(STRING);
+    jj_consume_token(QUOTED_STRING);
     jj_consume_token(SEMICOLON);
   }
 
@@ -379,7 +419,7 @@ public class DesignParser implements DesignParserConstants {
                 currModule.setAnchor(currInst);
             }
         }
-    jj_consume_token(STRING);
+    jj_consume_token(QUOTED_STRING);
   }
 
 //<inst_type>       ::= <string> ;
@@ -392,7 +432,7 @@ public class DesignParser implements DesignParserConstants {
                     System.exit(1);
           }
         currInst.setType(t);
-    jj_consume_token(STRING);
+    jj_consume_token(QUOTED_STRING);
   }
 
 // <inst_stmt>       ::= <COMMA> <inst_placement>
@@ -425,7 +465,7 @@ public class DesignParser implements DesignParserConstants {
           s = s.substring(1,s.length()-1); // Remove the "quotes"
           //currInst.setModuleInstanceName(pool.getUnique(s));
           currModuleInstanceName = pool.getUnique(s);
-    jj_consume_token(STRING);
+    jj_consume_token(QUOTED_STRING);
   }
 
   final public void ModuleTemplate() throws ParseException {
@@ -436,7 +476,7 @@ public class DesignParser implements DesignParserConstants {
     Module m = xdlDesign.getModule(pool.getUnique(s));
             currInst.setModuleTemplate(m);
           }
-    jj_consume_token(STRING);
+    jj_consume_token(QUOTED_STRING);
   }
 
   final public void ModuleTemplateInstance() throws ParseException {
@@ -449,7 +489,7 @@ public class DesignParser implements DesignParserConstants {
           {
             modInst.setAnchor(currInst);
           }
-    jj_consume_token(STRING);
+    jj_consume_token(QUOTED_STRING);
   }
 
 // <inst_placement>  ::= <inst_placed>
@@ -485,13 +525,13 @@ public class DesignParser implements DesignParserConstants {
           System.out.println("Invalid tile type:" + getToken(1).image);
           System.exit(1);
           }
-    jj_consume_token(STRING);
+    jj_consume_token(UNQUOTED_STRING);
   }
 
 //<primitive_site>  ::= <string> ;
   final public void PrimitiveSite() throws ParseException {
           currInst.place(dev.getPrimitiveSite(getToken(1).image));
-    jj_consume_token(STRING);
+    jj_consume_token(UNQUOTED_STRING);
   }
 
 // <inst_unplaced>   ::= "unplaced"
@@ -546,9 +586,41 @@ public class DesignParser implements DesignParserConstants {
 //<inst_cfg>        ::= "cfg" <DOUBLEQUOTE><cfg_string><DOUBLEQUOTE> ;
   final public void InstanceConfiguration() throws ParseException {
     jj_consume_token(CFG);
-    jj_consume_token(DOUBLEQUOTE);
-    ConfigurationString();
-    jj_consume_token(DOUBLEQUOTE);
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case DOUBLEQUOTE:
+      jj_consume_token(DOUBLEQUOTE);
+      ConfigurationString();
+      jj_consume_token(DOUBLEQUOTE);
+      break;
+    case QUOTED_STRING:
+      alternateBelConfiguration();
+      break;
+    default:
+      jj_la1[11] = jj_gen;
+      jj_consume_token(-1);
+      throw new ParseException();
+    }
+  }
+
+// This has to be used because XDL syntax isn't very good and I am not a JavaCC master.
+// One line cfg strings will fall to this method
+  final public void alternateBelConfiguration() throws ParseException {
+        String cfgString = getToken(1).image;
+        String[] attributeStrings = cfgString.split("\u005c\u005cs+");
+        for(String s : attributeStrings){
+          if(!s.equals("\u005c"")){
+                if(s.charAt(0) == '\u005c"'){
+          processAttribute(s.substring(1));
+        }
+        else if(s.charAt(s.length()-1) == '\u005c"'){
+          processAttribute(s.substring(0,s.length()-1));
+        }
+        else{
+          processAttribute(s);
+        }
+          }
+        }
+    jj_consume_token(QUOTED_STRING);
   }
 
 // <cfg_string>      ::= <bel_cfg>
@@ -558,11 +630,11 @@ public class DesignParser implements DesignParserConstants {
     label_4:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case STRING:
+      case UNQUOTED_STRING:
         ;
         break;
       default:
-        jj_la1[11] = jj_gen;
+        jj_la1[12] = jj_gen;
         break label_4;
       }
       BelConfiguration();
@@ -571,19 +643,20 @@ public class DesignParser implements DesignParserConstants {
 
 //<bel_cfg>         ::= <physical_name> ":" <logical_name> ":" <cfg_val> ;
   final public void BelConfiguration() throws ParseException {
-          String belCfg = getToken(1).image;
+          String attribute = getToken(1).image;
           int break1, break2;
           Boolean backslash = false;
-          break1 = belCfg.indexOf(':');
-          break2 = belCfg.indexOf(':',break1+1);
-          String phy_name = pool.getUnique(belCfg.substring(0,break1));
-          String log_name = pool.getUnique(belCfg.substring(break1+1,break2));
-          String cfg_value = pool.getUnique(belCfg.substring(break2+1,belCfg.length()));
+          break1 = attribute.indexOf(':');
+          break2 = attribute.indexOf(':',break1+1);
+          String phy_name = pool.getUnique(attribute.substring(0,break1));
+          String log_name = pool.getUnique(attribute.substring(break1+1,break2));
+          String cfg_value = pool.getUnique(attribute.substring(break2+1,attribute.length()));
 
           try{
                     if(phy_name.equals("_INST_PROP")){ // Look out, this case is nasty
                               char curr = jj_input_stream.readChar();
                 while(!(curr == '\u005cn' || curr == '\u005cr' || (curr == ' ' && !backslash))){
+                //System.out.println("curr=" + curr);
                                         if(curr == '\u005c\u005c'){
                                                 backslash = true;
                                         }
@@ -600,7 +673,6 @@ public class DesignParser implements DesignParserConstants {
                     System.exit(1);
           }
 
-
           if(inDesignCfg){ // If this is the design configuration
                     xdlDesign.addAttribute(phy_name,log_name,cfg_value);
           }
@@ -610,7 +682,7 @@ public class DesignParser implements DesignParserConstants {
           else{ // This is an instance configuration
                     currInst.addAttribute(phy_name,log_name,cfg_value);
           }
-    jj_consume_token(STRING);
+    jj_consume_token(UNQUOTED_STRING);
   }
 
 //<inst_pin_name>   ::= <string> ;
@@ -620,7 +692,7 @@ public class DesignParser implements DesignParserConstants {
         {
           modPinMap.put(currPin.getInstanceName()+currPin.getName(), currPin);
         }
-    jj_consume_token(STRING);
+    jj_consume_token(UNQUOTED_STRING);
   }
 
 // <net>             ::= "net" <net_name> <net_type> <net_stmts> ";"
@@ -649,7 +721,7 @@ public class DesignParser implements DesignParserConstants {
         NetStatements();
         break;
       default:
-        jj_la1[12] = jj_gen;
+        jj_la1[13] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -670,7 +742,7 @@ public class DesignParser implements DesignParserConstants {
           else{
                     currModule.addNet(currNet);
           }
-    jj_consume_token(STRING);
+    jj_consume_token(QUOTED_STRING);
   }
 
 // <net_type>        ::= "vcc"           #power
@@ -714,7 +786,7 @@ public class DesignParser implements DesignParserConstants {
       jj_consume_token(WIRE);
       break;
     default:
-      jj_la1[13] = jj_gen;
+      jj_la1[14] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -736,7 +808,7 @@ public class DesignParser implements DesignParserConstants {
         ;
         break;
       default:
-        jj_la1[14] = jj_gen;
+        jj_la1[15] = jj_gen;
         break label_5;
       }
       NetStatement();
@@ -765,7 +837,7 @@ public class DesignParser implements DesignParserConstants {
       NetCfg();
       break;
     default:
-      jj_la1[15] = jj_gen;
+      jj_la1[16] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -785,7 +857,7 @@ public class DesignParser implements DesignParserConstants {
       jj_consume_token(LOAD);
       break;
     default:
-      jj_la1[16] = jj_gen;
+      jj_la1[17] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -810,7 +882,7 @@ public class DesignParser implements DesignParserConstants {
       jj_consume_token(DRIVER);
       break;
     default:
-      jj_la1[17] = jj_gen;
+      jj_la1[18] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -832,7 +904,7 @@ public class DesignParser implements DesignParserConstants {
                                 currPin.setInstance(inst);
                                 currNet.addPin(currPin);
   inst.addToNetList(currNet);
-    jj_consume_token(STRING);
+    jj_consume_token(QUOTED_STRING);
   }
 
 //<net_pip>         ::= "pip" <tile> <wire0> <pip_direction> <wire1> ;
@@ -891,7 +963,7 @@ public class DesignParser implements DesignParserConstants {
     currNet.setModuleTemplate(module);
     currNet.setModuleTemplateNet(module.getNet(currNet.getName().replaceFirst(mi.getName()+"/","")));
   }
-    jj_consume_token(STRING);
+    jj_consume_token(UNQUOTED_STRING);
   }
 
 //<tile>            ::= <string> ;
@@ -902,13 +974,13 @@ public class DesignParser implements DesignParserConstants {
                     System.exit(1);
           }
           currPIP.setTile(tile);
-    jj_consume_token(STRING);
+    jj_consume_token(UNQUOTED_STRING);
   }
 
 //<wire0>           ::= <string> ;
   final public void Wire0() throws ParseException {
           currPIP.setStartWire(we.getWireEnum(getToken(1).image));
-    jj_consume_token(STRING);
+    jj_consume_token(UNQUOTED_STRING);
   }
 
 // <pip_direction>   ::= "=="      # Bidirectional, unbuffered,
@@ -931,7 +1003,7 @@ public class DesignParser implements DesignParserConstants {
       jj_consume_token(PIP3);
       break;
     default:
-      jj_la1[18] = jj_gen;
+      jj_la1[19] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -940,7 +1012,7 @@ public class DesignParser implements DesignParserConstants {
 //<wire1>           ::= <string> ;
   final public void Wire1() throws ParseException {
           currPIP.setEndWire(we.getWireEnum(getToken(1).image));
-    jj_consume_token(STRING);
+    jj_consume_token(UNQUOTED_STRING);
   }
 
   private boolean jj_2_1(int xla) {
@@ -948,6 +1020,12 @@ public class DesignParser implements DesignParserConstants {
     try { return !jj_3_1(); }
     catch(LookaheadSuccess ls) { return true; }
     finally { jj_save(0, xla); }
+  }
+
+  private boolean jj_3_1() {
+    if (jj_3R_6()) return true;
+    if (jj_scan_token(COMMA)) return true;
+    return false;
   }
 
   private boolean jj_3R_6() {
@@ -972,12 +1050,6 @@ public class DesignParser implements DesignParserConstants {
     return false;
   }
 
-  private boolean jj_3_1() {
-    if (jj_3R_6()) return true;
-    if (jj_scan_token(COMMA)) return true;
-    return false;
-  }
-
   /** Generated Token Manager. */
   public DesignParserTokenManager token_source;
   SimpleCharStream jj_input_stream;
@@ -989,7 +1061,7 @@ public class DesignParser implements DesignParserConstants {
   private Token jj_scanpos, jj_lastpos;
   private int jj_la;
   private int jj_gen;
-  final private int[] jj_la1 = new int[19];
+  final private int[] jj_la1 = new int[20];
   static private int[] jj_la1_0;
   static private int[] jj_la1_1;
   static {
@@ -997,10 +1069,10 @@ public class DesignParser implements DesignParserConstants {
       jj_la1_init_1();
    }
    private static void jj_la1_init_0() {
-      jj_la1_0 = new int[] {0x80,0x82200000,0x82200000,0x1000000,0x2200000,0x2200000,0x2000000,0x80000000,0x10000000,0x20000000,0x20000000,0x0,0x48870080,0x48870000,0x4580000,0x4580000,0x4400000,0x0,0xf000,};
+      jj_la1_0 = new int[] {0x80,0x82200000,0x82200000,0x1000000,0x2200000,0x2200000,0x2000000,0x80000000,0x10000000,0x20000000,0x20000000,0x40,0x0,0x48870080,0x48870000,0x4580000,0x4580000,0x4400000,0x0,0xf000,};
    }
    private static void jj_la1_init_1() {
-      jj_la1_1 = new int[] {0x0,0x40,0x40,0x0,0x40,0x40,0x40,0x0,0x10,0x20,0x20,0x80,0x0,0x0,0xc,0xc,0x0,0xc,0x0,};
+      jj_la1_1 = new int[] {0x0,0x40,0x40,0x0,0x40,0x40,0x40,0x0,0x10,0x20,0x20,0x100,0x80,0x0,0x0,0xc,0xc,0x0,0xc,0x0,};
    }
   final private JJCalls[] jj_2_rtns = new JJCalls[1];
   private boolean jj_rescan = false;
@@ -1017,7 +1089,7 @@ public class DesignParser implements DesignParserConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 20; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -1032,7 +1104,7 @@ public class DesignParser implements DesignParserConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 20; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -1043,7 +1115,7 @@ public class DesignParser implements DesignParserConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 20; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -1054,7 +1126,7 @@ public class DesignParser implements DesignParserConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 20; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -1064,7 +1136,7 @@ public class DesignParser implements DesignParserConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 20; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -1074,7 +1146,7 @@ public class DesignParser implements DesignParserConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 19; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 20; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -1186,12 +1258,12 @@ public class DesignParser implements DesignParserConstants {
   /** Generate ParseException. */
   public ParseException generateParseException() {
     jj_expentries.clear();
-    boolean[] la1tokens = new boolean[42];
+    boolean[] la1tokens = new boolean[41];
     if (jj_kind >= 0) {
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 19; i++) {
+    for (int i = 0; i < 20; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1<<j)) != 0) {
@@ -1203,7 +1275,7 @@ public class DesignParser implements DesignParserConstants {
         }
       }
     }
-    for (int i = 0; i < 42; i++) {
+    for (int i = 0; i < 41; i++) {
       if (la1tokens[i]) {
         jj_expentry = new int[1];
         jj_expentry[0] = i;
