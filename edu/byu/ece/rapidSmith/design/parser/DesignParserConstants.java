@@ -97,11 +97,9 @@ public interface DesignParserConstants {
   /** RegularExpression Id. */
   int INSTANCE = 38;
   /** RegularExpression Id. */
-  int STRING = 39;
+  int UNQUOTED_STRING = 39;
   /** RegularExpression Id. */
-  int UNQUOTED_STRING = 40;
-  /** RegularExpression Id. */
-  int QUOTED_STRING = 41;
+  int QUOTED_STRING = 40;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -147,7 +145,6 @@ public interface DesignParserConstants {
     "\"unplaced\"",
     "\"unbonded\"",
     "\"instance\"",
-    "<STRING>",
     "<UNQUOTED_STRING>",
     "<QUOTED_STRING>",
   };
