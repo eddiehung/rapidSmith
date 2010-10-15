@@ -18,26 +18,42 @@
  * get a copy of the license at <http://www.gnu.org/licenses/>.
  * 
  */
-package edu.byu.ece.rapidSmith.util;
+package edu.byu.ece.rapidSmith.design.parser;
 
-import java.util.HashMap;
-
-public class StringPool extends HashMap<String,String>{
-
-	private static final long serialVersionUID = 3200270847975999156L;
-	
-	/**
-	 * This gets a unique copy of the String string from the HashMap. 
-	 * If the string is not in the HashMap yet, it adds it and returns
-	 * the original string. 
-	 * @param string The string to make unique.
-	 * @return The unique copy of the String string. 
-	 */
-	public String getUnique(String string){
-		if(this.get(string)==null) {
-			this.put(string,string);
-			return string;
-		}
-		return this.get(string);
-	}
+public enum ParserState{
+	BEGIN_DESIGN,
+	DESIGN_NAME,
+	PART_NAME,
+	NCD_VERSION,
+	CFG_STRING,
+	ATTRIBUTE,
+	XDL_STATEMENT,
+	INSTANCE_NAME,
+	INSTANCE_TYPE,
+	INSTANCE_PLACED,
+	INSTANCE_TILE,
+	INSTANCE_SITE,
+	INSTANCE_BONDED,
+	MODULE_INSTANCE_TOKEN,
+	MODULE_INSTANCE_NAME,
+	MODULE_TEMPLATE_NAME,
+	MODULE_TEMPLATE_INSTANCE_NAME,
+	NET_NAME,
+	NET_TYPE,
+	NET_STATEMENT,
+	PIN_INSTANCE_NAME,
+	PIN_NAME,
+	PIP_TILE,
+	PIP_WIRE0,
+	PIP_CONN_TYPE,
+	PIP_WIRE1,
+	MODULE_NAME,
+	MODULE_ANCHOR_NAME,
+	MODULE_STATEMENT,
+	PORT_NAME,
+	PORT_INSTANCE_NAME,
+	PORT_PIN_NAME,
+	END_PORT,
+	END_MODULE_NAME,
+	END_MODULE
 }

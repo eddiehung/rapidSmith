@@ -20,11 +20,8 @@
  */
 package edu.byu.ece.rapidSmith.design;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
@@ -35,7 +32,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import edu.byu.ece.rapidSmith.design.parser.DesignParser;
-import edu.byu.ece.rapidSmith.design.parser.ParseException;
 import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.PrimitiveType;
@@ -600,23 +596,14 @@ public class Design implements Serializable{
 	}
 	
 	/**
-	 * Load a standard XDL file and return the XDL_Design object.
-	 * @param fileName The name of the xdl file to load.
+	 * Loads this instance of design with the XDL design found in
+	 * the file fileName.
+	 * @param fileName The name of the XDL file to load.
 	 */
 	public void loadXDLFile(String fileName){
-		DesignParser parser = null;
-		try {
-			parser = new DesignParser(new BufferedInputStream (new FileInputStream(fileName)));
-			parser.setDesign(this);
-			parser.XDL_File();
-		} 
-		catch (FileNotFoundException e){
-			MessageGenerator.briefErrorAndExit("Could not find XDL file: " + fileName);
-		}
-		catch (ParseException e) {
-			MessageGenerator.briefErrorAndExit("There was a problem parsing the XDL file: " +
-				fileName + File.separator + e.getMessage());
-		}
+		DesignParser parser = new DesignParser(fileName);
+		parser.setDesign(this);
+		parser.parseXDL();
 	}
 	
 	/**
