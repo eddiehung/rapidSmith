@@ -355,10 +355,21 @@ public class Net implements Comparable<Net>, Serializable {
 	 * @param value The value of the attribute
 	 */
 	public void addAttribute(String physicalName, String logicalName, String value){
-		if(getAttributes() == null){
-			setAttributes(new ArrayList<Attribute>());
+		if(attributes == null){
+			attributes = new ArrayList<Attribute>();
 		}
-		getAttributes().add(new Attribute(physicalName, logicalName, value));
+		attributes.add(new Attribute(physicalName, logicalName, value));
+	}
+	
+	/**
+	 * Add the attribute to this net.
+	 * @param attribute The attribute to add.
+	 */
+	public void addAttribute(Attribute attribute){
+		if(attributes == null){
+			attributes = new ArrayList<Attribute>();
+		}
+		attributes.add(attribute);
 	}
 	
 	/**
