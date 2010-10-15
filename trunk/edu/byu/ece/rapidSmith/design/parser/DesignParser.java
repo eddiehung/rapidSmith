@@ -217,10 +217,21 @@ public class DesignParser{
 				state = ParserState.PART_NAME;
 				break;
 			case PART_NAME:
+				if(design.isHardMacro()){
+					if(token.endsWith(";")){
+						state = ParserState.XDL_STATEMENT;
+						token = token.substring(0, token.length()-1);
+					}
+					else{
+						state = ParserState.CFG_STRING;
+					}
+				}
+				else{
+					state = ParserState.NCD_VERSION;					
+				}
 				design.setPartName(pool.getUnique(token));
 				we = design.getWireEnumerator();
 				dev = design.getDevice();
-				state = ParserState.NCD_VERSION;
 				break;
 			case NCD_VERSION:
 				design.setNCDVersion(pool.getUnique(token));
@@ -345,6 +356,12 @@ public class DesignParser{
 			case INSTANCE_BONDED:
 				if(token.equals(COMMA)){
 					state = ParserState.MODULE_INSTANCE_TOKEN;
+				}
+				else if(token.equals(CFG)){
+					state = ParserState.ATTRIBUTE;
+				}
+				else if(token.equals(MODULE)){
+					state = ParserState.MODULE_INSTANCE_NAME;
 				}
 				else if(token.equals(BONDED)){
 					currInstance.setBonded(true);
