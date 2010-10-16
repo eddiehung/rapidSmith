@@ -26,6 +26,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -514,6 +515,9 @@ public class Design implements Serializable{
 	 */
 	public void setName(String name){
 		this.name = name;
+		if(name.equals(hardMacroDesignName)){
+			this.isHardMacro = true;
+		}
 	}
 	
 	/**
@@ -614,7 +618,7 @@ public class Design implements Serializable{
 	public void saveXDLFile(String fileName){
 		saveXDLFile(fileName, false);
 	}
-	
+
 	/**
 	 * Saves the XDL design and adds comments based on the parameter addComments.
 	 * @param fileName Name of the file to save the design to. 
@@ -776,6 +780,9 @@ public class Design implements Serializable{
 					bw.write("inst \"" + inst.getName() + "\" \"" + inst.getType() +"\"," + placed + "  ," + module + nl);
 					bw.write("  cfg \"");
 					for(Attribute attr : inst.getAttributes()){
+						if(attr.getPhysicalName().charAt(0) == '_'){
+							bw.write(nl + "      ");
+						}
 						bw.write(" " + attr.toString());
 					}
 					bw.write(" \"" + nl + "  ;" + nl);
@@ -907,6 +914,408 @@ public class Design implements Serializable{
 				fileName + File.separator + e.getMessage());
 		}
 	}
+
+	public void saveComparableXDLFile(String fileName){
+		String nl = System.getProperty("line.separator");
+		try{
+			BufferedWriter bw = new BufferedWriter(new FileWriter(fileName));
+
+			bw.write(nl+"# ======================================================="+nl);
+			bw.write("# "+this.getClass().getCanonicalName()+" XDL Generation $Revision: 1.01$"+nl);
+			bw.write("# ======================================================="+nl+nl+nl);
+			
+			bw.write("# ======================================================="+nl);
+			bw.write("# The syntax for the design statement is:                "+nl);
+			bw.write("# design <design_name> <part> <ncd version>;             "+nl);
+			bw.write("# or                                                     "+nl);
+			bw.write("# design <design_name> <device> <package> <speed> <ncd_version>"+nl);
+			bw.write("# ======================================================="+nl);
+				
+			if(!isHardMacro){
+				bw.write("design \"" + name + "\" " + partName + " " + NCDVersion + " ,"+nl);
+				bw.write("  cfg \"");
+				for(Attribute attr : attributes){
+					bw.write(nl+"\t" + attr.toString());
+				}
+				bw.write("\";"+nl+nl+nl);
+			}
+			else{
+				bw.write("design \"" + name + "\" " + partName + ";"+nl+nl);
+			}
+			
+			
+			if(modules.size() > 0){
+				bw.write("# ======================================================="+nl);
+				bw.write("# The syntax for modules is:"+nl);
+				bw.write("#     module <name> <inst_name> ;"+nl);
+				bw.write("#     port <name> <inst_name> <inst_pin> ;"+nl);
+				bw.write("#     ."+nl);
+				bw.write("#     ."+nl);
+				bw.write("#     instance ... ;"+nl);
+				bw.write("#     ."+nl);
+				bw.write("#     ."+nl);
+				bw.write("#     net ... ;"+nl);
+				bw.write("#     ."+nl);
+				bw.write("#     ."+nl);
+				bw.write("#     endmodule <name> ;"+nl);
+				bw.write("# ======================================================="+nl+nl);
+
+				String[] moduleNames = new String[modules.keySet().size()];
+				moduleNames = modules.keySet().toArray(moduleNames);
+				Arrays.sort(moduleNames);
+				
+				for(String moduleName : moduleNames){
+					Module module = modules.get(moduleName);
+					bw.write("# ======================================================="+nl);
+					bw.write("# MODULE of \""+moduleName+"\"" + nl);
+					bw.write("# ======================================================="+nl);
+
+					bw.write("module "+"\""+moduleName+"\" "+"\""+module.getAnchor().getName()+"\" , cfg \"");
+					
+					String[] attributes = new String[module.getAttributes().size()];
+					for(int j = 0; j < attributes.length; j++){
+						attributes[j] = module.getAttributes().get(j).toString()+" ";
+					}
+					Arrays.sort(attributes);
+					
+					for(int j = 0; j < attributes.length; j++){
+						bw.write(attributes[j]);
+					}
+					bw.write("\";" + nl);
+					
+					String[] ports = new String[module.getPortList().size()];
+					for(int i = 0; i < ports.length; i++){
+						Port port = module.getPortList().get(i); 
+						ports[i] = "  port \"" + port.getName() +"\" \"" + port.getInstanceName() +"\" \"" + port.getPinName()+"\";" + nl;
+					}
+					Arrays.sort(ports);
+					
+					for(int i = 0; i < ports.length; i++){
+						bw.write(ports[i]);
+					}
+					
+					String[] instances = new String[module.getInstances().size()];
+					int i = 0;
+					for(Instance inst : module.getInstances()){
+						instances[i] = inst.getName();
+						i++;
+					}
+					Arrays.sort(instances);
+					
+					for(int j = 0; j < instances.length; j++){
+						Instance inst = module.getInstance(instances[j]);
+						String placed = inst.isPlaced() ? "placed " + inst.getTile() + " " + inst.getPrimitiveSiteName() : "unplaced";
+						bw.write("  inst \"" + inst.getName() + "\" \"" + inst.getType() +"\"," + placed +"  ," +nl);
+						bw.write("    cfg \"");
+						
+						String[] instanceAttributes = new String[inst.getAttributes().size()];
+						int k = 0;
+						for(Attribute attr : inst.getAttributes()){
+							instanceAttributes[k] = (" " + attr.toString());
+							k++;
+						}
+						Arrays.sort(instanceAttributes);
+						for(int k2 = 0; k2 < instanceAttributes.length; k2++){
+							bw.write(instanceAttributes[k2]);
+						}
+						bw.write(" \"" + nl + "    ;" + nl);
+					}
+					
+					String[] nets = new String[module.getNets().size()];
+					int m = 0;
+					for(Net net : module.getNets()){
+						nets[m] = net.getName();
+						m++;
+					}
+					Arrays.sort(nets);
+					for(int j = 0; j < nets.length; j++){
+						Net net = module.getNet(nets[j]);
+						bw.write("  net \"" + net.getName() + "\" ," );
+						
+						if(net.getAttributes() != null){
+							bw.write(" cfg \"");
+							
+							String[] netAttributes = new String[net.getAttributes().size()];
+							for(int k = 0; k < netAttributes.length; k++){
+								netAttributes[k] = " " + net.getAttributes().get(k).toString();
+							}
+							Arrays.sort(netAttributes);
+							for(int k = 0; k < netAttributes.length; k++){
+								bw.write(netAttributes[k]);
+							}
+							bw.write("\",");
+						}
+						
+						bw.write(nl);
+						
+						String[] pins = new String[net.getPins().size()];
+						for(int k = 0; k < pins.length; k++){
+							Pin pin = net.getPins().get(k); 
+							if(pin.isOutPin()){
+								pins[k] = ("    outpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
+							}else{
+								pins[k] = ("    inpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
+							} 
+						}
+						Arrays.sort(pins);
+						for(int k = 0; k < pins.length; k++){
+							bw.write(pins[k]);
+						}
+						
+						String[] pips = new String[net.getPIPs().size()];
+						for(int k = 0; k < pips.length; k++){
+							PIP pip = net.getPIPs().get(k);
+							pips[k] = ("    pip " + pip.getTile() +" "+ pip.getStartWireName(we) + " -> " + pip.getEndWireName(we) + " ," + nl);
+						}
+						Arrays.sort(pips);
+						for(int k = 0; k < pips.length; k++){
+							bw.write(pips[k]);
+						}
+						bw.write("    ;" + nl);
+					}
+
+					bw.write("endmodule \""+moduleName+"\" ;" + nl + nl);
+				}
+			}
+			if(!isHardMacro){
+				if(moduleInstances.size() > 0){
+					bw.write(nl);
+					bw.write("#  ======================================================="+nl);
+					bw.write("#  MODULE INSTANCES"+nl);
+					bw.write("#  ======================================================="+nl);
+					String[] moduleInstanceNames = new String[moduleInstances.values().size()];
+					int n = 0;
+					for(ModuleInstance mi : moduleInstances.values()){
+						moduleInstanceNames[n] = mi.getName();
+						n++;
+					}
+					Arrays.sort(moduleInstanceNames);
+					for(int i = 0; i < moduleInstanceNames.length; i++){
+						ModuleInstance mi = getModuleInstance(moduleInstanceNames[i]);
+
+						bw.write("# instance \""+mi.getName()+"\" \""+mi.getModule().getName()+"\" , ");
+						if(mi.getAnchor().isPlaced()){
+							bw.write("placed " + mi.getAnchor().getTile() + " " +
+									mi.getAnchor().getPrimitiveSiteName() + " ;" + nl);
+						}
+						else{
+							bw.write("unplaced  ;" + nl);
+						}
+					}
+					bw.write(nl);
+				}
+					
+				bw.write("#  ======================================================="+nl);
+				bw.write("#  The syntax for instances is:"+nl);
+				bw.write("#      instance <name> <sitedef>, placed <tile> <site>, cfg <string> ;"+nl);
+				bw.write("#  or"+nl);
+				bw.write("#      instance <name> <sitedef>, unplaced, cfg <string> ;"+nl);
+				bw.write("# "+nl);
+				bw.write("#  For typing convenience you can abbreviate instance to inst."+nl);
+				bw.write("# "+nl);
+				bw.write("#  For IOs there are two special keywords: bonded and unbonded"+nl);
+				bw.write("#  that can be used to designate whether the PAD of an unplaced IO is"+nl);
+				bw.write("#  bonded out. If neither keyword is specified, bonded is assumed."+nl);
+				bw.write("# "+nl);
+				bw.write("#  The bonding of placed IOs is determined by the site they are placed in."+nl);
+				bw.write("# "+nl);
+				bw.write("#  If you specify bonded or unbonded for an instance that is not an"+nl);
+				bw.write("#  IOB it is ignored."+nl);
+				bw.write("# "+nl);
+				bw.write("#  Shown below are three examples for IOs. "+nl); 
+				bw.write("#     instance IO1 IOB, unplaced ;          # This will be bonded"+nl);
+				bw.write("#     instance IO1 IOB, unplaced bonded ;   # This will be bonded"+nl);
+				bw.write("#     instance IO1 IOB, unplaced unbonded ; # This will be unbonded"+nl);
+				bw.write("#  ======================================================="+nl);
+				
+				String[] instanceNames = new String[getInstances().size()];
+				int i = 0;
+				for(Instance inst : getInstances()){
+					instanceNames[i] = inst.getName();
+					i++;
+				}
+				Arrays.sort(instanceNames);
+				
+				for(int j = 0; j < instanceNames.length; j++){
+					Instance inst = getInstance(instanceNames[j]);
+					String placed = inst.isPlaced() ? "placed " + inst.getTile() +
+							" " + inst.getPrimitiveSiteName() : "unplaced";
+					String module = inst.getModuleInstanceName()==null ? "" : "module \"" + 
+							inst.getModuleInstanceName() +"\" \"" + inst.getModuleTemplate().getName() + "\" \"" +
+							inst.getModuleTemplateInstance().getName() + "\" ,";
+					bw.write("inst \"" + inst.getName() + "\" \"" + inst.getType() +"\"," + placed + "  ," + module + nl);
+					bw.write("  cfg \"");
+					
+					
+					String[] instanceAttributes = new String[inst.getAttributes().size()];
+					int k = 0;
+					for(Attribute attr : inst.getAttributes()){
+						instanceAttributes[k] = (" " + attr.toString());
+						k++;
+					}
+					Arrays.sort(instanceAttributes);
+					for(int k2 = 0; k2 < instanceAttributes.length; k2++){
+						if(instanceAttributes[k2].charAt(1) == '_'){
+							bw.write(nl + "      ");
+						}
+						bw.write(instanceAttributes[k2]);
+					}
+					
+					bw.write(" \"" + nl + "  ;" + nl);
+				}
+				bw.write(nl);
+				
+				bw.write("#  ================================================"+nl);
+				bw.write("#  The syntax for nets is:"+nl);
+				bw.write("#     net <name> <type>,"+nl);
+				bw.write("#       outpin <inst_name> <inst_pin>,"+nl);
+				bw.write("#       ."+nl);
+				bw.write("#       ."+nl);
+				bw.write("#       inpin <inst_name> <inst_pin>,"+nl);
+				bw.write("#       ."+nl);
+				bw.write("#       ."+nl);
+				bw.write("#       pip <tile> <wire0> <dir> <wire1> , # [<rt>]"+nl);
+				bw.write("#       ."+nl);
+				bw.write("#       ."+nl);
+				bw.write("#       ;"+nl);
+				bw.write("# "+nl);
+				bw.write("#  There are three available wire types: wire, power and ground."+nl);
+				bw.write("#  If no type is specified, wire is assumed."+nl);
+				bw.write("# "+nl);
+				bw.write("#  Wire indicates that this a normal wire."+nl);
+				bw.write("#  Power indicates that this net is tied to a DC power source."+nl);
+				bw.write("#  You can use \"power\", \"vcc\" or \"vdd\" to specify a power net."+nl);
+				bw.write("# "+nl);
+				bw.write("#  Ground indicates that this net is tied to ground."+nl);
+				bw.write("#  You can use \"ground\", or \"gnd\" to specify a ground net."+nl);
+				bw.write("# "+nl); 
+				bw.write("#  The <dir> token will be one of the following:"+nl);
+				bw.write("# "+nl);
+				bw.write("#     Symbol Description"+nl);
+				bw.write("#     ====== =========================================="+nl);
+				bw.write("#       ==   Bidirectional, unbuffered."+nl);
+				bw.write("#       =>   Bidirectional, buffered in one direction."+nl);
+				bw.write("#       =-   Bidirectional, buffered in both directions."+nl);
+				bw.write("#       ->   Directional, buffered."+nl);
+				bw.write("# "+nl); 
+				bw.write("#  No pips exist for unrouted nets."+nl);
+				bw.write("#  ================================================"+nl);
+
+				String[] netNames = new String[getNets().size()];
+				int m = 0;
+				for(Net net : getNets()){
+					netNames[m] = net.getName();
+					m++;
+				}
+				Arrays.sort(netNames);
+				for(int j = 0; j < netNames.length; j++){
+					Net net = getNet(netNames[j]);
+					String type = net.getType().equals(NetType.WIRE) ? "" : net.getType().toString().toLowerCase();
+					bw.write("  net \"" + net.getName() + "\" "+type+"," );
+					
+					if(net.getAttributes() != null){
+						bw.write(" cfg \"");
+						
+						String[] netAttributes = new String[net.getAttributes().size()];
+						for(int k = 0; k < netAttributes.length; k++){
+							netAttributes[k] = " " + net.getAttributes().get(k).toString();
+						}
+						Arrays.sort(netAttributes);
+						for(int k = 0; k < netAttributes.length; k++){
+							bw.write(netAttributes[k]);
+						}
+
+						bw.write("\",");
+					}
+					bw.write(nl);
+					
+					String[] pins = new String[net.getPins().size()];
+					for(int k = 0; k < pins.length; k++){
+						Pin pin = net.getPins().get(k); 
+						if(pin.isOutPin()){
+							pins[k] = ("    outpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
+						}else{
+							pins[k] = ("    inpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
+						} 
+					}
+					Arrays.sort(pins);
+					for(int k = 0; k < pins.length; k++){
+						bw.write(pins[k]);
+					}
+					
+					String[] pips = new String[net.getPIPs().size()];
+					for(int k = 0; k < pips.length; k++){
+						PIP pip = net.getPIPs().get(k);
+						pips[k] = ("    pip " + pip.getTile() +" "+ pip.getStartWireName(we) + " -> " + pip.getEndWireName(we) + " ," + nl);
+					}
+					Arrays.sort(pips);
+					for(int k = 0; k < pips.length; k++){
+						bw.write(pips[k]);
+					}
+
+					bw.write("    ;" + nl);
+				}
+				
+				bw.write(nl);
+				
+				int sliceCount = 0;
+				int bramCount = 0;
+				int dspCount = 0;
+				for(Instance instance : instances.values()){
+					PrimitiveType type = instance.getType();
+					if(sliceTypes.contains(type)){
+						sliceCount++;
+					}
+					else if(dspTypes.contains(type)){
+						dspCount++;
+					}
+					else if(bramTypes.contains(type)){
+						bramCount++;
+					}
+				}
+				
+				bw.write("# ======================================================="+nl);
+				bw.write("# SUMMARY"+nl);
+				bw.write("# Number of Module Defs: " + modules.size() + nl);
+				bw.write("# Number of Module Insts: " + moduleInstances.size() + nl);
+				bw.write("# Number of Primitive Insts: "+ instances.size() +nl);
+				bw.write("#     Number of SLICES: "+ sliceCount +nl);
+				bw.write("#     Number of DSP48s: "+ dspCount +nl);
+				bw.write("#     Number of BRAMs: "+ bramCount +nl);
+				bw.write("# Number of Nets: " + nets.size() + nl);
+				bw.write("# ======================================================="+nl+nl+nl);
+			}
+			else{
+				Module mod = getHardMacro();
+				bw.write("# ======================================================="+nl);
+				bw.write("# MACRO SUMMARY"+nl);
+				bw.write("# Number of Module Insts: " + mod.getInstances().size() + nl);
+				HashMap<PrimitiveType,Integer> instTypeCount = new HashMap<PrimitiveType,Integer>();
+				for(Instance inst : mod.getInstances()){
+					Integer count = instTypeCount.get(inst.getType());
+					if(count == null){
+						instTypeCount.put(inst.getType(),1);
+					}
+					else{
+						count++;
+						instTypeCount.put(inst.getType(),count);
+					}
+				}
+				for(PrimitiveType type : instTypeCount.keySet()){
+					bw.write("#   Number of " + type.toString() + "s: " + instTypeCount.get(type) + nl);
+				}
+				bw.write("# Number of Module Ports: " + mod.getPortList().size() + nl);
+				bw.write("# Number of Module Nets: "+ mod.getNets().size() +nl);
+				bw.write("# ======================================================="+nl+nl+nl);
+			}
+			bw.close();
+		}
+		catch(IOException e){
+			MessageGenerator.briefErrorAndExit("Error writing XDL file: " +
+				fileName + File.separator + e.getMessage());
+		}
+	}
+
 	
 	static {
 		sliceTypes = new HashSet<PrimitiveType>();
