@@ -419,6 +419,20 @@ public class Device implements Serializable{
 	}
 	
 	/**
+	 * This method will get all primitive sites with the same base type as
+	 * that passed as a parameter type.  This does not necessarily get all
+	 * compatible sites for the PrimitiveType type as a SLICEL request would
+	 * only return all SLICEL type sites and no SLICEM types which can also 
+	 * be a valid site for SLICELs.
+	 * @param type The types of sites to retrieve.
+	 * @return An array of primitive sites with the same Primitive type as type.
+	 */
+	public PrimitiveSite[] getAllPrimitiveSitesOfType(PrimitiveType type){
+		return getPrimitiveSiteIndex().get(type.ordinal());
+	}
+	
+	
+	/**
 	 * Gets and returns an array of all primitive sites of the given primitive type.
 	 * @param type The primitive type of the site to get.
 	 * @return An array of all primitive sites in the device with primitive type type.
