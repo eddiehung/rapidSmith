@@ -367,7 +367,12 @@ public class StaticSourceHandler{
 		
 		HashMap<Tile,PinSorter> tileMap = new HashMap<Tile, PinSorter>();
 		
-		// Iterate through all static nets and create new nets based on those nets
+		// Iterate through all static nets and create mapping of all sinks to their
+		// respective switch matrix tile, each pin is separated into groups of how their
+		// sources should be created. There are 3 groups:
+		// 1. High priority TIEOFF sinks - Do the best you can to attach these sinks to the TIEOFF
+		// 2. Attempt TIEOFF sinks - Attempt to connect them to a TIEOFF, but not critical
+		// 3. SLICE Source - Instance a nearby slice to supply GND/VCC
 		for(Net net : staticNetList){
 			for(Pin pin : net.getPins()){
 				// Switch matrix sink, where the route has to connect through
@@ -380,11 +385,14 @@ public class StaticSourceHandler{
 				tmp.addPin(switchMatrixSink, pin, net, needsHard1, needsNonTIEOFFSource);
 			}
 		}
-			
+		
+		// For every switch matrix tile we have found that requires static sink connections
 		for(Tile tile : tileMap.keySet()){
 			PinSorter ps = tileMap.get(tile);
 			tempNode.setTile(tile);
 			ArrayList<StaticSink> removeThese = new ArrayList<StaticSink>();
+			
+			// Virtex 5 has some special pins that we should reserve
 			if(dev.getPartName().startsWith("xc5v")){
 				for(StaticSink ss : ps.highPriorityForTIEOFF){
 					String[] fans = fanBounceMap.get(we.getWireName(ss.node.wire));
@@ -412,39 +420,39 @@ public class StaticSourceHandler{
 					}
 				}
 				ps.highPriorityForTIEOFF.removeAll(removeThese);				
-			}
 			
-			removeThese = new ArrayList<StaticSink>();
-			for(StaticSink ss : ps.attemptTIEOFF){
-				if(ss.net.getType().equals(NetType.GND)){
-					String[] fans = fanBounceMap.get(we.getWireName(ss.node.wire));
-					boolean useSLICE = true;
-					for(String fan : fans){
-						tempNode.setWire(we.getWireEnum(fan));
-						// Add this to reserved
-						if(!router.usedNodes.contains(tempNode)){
-							useSLICE = false;
-							break;
+				removeThese = new ArrayList<StaticSink>();
+				for(StaticSink ss : ps.attemptTIEOFF){
+					if(ss.net.getType().equals(NetType.GND)){
+						String[] fans = fanBounceMap.get(we.getWireName(ss.node.wire));
+						boolean useSLICE = true;
+						for(String fan : fans){
+							tempNode.setWire(we.getWireEnum(fan));
+							// Add this to reserved
+							if(!router.usedNodes.contains(tempNode)){
+								useSLICE = false;
+								break;
+							}
+						}
+						if(useSLICE){
+							ps.useSLICE.add(ss);
+							removeThese.add(ss);
 						}
 					}
-					if(useSLICE){
-						ps.useSLICE.add(ss);
-						removeThese.add(ss);
-					}
 				}
+				ps.attemptTIEOFF.removeAll(removeThese);
 			}
-			ps.attemptTIEOFF.removeAll(removeThese);
 		}
 		
+		// Handle each group of sinks separately, allocating TIEOFF to those sinks according
+		// to priority
 		for(PinSorter ps : tileMap.values()){
 			for(StaticSink ss : ps.highPriorityForTIEOFF){
 				Instance inst = updateTIEOFF(ss.node.tile, ss.net, true);
-				if(ss.node.tile.getName().equals("INT_X6Y94") && we.getWireName(ss.node.wire).equals("IMUX_B25")){
-					System.out.println("Its in the highPriorityList");
-				}
+				// Find the correct net corresponding to this TIEOFF if it exists
 				Net matchingNet = null;
 				for(Net net : inst.getNetList()){
-					if(net.getSource().getName().equals("HARD1")){
+					if(net.getType().equals(ss.net.getType()) && !net.getSource().getName().equals("KEEP1")){
 						matchingNet = net;
 						break;
 					}
@@ -462,10 +470,10 @@ public class StaticSourceHandler{
 			
 			for(StaticSink ss : ps.attemptTIEOFF){
 				Instance inst = updateTIEOFF(ss.node.tile, ss.net, false);
-
 				Net matchingNet = null;
+				// Find the correct net corresponding to this TIEOFF if it exists
 				for(Net net : inst.getNetList()){
-					if(net.getSource().getName().equals("KEEP1")){
+					if(net.getType().equals(ss.net.getType()) && !net.getSource().getName().equals("HARD1")){
 						matchingNet = net;
 						break;
 					}
@@ -563,7 +571,7 @@ public class StaticSourceHandler{
 	 * @return The created/updated TIEOFF.
 	 */
 	private Instance updateTIEOFF(Tile tile, Net net, boolean needHard1){
-		String tileSuffix = tile.getTileNameSuffix();//findClosestSwitchBox(net);
+		String tileSuffix = tile.getTileNameSuffix();
 		String instName = "XDL_DUMMY_INT" + tileSuffix + "_TIEOFF" + tileSuffix;
 		Instance currInst = router.design.getInstance(instName);
 		Attribute vccAttr = needHard1 ? hard1Attr : keep1Attr;
