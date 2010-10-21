@@ -1,5 +1,14 @@
 Release Notes for BYU RapidSmith Tools
 
+ - Version 0.2.1 (21 OCT 2010) -
+This version has a few big bug fixes to it.  First, the XDL design parser
+has been completely rewritten and no longer uses JavaCC.  It is a custom
+parser and loads designs 20-30% faster than the previous parser.  This
+revision also contains a fix in the StaticSourceHandler which affects
+the routers.  It was erroneously putting GND pins on VCC nets.  This 
+version also adds a new deterministic XDL export method to compare XDL
+files sanely.
+
  - Version 0.2.0 (8 OCT 2010) -
 This is a major revision upgrade as preliminary support for Virtex 6 parts
 has been added.  An abstract router class as well as an example basic 
