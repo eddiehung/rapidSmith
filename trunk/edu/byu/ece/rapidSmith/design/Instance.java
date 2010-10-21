@@ -138,12 +138,23 @@ public class Instance implements Serializable{
 	 * physical name physicalName, false otherwise.
 	 */
 	public boolean hasAttribute(String physicalName){
+		return getAttribute(physicalName) != null;
+	}
+	
+	/**
+	 * TODO Improve performance of this method.  
+	 * Gets the attribute from this instance with the physical name given.
+	 * @param physicalName Name of the attribute to get
+	 * @return The attribute with the physical name specified, or null if 
+	 * no such attribute exists.
+	 */
+	public Attribute getAttribute(String physicalName){
 		for(Attribute attr : attributes){
 			if(attr.getPhysicalName().equals(physicalName)){
-				return true;
+				return attr;
 			}
 		}
-		return false;
+		return null;
 	}
 	
 	/**
