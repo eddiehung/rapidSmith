@@ -465,6 +465,7 @@ public class StaticSourceHandler{
 				}
 				else{
 					matchingNet.addPin(ss.pin);
+					ss.pin.getInstance().addToNetList(matchingNet);
 				}
 			}
 			
@@ -486,6 +487,7 @@ public class StaticSourceHandler{
 				}
 				else{
 					matchingNet.addPin(ss.pin);
+					ss.pin.getInstance().addToNetList(matchingNet);
 				}
 			}
 			
@@ -515,6 +517,7 @@ public class StaticSourceHandler{
 					
 					Pin source = new Pin(true, slicePin, currInst); 
 					newNet.addPin(source);
+					source.getInstance().addToNetList(newNet);
 				}
 				if(vccs.size() > 0){
 					// Create the new net
@@ -530,6 +533,7 @@ public class StaticSourceHandler{
 					
 					Pin source = new Pin(true, slicePin, currInst); 
 					newNet.addPin(source);
+					source.getInstance().addToNetList(newNet);
 				}
 			}
 		}
@@ -562,6 +566,7 @@ public class StaticSourceHandler{
 		}
 		Pin source = new Pin(true,pinName, inst); 
 		net.addPin(source);
+		inst.addToNetList(net);
 	}
 	
 	/**
@@ -625,7 +630,7 @@ public class StaticSourceHandler{
 	}
 	
 	/**
-	 * Creates a new net based on the staticNet and will contain the newPinList
+	 * Creates a new net based on the staticNet and will contain the newPin
 	 * @param staticNet Parent net to create new net from
 	 * @param newPin The new pin of the new net
 	 * @return The newly created net
@@ -633,6 +638,7 @@ public class StaticSourceHandler{
 	private Net createNewNet(Net staticNet, Pin newPin){
 		Net newNet = new Net();
 		newNet.addPin(newPin);
+		newPin.getInstance().addToNetList(newNet);
 		newNet.setName(staticNet.getName() + "_" + netCount);
 		newNet.setType(staticNet.getType());
 		netCount++;
