@@ -72,6 +72,8 @@ public class StaticSourceHandler{
 	String slicePin;
 	/** Just a node that is used so it doesn't have to be created over and over */
 	private Node tempNode;
+	/** Map to help determine when to use a SLICE for GND connections */
+	private static HashMap<String, String> v4BounceMap;
 	/** Map to help retrieve the FAN and BOUNCE connections in Virtex 5 */
 	private static HashMap<String,String[]> fanBounceMap;
 	/** List of OMUX Top Wires in Virtex 4 Switch Box */
@@ -129,7 +131,6 @@ public class StaticSourceHandler{
 	
 	public Node getSwitchBoxWire(Net net){
 		Pin source = net.getSource();
-		
 		if(source.getName().contains("COUT") && net.getPins().size() == 2){
 			Pin sink = net.getPins().get(1).equals(source) ? net.getPins().get(0) : net.getPins().get(1);
 			if(sink.getName().contains("CIN")){
@@ -373,17 +374,60 @@ public class StaticSourceHandler{
 		// 1. High priority TIEOFF sinks - Do the best you can to attach these sinks to the TIEOFF
 		// 2. Attempt TIEOFF sinks - Attempt to connect them to a TIEOFF, but not critical
 		// 3. SLICE Source - Instance a nearby slice to supply GND/VCC
-		for(Net net : staticNetList){
-			for(Pin pin : net.getPins()){
-				// Switch matrix sink, where the route has to connect through
-				Node switchMatrixSink  = dev.getSwitchMatrixSink(pin);
-				PinSorter tmp = tileMap.get(switchMatrixSink.tile);
-				if(tmp == null){
-					tmp = new PinSorter();
-					tileMap.put(switchMatrixSink.tile, tmp);
+		if(router.design.getPartName().startsWith("xc4v")){
+			for(Net net : staticNetList){
+				for(Pin pin : net.getPins()){
+					// Switch matrix sink, where the route has to connect through
+					Node switchMatrixSink  = dev.getSwitchMatrixSink(pin);
+					PinSorter tmp = tileMap.get(switchMatrixSink.tile);
+					if(tmp == null){
+						tmp = new PinSorter();
+						tileMap.put(switchMatrixSink.tile, tmp);
+					}
+					
+					String wireName = we.getWireName(switchMatrixSink.wire);
+					String bounce = v4BounceMap.get(wireName);
+					if(bounce != null && net.getType().equals(NetType.GND) && router.isNodeUsed(switchMatrixSink.tile, we.getWireEnum(bounce))){
+						if(wireName.startsWith("CE") || wireName.startsWith("SR")){
+							if(router.isNodeUsed(switchMatrixSink.tile, we.getWireEnum("BOUNCE1")) &&
+							   router.isNodeUsed(switchMatrixSink.tile, we.getWireEnum("BOUNCE2")) &&
+							   router.isNodeUsed(switchMatrixSink.tile, we.getWireEnum("BOUNCE3"))){
+								tmp.addPinToSliceList(switchMatrixSink, pin, net);
+							}
+							else{
+								tmp.addPin(switchMatrixSink, pin, net, needsHard1, needsNonTIEOFFSource);
+							}
+						}
+						else{
+							tmp.addPinToSliceList(switchMatrixSink, pin, net);
+						}
+						
+					}
+					else{
+						tmp.addPin(switchMatrixSink, pin, net, needsHard1, needsNonTIEOFFSource);
+					}
+					
+					
 				}
-				tmp.addPin(switchMatrixSink, pin, net, needsHard1, needsNonTIEOFFSource);
+			}			
+		}
+		else if(router.design.getPartName().startsWith("xc5v")){
+			for(Net net : staticNetList){
+				for(Pin pin : net.getPins()){
+					// Switch matrix sink, where the route has to connect through
+					Node switchMatrixSink  = dev.getSwitchMatrixSink(pin);
+					PinSorter tmp = tileMap.get(switchMatrixSink.tile);
+					if(tmp == null){
+						tmp = new PinSorter();
+						tileMap.put(switchMatrixSink.tile, tmp);
+					}
+					
+					tmp.addPin(switchMatrixSink, pin, net, needsHard1, needsNonTIEOFFSource);
+				}
 			}
+		}
+		else {
+			MessageGenerator.briefErrorAndExit("Sorry, this architecture is not yet supported.");
 		}
 		
 		// For every switch matrix tile we have found that requires static sink connections
@@ -930,5 +974,59 @@ public class StaticSourceHandler{
 		fanBounceMap.put("FAN_B6", array70);
 		String[] array71 = {"FAN7"};
 		fanBounceMap.put("FAN_B7", array71);
+		
+		v4BounceMap = new HashMap<String, String>();
+		v4BounceMap.put("SR_B0", "BOUNCE0");
+		v4BounceMap.put("SR_B1", "BOUNCE0");
+		v4BounceMap.put("SR_B2", "BOUNCE0");
+		v4BounceMap.put("SR_B3", "BOUNCE0");
+		
+		v4BounceMap.put("CE_B0", "BOUNCE0");
+		v4BounceMap.put("CE_B1", "BOUNCE0");
+		v4BounceMap.put("CE_B2", "BOUNCE0");
+		v4BounceMap.put("CE_B3", "BOUNCE0");
+		
+		v4BounceMap.put("BYP_INT_B0", "BOUNCE0");
+		v4BounceMap.put("BYP_INT_B1", "BOUNCE2");
+		v4BounceMap.put("BYP_INT_B2", "BOUNCE0");
+		v4BounceMap.put("BYP_INT_B3", "BOUNCE2");
+		v4BounceMap.put("BYP_INT_B4", "BOUNCE1");
+		v4BounceMap.put("BYP_INT_B5", "BOUNCE3");
+		v4BounceMap.put("BYP_INT_B6", "BOUNCE1");
+		v4BounceMap.put("BYP_INT_B7", "BOUNCE3");
+		v4BounceMap.put("IMUX_B0", "BOUNCE0");
+		v4BounceMap.put("IMUX_B1", "BOUNCE1");
+		v4BounceMap.put("IMUX_B10", "BOUNCE2");
+		v4BounceMap.put("IMUX_B11", "BOUNCE3");
+		v4BounceMap.put("IMUX_B12", "BOUNCE0");
+		v4BounceMap.put("IMUX_B13", "BOUNCE1");
+		v4BounceMap.put("IMUX_B14", "BOUNCE2");
+		v4BounceMap.put("IMUX_B15", "BOUNCE3");
+		v4BounceMap.put("IMUX_B16", "BOUNCE0");
+		v4BounceMap.put("IMUX_B17", "BOUNCE1");
+		v4BounceMap.put("IMUX_B18", "BOUNCE2");
+		v4BounceMap.put("IMUX_B19", "BOUNCE3");
+		v4BounceMap.put("IMUX_B2", "BOUNCE2");
+		v4BounceMap.put("IMUX_B20", "BOUNCE0");
+		v4BounceMap.put("IMUX_B21", "BOUNCE1");
+		v4BounceMap.put("IMUX_B22", "BOUNCE2");
+		v4BounceMap.put("IMUX_B23", "BOUNCE3");
+		v4BounceMap.put("IMUX_B24", "BOUNCE0");
+		v4BounceMap.put("IMUX_B25", "BOUNCE1");
+		v4BounceMap.put("IMUX_B26", "BOUNCE2");
+		v4BounceMap.put("IMUX_B27", "BOUNCE3");
+		v4BounceMap.put("IMUX_B28", "BOUNCE0");
+		v4BounceMap.put("IMUX_B29", "BOUNCE1");
+		v4BounceMap.put("IMUX_B3", "BOUNCE3");
+		v4BounceMap.put("IMUX_B30", "BOUNCE2");
+		v4BounceMap.put("IMUX_B31", "BOUNCE3");
+		v4BounceMap.put("IMUX_B4", "BOUNCE0");
+		v4BounceMap.put("IMUX_B5", "BOUNCE1");
+		v4BounceMap.put("IMUX_B6", "BOUNCE2");
+		v4BounceMap.put("IMUX_B7", "BOUNCE3");
+		v4BounceMap.put("IMUX_B8", "BOUNCE0");
+		v4BounceMap.put("IMUX_B9", "BOUNCE1");
+
+		
 	}
 }

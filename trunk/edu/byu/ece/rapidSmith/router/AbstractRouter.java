@@ -71,10 +71,12 @@ public abstract class AbstractRouter{
 	/** Current net to be routed */
 	protected Net currNet;
 	/** Current sink pin to be routed */ 
-	protected Pin currPin;
+	protected Pin currSinkPin;
 	/** PIPs of the current net being routed */
 	protected ArrayList<PIP> netPIPs;
 
+	protected Node tempNode;
+	
 	/** A flag indicating if the current connection was routed successfully */
 	protected boolean successfulRoute;
 	/** A flag which determines if the current sink is a clock wire */
@@ -92,6 +94,7 @@ public abstract class AbstractRouter{
 	
 	public AbstractRouter() {
 		// Initialize variables
+		tempNode = new Node();
 		usedNodes = new HashSet<Node>();
 		usedNodesMap = new HashMap<Node, LinkedList<Net>>();
 		reservedNodes = new HashMap<Net, ArrayList<Node>>();
@@ -117,6 +120,11 @@ public abstract class AbstractRouter{
 		Node n = new Node(t, wire, null, 0);
 		usedNodes.add(n);
 		return n;
+	}
+	
+	public boolean isNodeUsed(Tile tile, int wire){
+		tempNode.setTileAndWire(tile, wire);
+		return usedNodes.contains(tempNode);
 	}
 	
 	/**

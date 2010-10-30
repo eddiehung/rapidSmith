@@ -77,6 +77,11 @@ public class PinSorter{
 		}
 	}
 	
+	public void addPinToSliceList(Node node, Pin pin, Net net){
+		StaticSink ss = new StaticSink(node, pin, net);
+		useSLICE.add(ss);
+	}
+	
 	/**
 	 * This is just a small class to help the PinSorter class keep track of things.
 	 * @author Chris Lavin

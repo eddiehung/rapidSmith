@@ -176,14 +176,13 @@ public class BasicRouter extends AbstractRouter{
 		
 		// Route each pin by itself
 		for(Pin currSinkPin : currNet.getPins()){
-			currPin = currSinkPin;
 			// Ignore the source pin
 			if (currSinkPin.isOutPin()) continue; 
 
 			// This will print out until the Virtex 5 patch is complete
 			if(dev.getPrimitiveExternalPin(currSinkPin) == null){
-				MessageGenerator.printHeader("Pin Missing from V5 Patch: " + currNet.getName() + " " + currPin.getName() 
-						+ " " +currPin.getInstance().getTile() + " " + currPin.getInstance().getType());
+				MessageGenerator.printHeader("Pin Missing from V5 Patch: " + currNet.getName() + " " + currSinkPin.getName() 
+						+ " " +currSinkPin.getInstance().getTile() + " " + currSinkPin.getInstance().getType());
 				continue;
 			}
 			
@@ -195,8 +194,8 @@ public class BasicRouter extends AbstractRouter{
 			boolean currNetOutputFromBUF = currSource.getInstance().getType().toString().contains("BUF");
 			
 			isCurrSinkAClkWire = (we.getWireDirection(currSink.wire).equals(WireDirection.CLK) || 
-								  currPin.getName().contains("CLK") ||
-								  currPin.getName().equals("C")) &&
+								  currSinkPin.getName().contains("CLK") ||
+								  currSinkPin.getName().equals("C")) &&
 								 (currNetOutputFromBUF || 
 								  currSinkPin.getInstance().getType().toString().contains("BUF")
 								 );
@@ -252,8 +251,8 @@ public class BasicRouter extends AbstractRouter{
 			} 
 			else{
 				failedConnections++;
-				MessageGenerator.briefError("\tFAILED TO ROUTE: net: " + currNet.getName() + " inpin: " + currPin.getName() +
-                   " (" + we.getWireName(currSink.wire) + ") on instance: " + currPin.getInstanceName());				
+				MessageGenerator.briefError("\tFAILED TO ROUTE: net: " + currNet.getName() + " inpin: " + currSinkPin.getName() +
+                   " (" + we.getWireName(currSink.wire) + ") on instance: " + currSinkPin.getInstanceName());				
 			}
 		}
 		return usedPIPs;
