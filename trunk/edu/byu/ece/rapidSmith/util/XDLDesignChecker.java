@@ -29,7 +29,6 @@ import java.util.HashMap;
 import edu.byu.ece.rapidSmith.design.Design;
 import edu.byu.ece.rapidSmith.design.Instance;
 import edu.byu.ece.rapidSmith.design.Net;
-import edu.byu.ece.rapidSmith.design.NetType;
 import edu.byu.ece.rapidSmith.design.PIP;
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.router.Node;
@@ -138,9 +137,8 @@ public class XDLDesignChecker{
 	}
 		
 	public static void main(String[] args){
-		if(args.length != 2){
-			System.out.println("USAGE: <input.xdl> <output.xdl>");
-			System.exit(0);
+		if(args.length != 1){
+			MessageGenerator.briefMessageAndExit("USAGE: <input.xdl>");
 		}
 
 		Design design = new Design();
@@ -175,10 +173,7 @@ public class XDLDesignChecker{
 				if(tmp == null){
 					pipMap.put(pip, net);
 				}
-				else if(!tmp.equals(net) && 
-						!(tmp.getType().equals(NetType.GND) && net.getType().equals(NetType.GND)) &&
-						!(tmp.getType().equals(NetType.VCC) && net.getType().equals(NetType.VCC))
-						){
+				else{
 					System.out.print("  Duplicate PIP: " + pip.toString(design.getWireEnumerator()));
 					System.out.println("  in nets: " + net.getName());
 					System.out.println("           " + tmp.getName());
@@ -196,10 +191,7 @@ public class XDLDesignChecker{
 				if(tmp == null){
 					pipSinks.put(n, net);
 				}
-				else if(!tmp.equals(net) && 
-						!(tmp.getType().equals(NetType.GND) && net.getType().equals(NetType.GND)) &&
-						!(tmp.getType().equals(NetType.VCC) && net.getType().equals(NetType.VCC))
-						){
+				else{
 					System.out.print("  Duplicate PIP Sink: " + n.toString(design.getWireEnumerator()));
 					System.out.println("  in nets: ");
 					System.out.println("           " + net.getName());
@@ -207,7 +199,5 @@ public class XDLDesignChecker{
 				}
 			}
 		}
-		
-		design.saveXDLFile(args[1],true);
 	}
 }

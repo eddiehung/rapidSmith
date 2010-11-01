@@ -25,7 +25,6 @@ import java.util.HashSet;
 
 import edu.byu.ece.rapidSmith.design.Design;
 import edu.byu.ece.rapidSmith.design.Net;
-import edu.byu.ece.rapidSmith.design.NetType;
 import edu.byu.ece.rapidSmith.design.PIP;
 import edu.byu.ece.rapidSmith.design.Pin;
 import edu.byu.ece.rapidSmith.device.Wire;
@@ -168,11 +167,11 @@ public class BasicRouter extends AbstractRouter{
 	 * @param i The number of the net (in sequence from the beginning)
 	 * @return The list of PIPs used in the routing of this net.
 	 */
-	public ArrayList<PIP> routeNet(int i){
+	public void routeNet(int i){
 		Pin currSource = currNet.getSource();
-		ArrayList<PIP> usedPIPs = new ArrayList<PIP>();
 		ArrayList<Node> sources = new ArrayList<Node>();
 		currSources = new HashSet<Node>();
+		boolean firstConnection = true;
 		
 		// Route each pin by itself
 		for(Pin currSinkPin : currNet.getPins()){
@@ -201,7 +200,7 @@ public class BasicRouter extends AbstractRouter{
 								 );
 
 			// Add additional sources if this is not the first sink of the net being routed
-			if(usedPIPs.isEmpty()){
+			if(firstConnection){
 				// Error checking
 				if(dev.getPrimitiveExternalPin(currSource) == null){
 					MessageGenerator.briefErrorAndExit("ERROR: Could not find valid external source pin name: " +
@@ -225,37 +224,16 @@ public class BasicRouter extends AbstractRouter{
 
 			// Check if it was a successful routing
 			if(successfulRoute){
-				netPIPs.addAll(pipList);
 				// Add these PIPs to the rest used in the net
-				if(currNet.getType().equals(NetType.GND) && i != -1){
-					// GND PIPs
-					gndPIPs.addAll(pipList);
-					if((netList.size() >= i + 2) && netList.get(i + 1).getType().equals(NetType.VCC)) {
-						// We have finished the GND nets, and will start VCC net on next net
-						// Mark all GND PIPs as used
-						usedPIPs.addAll(gndPIPs);
-					}
-				} 
-				else if(currNet.getType().equals(NetType.VCC) && i != -1){
-					// VCC PIPs
-					vccPIPs.addAll(pipList);
-					if((netList.size() >= i + 2) && netList.get(i + 1).getType().equals(NetType.WIRE)) {
-						// We have finished the VCC nets, and will start regular net on next net
-						// Mark all VCC PIPs as used
-						usedPIPs.addAll(vccPIPs);
-					}
-				} 
-				else{
-					usedPIPs.addAll(pipList);
-				}
+				netPIPs.addAll(pipList);
 			} 
 			else{
 				failedConnections++;
 				MessageGenerator.briefError("\tFAILED TO ROUTE: net: " + currNet.getName() + " inpin: " + currSinkPin.getName() +
                    " (" + we.getWireName(currSink.wire) + ") on instance: " + currSinkPin.getInstanceName());				
 			}
+			firstConnection = false;
 		}
-		return usedPIPs;
 	}
 	
 	/**
@@ -306,10 +284,10 @@ public class BasicRouter extends AbstractRouter{
 			// because GND/VCC nets can use pips of other nets, we need a usedPIPs
 			// variable to keep everything straight.
 			netPIPs = new ArrayList<PIP>();
-			ArrayList<PIP> usedPIPs = routeNet(i);
+			routeNet(i);
 			
 			// Mark these used PIPs as used in the data structures
-			for (PIP pip : usedPIPs){
+			for (PIP pip : netPIPs){
 				setWireAsUsed(pip.getTile(), pip.getStartWire());
 				setWireAsUsed(pip.getTile(), pip.getEndWire());
 				checkForIntermediateUsedNodes(pip);

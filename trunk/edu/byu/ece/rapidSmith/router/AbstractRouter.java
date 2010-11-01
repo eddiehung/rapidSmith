@@ -57,10 +57,6 @@ public abstract class AbstractRouter{
 	/** Some nodes are reserved for particular routes to minimize routing conflicts later */
 	HashMap<Net,ArrayList<Node>> reservedNodes;
 
-	/** PIPs that are part of ground nets */
-	protected ArrayList<PIP> gndPIPs;
-	/** PIPs that are part of power nets */
-	protected ArrayList<PIP> vccPIPs;
 	/** PIPs that are part of the most recently routed connection */
 	protected ArrayList<PIP> pipList;
 	
@@ -106,8 +102,6 @@ public abstract class AbstractRouter{
 		totalNodesProcessed = 0;
 		nodesProcessed = 0;
 		failedConnections = 0;
-		gndPIPs = new ArrayList<PIP>();
-		vccPIPs = new ArrayList<PIP>();
 		currSink = new Node();
 	}
 	
@@ -125,6 +119,10 @@ public abstract class AbstractRouter{
 	public boolean isNodeUsed(Tile tile, int wire){
 		tempNode.setTileAndWire(tile, wire);
 		return usedNodes.contains(tempNode);
+	}
+	
+	public boolean isNodeUsed(Node node){
+		return usedNodes.contains(node);
 	}
 	
 	/**
