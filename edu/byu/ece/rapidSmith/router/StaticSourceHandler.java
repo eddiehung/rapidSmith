@@ -21,12 +21,8 @@
 package edu.byu.ece.rapidSmith.router;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.PriorityQueue;
-import java.util.Set;
 
 import edu.byu.ece.rapidSmith.design.Attribute;
 import edu.byu.ece.rapidSmith.design.Instance;
@@ -81,6 +77,7 @@ public class StaticSourceHandler{
 	/** List of OMUX Bottom Wires in Virtex 4 Switch Box */
 	private static String[] v4BottomOmuxs = {"OMUX0","OMUX4","OMUX3","OMUX5","OMUX2","OMUX7","OMUX6","OMUX1"};
 	
+	
 	// Attributes used in creating TIEOFFs
 	private Attribute noUserLogicAttr;
 	private Attribute hard1Attr;
@@ -100,7 +97,6 @@ public class StaticSourceHandler{
 		needsHard1 = getPinsNeedingHardPowerSource(dev.getPartName(), we);
 		needsNonTIEOFFSource = getPinsNeedingNonTIEOFFSource(dev.getPartName(), we);
 		tempNode = new Node();
-		
 		if(router.dev.getPartName().startsWith("xc5v")){
 			slicePin = "B";
 		}
@@ -271,9 +267,12 @@ public class StaticSourceHandler{
 				}
 			}
 			for(Tile t : switchMatrixSources.keySet()){
+				
+				
 				ArrayList<Net> nets = switchMatrixSources.get(t);
+				//System.out.println("Tile: " + t.getName() +" "+ nets.size());
 				boolean debug = false;
-				if(nets.size() > 8){
+				if(nets.size() > 0){
 
 					int reservedTop = 0;
 					int reservedBot = 0;
@@ -366,7 +365,7 @@ public class StaticSourceHandler{
 		// Remove all static source'd nets afterwards from original design
 		netList.removeAll(staticNetList);
 		
-		HashMap<Tile,PinSorter> tileMap = new HashMap<Tile, PinSorter>();
+		HashMap<Tile, PinSorter> tileMap = new HashMap<Tile, PinSorter>();
 		
 		// Iterate through all static nets and create mapping of all sinks to their
 		// respective switch matrix tile, each pin is separated into groups of how their
@@ -375,6 +374,11 @@ public class StaticSourceHandler{
 		// 2. Attempt TIEOFF sinks - Attempt to connect them to a TIEOFF, but not critical
 		// 3. SLICE Source - Instance a nearby slice to supply GND/VCC
 		if(router.design.getPartName().startsWith("xc4v")){
+			Node bounce0 = new Node(); bounce0.wire = we.getWireEnum("BOUNCE0");
+			Node bounce1 = new Node(); bounce1.wire = we.getWireEnum("BOUNCE1");
+			Node bounce2 = new Node(); bounce2.wire = we.getWireEnum("BOUNCE2");
+			Node bounce3 = new Node(); bounce3.wire = we.getWireEnum("BOUNCE3");
+			
 			for(Net net : staticNetList){
 				for(Pin pin : net.getPins()){
 					// Switch matrix sink, where the route has to connect through
@@ -388,10 +392,14 @@ public class StaticSourceHandler{
 					String wireName = we.getWireName(switchMatrixSink.wire);
 					String bounce = v4BounceMap.get(wireName);
 					if(bounce != null && net.getType().equals(NetType.GND) && router.isNodeUsed(switchMatrixSink.tile, we.getWireEnum(bounce))){
+						bounce0.setTile(switchMatrixSink.tile);
+						bounce1.setTile(switchMatrixSink.tile);
+						bounce2.setTile(switchMatrixSink.tile);
+						bounce3.setTile(switchMatrixSink.tile);
 						if(wireName.startsWith("CE") || wireName.startsWith("SR")){
-							if(router.isNodeUsed(switchMatrixSink.tile, we.getWireEnum("BOUNCE1")) &&
-							   router.isNodeUsed(switchMatrixSink.tile, we.getWireEnum("BOUNCE2")) &&
-							   router.isNodeUsed(switchMatrixSink.tile, we.getWireEnum("BOUNCE3"))){
+							
+							if(router.isNodeUsed(bounce0) && router.isNodeUsed(bounce1) &&
+							   router.isNodeUsed(bounce2) && router.isNodeUsed(bounce3) ){
 								tmp.addPinToSliceList(switchMatrixSink, pin, net);
 							}
 							else{
@@ -401,7 +409,6 @@ public class StaticSourceHandler{
 						else{
 							tmp.addPinToSliceList(switchMatrixSink, pin, net);
 						}
-						
 					}
 					else{
 						tmp.addPin(switchMatrixSink, pin, net, needsHard1, needsNonTIEOFFSource);
@@ -689,63 +696,90 @@ public class StaticSourceHandler{
 		return newNet;
 	}
 		
+	enum Direction{UP, DOWN, LEFT, RIGHT};
 	/**
 	 * Finds an available SLICE to be used as a static source.  
 	 * @param tile The tile where the sink to be driven is located
 	 * @return The newly created instance of the SLICE to source the sink
 	 */
-	private Instance findClosestAvailableSLICE(Tile tile, NetType sourceType) {
-		PrimitiveSite p = null;
-		final Tile sink = router.dev.getTile(tile.toString());
-		
-		// Create a Priority Queue that prioritizes by the closest Manhattan distance
-		PriorityQueue<PrimitiveSite> queueSLICEs =  new PriorityQueue<PrimitiveSite>(16, new Comparator<PrimitiveSite>(){
-				public int compare(PrimitiveSite i, PrimitiveSite j){
-					int iDist = Math.abs(sink.getRow() - i.getTile().getRow()) + 
-								Math.abs(sink.getColumn() - i.getTile().getColumn());
-					int jDist = Math.abs(sink.getRow() - j.getTile().getRow()) + 
-								Math.abs(sink.getColumn() - j.getTile().getColumn());
-					
-					return iDist-jDist;
-				}
+	private Instance findClosestAvailableSLICE(Tile tile, NetType sourceType){
+		Direction dir = Direction.DOWN;
+		int column = tile.getColumn();
+		int row = tile.getRow();
+		int maxColumn = column+1;
+		int maxRow = row+1;
+		int minColumn = column-1;
+		int minRow = row;
+		Tile currentTile;
+		boolean foundFreeSlice = false;
+		while(!foundFreeSlice){
+			switch(dir){
+				case UP:
+					if(row == minRow){
+						dir = Direction.RIGHT;
+						minRow--;
+						column++;
+					}
+					else{
+						row--;
+					}
+					break;
+				case DOWN:
+					if(row == maxRow){
+						dir = Direction.LEFT;
+						maxRow++;
+						column--;
+					}
+					else{
+						row++;
+					}
+					break;
+				case LEFT:
+					if(column == minColumn){
+						dir = Direction.UP;
+						minColumn--;
+						row--;
+					}
+					else{
+						column--;
+					}
+					break;
+				case RIGHT:
+					if(column == maxColumn){
+						dir = Direction.DOWN;
+						maxColumn++;
+						row++;
+					}
+					else{
+						column++;
+					}
+					break;
 			}
-		);
-		
-		// Add all SLICEs on the chip to the queue
-		Set<String> set = router.dev.getPrimitiveSites().keySet();
-		Iterator<String> itr = set.iterator();
-		while(itr.hasNext()){
-			p = router.dev.getPrimitiveSite(itr.next());
-			if(p.getType() == PrimitiveType.SLICEL || p.getType() == PrimitiveType.SLICEM){
-				if(!router.design.getUsedPrimitiveSites().contains(p)){
-					queueSLICEs.add(p);
+			currentTile = dev.getTile(row, column);
+			if(currentTile != null && currentTile.getPrimitiveSites() != null){
+				for(PrimitiveSite site : currentTile.getPrimitiveSites()){
+					if(!router.design.getUsedPrimitiveSites().contains(site) && (site.getType().equals(PrimitiveType.SLICEL) || site.getType().equals(PrimitiveType.SLICEM))){
+						Instance returnMe = new Instance();
+						ArrayList<Attribute> list = new ArrayList<Attribute>();
+						list.add(new Attribute("_NO_USER_LOGIC","",""));
+						if(sourceType.equals(NetType.VCC)){
+							list.add(new Attribute("_VCC_SOURCE","",slicePin));	
+						}
+						else{
+							list.add(new Attribute("_GND_SOURCE","",slicePin));
+						}
+						
+						returnMe.place(site);
+						returnMe.setType(PrimitiveType.SLICEL);
+						returnMe.setAttributes(list);
+						returnMe.setName("XDL_DUMMY_" + returnMe.getTile() + "_" + site.getName());
+						return returnMe;
+					}
 				}
 			}
 		}
 		
-		// Iterate through the SLICEs looking for a SLICE that is unused
-		// If one is found, create the instance and return it
-		while((p = queueSLICEs.poll()) != null){
-			Instance returnMe = new Instance();
-			ArrayList<Attribute> list = new ArrayList<Attribute>();
-			list.add(new Attribute("_NO_USER_LOGIC","",""));
-			if(sourceType.equals(NetType.VCC)){
-				list.add(new Attribute("_VCC_SOURCE","",slicePin));	
-			}
-			else{
-				list.add(new Attribute("_GND_SOURCE","",slicePin));
-			}
-			
-			returnMe.place(p);
-			returnMe.setType(p.getType());
-			returnMe.setAttributes(list);
-			returnMe.setName("XDL_DUMMY_" + returnMe.getTile() + "_" + p.getName());
-			
-			return returnMe;
-		}
-		
-		System.out.println("Could not find a free SLICE for a static source, I am giving up.");
-		System.exit(1);
+		MessageGenerator.briefErrorAndExit("Could not find a free SLICE for a static source, I am giving up.");
 		return null;
 	}
 	
