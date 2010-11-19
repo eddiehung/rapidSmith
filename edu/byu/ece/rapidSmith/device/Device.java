@@ -260,7 +260,8 @@ public class Device implements Serializable{
 	 */
 	public static PrimitiveSite getCorrespondingPrimitiveSite(PrimitiveSite current, Tile newSiteTile){
 		if(newSiteTile == null){
-			MessageGenerator.briefError("ERROR: Bad input to Device.getCorrespondingPrimitiveSite(), newSite==null");
+			//MessageGenerator.briefError("ERROR: Bad input to Device.getCorrespondingPrimitiveSite(), newSiteTile==null");
+			return null;
 		}
 		if(newSiteTile.getPrimitiveSites() == null){
 			return null;
@@ -676,8 +677,7 @@ public class Device implements Serializable{
 		debugPrintUniquePoolCount(primitivePinPool, "PrimitivePinMap");
 	}
 	
-	@SuppressWarnings("unchecked")
-	private void debugPrintUniquePoolCount(HashPool p, String name){
+	private void debugPrintUniquePoolCount(@SuppressWarnings("rawtypes") HashPool p, String name){
 		System.out.printf("%10d : Unique %s\n",p.getEnumerations().size(),name);
 	}
 	

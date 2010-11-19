@@ -215,8 +215,8 @@ public class ModuleInstance{
 		Tile t = newAnchorSite.getTile();
 		PrimitiveSite newValidSite = Device.getCorrespondingPrimitiveSite(p, t);
 		if(!newAnchorSite.equals(newValidSite)){
-			MessageGenerator.briefError("New anchor site (" + newAnchorSite.getName() +
-					") is incorrect.  Should be " + newValidSite.getName());
+			//MessageGenerator.briefError("New anchor site (" + newAnchorSite.getName() +
+			//		") is incorrect.  Should be " + newValidSite.getName());
 			this.unplace();
 			return false;
 		}
@@ -234,10 +234,10 @@ public class ModuleInstance{
 			PrimitiveSite newSite = Device.getCorrespondingPrimitiveSite(templateSite, newTile);
 
 			if(newSite == null){
-				MessageGenerator.briefError("ERROR: No matching primitive site found." +
-					" (Template Primitive:"	+ templateSite.getName() + 
-					", Template Tile:" + templateSite.getTile() +
-					" => New Primitive:" + newSite + ", New Tile:" + newTile+")");
+				//MessageGenerator.briefError("ERROR: No matching primitive site found." +
+				//	" (Template Primitive:"	+ templateSite.getName() + 
+				//	", Template Tile:" + templateSite.getTile() +
+				//	" => New Primitive:" + newSite + ", New Tile:" + newTile+")");
 				
 				// revert placement to original placement before method call
 				if(originalSites == null){
