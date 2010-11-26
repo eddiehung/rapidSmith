@@ -22,12 +22,14 @@ package edu.byu.ece.rapidSmith.util;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -454,6 +456,34 @@ public class FileTools {
 		}
 	}
 	
+	/**
+	 * This is a simple method that will read in a text file and put each line in a
+	 * string and put all the lines in an ArrayList.  The user is cautioned not
+	 * to open extremely large files with this method.
+	 * @param fileName Name of the text file to load into the ArrayList<String>.
+	 * @return An ArrayList containing strings of each line in the file. 
+	 */
+	public static ArrayList<String> getLinesFromTextFile(String fileName){
+		String line = null;
+		BufferedReader br;
+		ArrayList<String> lines = new ArrayList<String>();
+		try{
+			br = new BufferedReader(new FileReader(fileName));
+			
+			while((line = br.readLine()) != null){
+				lines.add(line);
+			}
+		}
+		catch(FileNotFoundException e){
+			MessageGenerator.briefErrorAndExit("ERROR: Could not find file: " + fileName);
+		} 
+		catch(IOException e){
+			MessageGenerator.briefErrorAndExit("ERROR: Could not read from file: " + fileName);
+		}
+		
+		return lines;
+	}
+	
 	//===================================================================================//
 	/* Generic File Manipulation Methods                                                 */
 	//===================================================================================//	
@@ -756,9 +786,34 @@ public class FileTools {
 	 */
 	public static String getFamilyNameFromPart(String partName){
 		String number = partName.substring(2, 3);
-		String partType = partName.substring(3, 4).equals("v") ? "virtex" : "spartan";
-		return partType + number;
+		String partType = partName.substring(3, 4).equalsIgnoreCase("v") ? "virtex" : "spartan";
+		String extra = "";
+		if(partName.substring(3, 4).equalsIgnoreCase("s") && number.equals("3")){
+			if(partName.substring(4, 5).equalsIgnoreCase("d")){
+				extra = "adsp";
+			}
+			else if(partName.indexOf('a', 4) != -1 || partName.indexOf('A', 4) != -1){
+				extra = "a";
+			}
+			else if(partName.indexOf('e', 4) != -1 || partName.indexOf('E', 4) != -1){
+				extra = "e";
+			}
+		}
+		return partType + number + extra;
 	}
+	
+	/**
+	 * Gets the subfamily name (LX, SX, FX, ...) from the part name.
+	 * @param partName The name of the Xilinx part to get the family name from.
+	 * @return The subfamily name of the part specified or null if none.
+	 */
+	public static String getSubFamilyNameFromPart(String partName){
+		if(partName.substring(2, 4).equalsIgnoreCase("3s")){
+			return null;
+		}
+		return partName.substring(4, 6);
+	}
+	
 	
 	/**
 	 * Gets and returns the path of the folder where the part files resides for partName.
