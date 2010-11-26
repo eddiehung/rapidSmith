@@ -6,5 +6,6 @@
 	<classpathentry kind="lib" path="jars/qtjambi-4.6.3.jar"/>
 	<classpathentry kind="lib" path="jars/qtjambi-win32-msvc2005-4.6.3.jar"/>
 	<classpathentry kind="lib" path="jars/qtjambi-linux32-gcc-4.6.3.jar"/>
+	<classpathentry kind="lib" path="jars/qtjambi-macosx-gcc-4.6.3.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>
