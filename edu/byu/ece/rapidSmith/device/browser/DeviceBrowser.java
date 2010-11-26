@@ -106,7 +106,13 @@ public class DeviceBrowser extends QMainWindow{
 			MessageGenerator.briefErrorAndExit("Error: No available parts. " +
 					"Please generate part database files.");
 		}
-		currPart = parts.get(0);
+		if(parts.contains("xc4vlx100ff1148")){
+			currPart = "xc4vlx100ff1148";
+		}
+		else{
+			currPart = parts.get(0);
+		}
+		
 		device = FileTools.loadDevice(currPart);
 		we = FileTools.loadWireEnumerator(currPart);
 		
