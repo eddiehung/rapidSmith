@@ -156,5 +156,17 @@ public class DeviceBrowserView extends QGraphicsView{
 				scale(1.0 / scaleFactor, 1.0 / scaleFactor);
 		}		
 	}
+	
+	public void zoomIn(){ 
+		// Zoom in (if not at limit)
+		if(this.matrix().m11() < zoomMax)
+			scale(scaleFactor, scaleFactor);
+	}
+	
+	public void zoomOut(){
+		// Zoom out (if not at limit)
+		if(this.matrix().m11() > zoomMin)
+			scale(1.0 / scaleFactor, 1.0 / scaleFactor);
+	}
 }
 
