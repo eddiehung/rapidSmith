@@ -532,14 +532,15 @@ public class Device implements Serializable{
 												int yOffset = (tile.getRow() - wire2.getTile(this, t1).getRow());
 												
 												if(found == null){
-													System.out.println("Null Sink: " + wire2.getTile(this, t1) + " " + we.getWireName(wire2.getWire()));
+													/*System.out.println("Null Sink: " + wire2.getTile(this, t1) + " " + we.getWireName(wire2.getWire()));
 													for(Integer sink : wire2.getTile(this, t1).getSinks().keySet()){
 														System.out.println("  " + we.getWireName(sink));
 													}
 													System.out.println("SOURCES: ");
 													for(Integer source : wire2.getTile(this, t1).getSources()){
 														System.out.println("  " + we.getWireName(source));
-													}
+													}*/
+													continue;
 												}
 												
 												found.switchMatrixSinkWire = currINTSinkWire;
