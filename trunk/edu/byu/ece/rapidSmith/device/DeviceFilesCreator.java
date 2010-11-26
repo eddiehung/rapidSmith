@@ -89,6 +89,10 @@ public class DeviceFilesCreator{
 			partNames.add("xc6vhx255tff1155");
 			partNames.add("xc6vcx75tff484");			
 		}
+		else if(familyName.equalsIgnoreCase("spartan6")){
+			partNames.add("xc6slx25tcsg324");
+			partNames.add("xc6slx75tfgg676");
+		}
 		else{
 			MessageGenerator.briefErrorAndExit("Sorry, the device family "+ familyName+
 					" is currently not supported.");
