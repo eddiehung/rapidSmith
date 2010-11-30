@@ -134,8 +134,7 @@ public class HardMacroGenerator {
 	
 	/**
 	 * The main function which will convert XDL_Design design to a hard macro.
-	 * @param design The XDL_Design to convert to a hard macro.
-	 * @param fileName The output file name, used to generate the VHDL wrapper file name.
+	 * @param vhdName The output file name, used to generate the VHDL wrapper file name.
 	 * @return The newly created hard macro.
 	 */
 	public Design convertToHardMacro(String vhdName){
