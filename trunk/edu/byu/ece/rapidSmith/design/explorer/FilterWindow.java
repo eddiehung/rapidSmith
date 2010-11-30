@@ -350,7 +350,7 @@ public class FilterWindow extends QWidget{
 				break;
 			case INSTANCES:
 				// populate attributes
-				System.out.println(subModels[0].removeRows(0, subModels[0].rowCount()));
+				subModels[0].removeRows(0, subModels[0].rowCount());
 				Instance instance = explorer.currDesign.getInstance(proxyModel.data(index.row(),0).toString());
 				for(Attribute attribute : instance.getAttributes()){
 					ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();

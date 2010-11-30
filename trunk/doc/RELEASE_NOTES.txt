@@ -1,4 +1,9 @@
 Release Notes for BYU RapidSmith Tools
+ - Version 0.2.2 (29 NOV 2010) -
+ Added several features including a hard macro generator, a design explorer,
+ a device browser, and basic support for Spartan 6 devices.  Fixed a few bugs
+ in the basic router.  Added a class to merge static nets.  Added better 
+ support/documentation for Mac OS X users.
 
  - Version 0.2.1 (21 OCT 2010) -
 This version has a few big bug fixes to it.  First, the XDL design parser
