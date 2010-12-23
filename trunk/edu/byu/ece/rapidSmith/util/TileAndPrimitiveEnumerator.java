@@ -132,7 +132,7 @@ public class TileAndPrimitiveEnumerator{
 					
 					if(tokens.length > 1 && tokens[1].equals("(tile")){
 						this.tileSet.add(tokens[5]);
-						this.tileSet.add(this.removeCoordinates(tokens[4]));
+						//this.tileSet.add(this.removeCoordinates(tokens[4]));
 					}
 					else if(tokens.length > 1 && tokens[1].equals("(primitive_def")){
 						this.primitiveSet.add(tokens[2]);
