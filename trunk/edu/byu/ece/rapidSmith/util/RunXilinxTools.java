@@ -68,7 +68,7 @@ public class RunXilinxTools {
 		String defaultFileName = partName + fileNameSuffix;
 		String xdlrcFileName = optionalOutputFileName==null ? defaultFileName : optionalOutputFileName;
 		String commandParameters = briefFile ? "" : "-pips -all_conns "; 
-		String command = "xdl -report " + commandParameters + FileTools.removeSpeedGrade(partName) + " " + xdlrcFileName;
+		String command = "xdl -report " + commandParameters + PartNameTools.removeSpeedGrade(partName) + " " + xdlrcFileName;
 		
 		// Check to see if the file already exists
 		if(new File(xdlrcFileName).exists()){
@@ -86,7 +86,7 @@ public class RunXilinxTools {
 			}
 			if(p.exitValue() != 0){
 				MessageGenerator.briefError("XDLRC Generation failed, is the part \"" + 
-						FileTools.removeSpeedGrade(partName) + "\" name valid?" + " COMMAND: " + command);
+						PartNameTools.removeSpeedGrade(partName) + "\" name valid?" + " COMMAND: " + command);
 				return false;	
 			}
 		} 
@@ -170,7 +170,7 @@ public class RunXilinxTools {
 				lastPartName = null;
 				while((line = input.readLine()) != null){
 					tokens = line.split("\\s+");
-					if(tokens.length > 0 && tokens[0].startsWith("xc")){
+					if(tokens.length > 0 && tokens[0].startsWith("x")){
 						lastPartName = tokens[0];
 						if(includeSpeedGrades && tokens[1].equals("SPEEDS:")){
 							speedGrades.clear();
@@ -211,24 +211,5 @@ public class RunXilinxTools {
 			return null;
 		}
 		return partNames;
-	}
-	
-	/**
-	 * Gets and returns the file separator character for the given OS
-	 */
-	public static String getDirectorySeparator(){
-		if(RunXilinxTools.cygwinInstalled()){
-			return "/";
-		}
-		else{
-			return File.separator;
-		}
-	}
-
-	/**
-	 * Checks if Cygwin is installed on the system
-	 */
-	public static boolean cygwinInstalled(){
-		return System.getenv("CYGWIN") != null;
 	}
 }

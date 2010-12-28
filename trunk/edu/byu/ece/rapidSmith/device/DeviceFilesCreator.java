@@ -31,7 +31,9 @@ import java.util.HashSet;
 import edu.byu.ece.rapidSmith.device.helper.Connection;
 import edu.byu.ece.rapidSmith.util.FileTools;
 import edu.byu.ece.rapidSmith.util.MessageGenerator;
+import edu.byu.ece.rapidSmith.util.PartNameTools;
 import edu.byu.ece.rapidSmith.util.RunXilinxTools;
+import edu.byu.ece.rapidSmith.util.FamilyType;
 
 /**
  * This class has a number of static methods to create Device and WireEnumerator objects from
@@ -66,37 +68,77 @@ public class DeviceFilesCreator{
 	 * @return The loaded or newly created WireEnumerator
 	 */
 	public static WireEnumerator createWireEnumerator(String partName){
-		String familyName = FileTools.getFamilyNameFromPart(partName);
+		FamilyType familyType = PartNameTools.getFamilyTypeFromPart(partName);
 		String wireEnumeratorFileName = FileTools.getWireEnumeratorFileName(partName);
 		if(new File(wireEnumeratorFileName).exists()){
 			WireEnumerator we = new WireEnumerator();
-			we.readCompactEnumFile(wireEnumeratorFileName, FileTools.getFamilyNameFromPart(partName));
+			we.readCompactEnumFile(wireEnumeratorFileName, PartNameTools.getFamilyTypeFromPart(partName));
 			return we;
 		}
 		
 		ArrayList<String> partNames = new ArrayList<String>();
-		if(familyName.equalsIgnoreCase("virtex4")){
-			partNames.add("xc4vfx12ff668");
-			partNames.add("xc4vfx100ff1517");
+		switch(familyType){
+			case SPARTAN2:
+				partNames.add("xc2s100tq144");
+				break;
+			case SPARTAN2E:
+				partNames.add("xc2s100eft256");
+				partNames.add("xc2s600efg456");
+				break;
+			case SPARTAN3:
+				partNames.add("xc3s1000fg320");
+				break;
+			case SPARTAN3A:
+				partNames.add("xc3s50atq144");
+				partNames.add("xc3s1400afg484");
+				break;
+			case SPARTAN3ADSP:
+				partNames.add("xc3sd1800acs484");
+				break;
+			case SPARTAN3E:
+				partNames.add("xc3s100evq100");
+				partNames.add("xc3s250evq100");
+				partNames.add("xc3s1200eft256");
+				break;
+			case SPARTAN6:
+				partNames.add("xc6slx25tcsg324");
+				partNames.add("xc6slx75tfgg676");
+				break;
+			case VIRTEX:
+				partNames.add("xcv100bg256");
+				partNames.add("xcv1000bg560");
+				break;
+			case VIRTEX2:
+				partNames.add("xc2v1000bg575");
+				break;
+			case VIRTEX2P:
+				partNames.add("xc2vp20fg676");
+				break;
+			case VIRTEX4:
+				partNames.add("xc4vfx12ff668");
+				partNames.add("xc4vfx100ff1517");
+				break;
+			case VIRTEX5:
+				partNames.add("xc5vlx20tff323");
+				partNames.add("xc5vlx30ff324");
+				partNames.add("xc5vfx30tff665");
+				partNames.add("xc5vtx150tff1156");
+				break;			
+			case VIRTEX6:
+				partNames.add("xc6vhx255tff1155");
+				partNames.add("xc6vcx75tff484");			
+				break;
+			case VIRTEXE:
+				partNames.add("xcv2600efg1156");
+				break;
+			case ARTIX7:
+			case KINTEX7:
+			case VIRTEX7:
+			default:
+				MessageGenerator.briefErrorAndExit("Sorry, the device family "+ familyType +
+				" is currently not supported.");
 		}
-		else if(familyName.equalsIgnoreCase("virtex5")){
-			partNames.add("xc5vlx20tff323");
-			partNames.add("xc5vlx30ff324");
-			partNames.add("xc5vfx30tff665");
-			partNames.add("xc5vtx150tff1156");
-		}
-		else if(familyName.equalsIgnoreCase("virtex6")){
-			partNames.add("xc6vhx255tff1155");
-			partNames.add("xc6vcx75tff484");			
-		}
-		else if(familyName.equalsIgnoreCase("spartan6")){
-			partNames.add("xc6slx25tcsg324");
-			partNames.add("xc6slx75tfgg676");
-		}
-		else{
-			MessageGenerator.briefErrorAndExit("Sorry, the device family "+ familyName+
-					" is currently not supported.");
-		}
+
 		
 		// Create XDLRC files for the wireEnumerator
 		ArrayList<String> fileNames = new ArrayList<String>();
@@ -121,7 +163,7 @@ public class DeviceFilesCreator{
 	 * @return The created tile map
 	 */
 	public static HashMap<String,Integer> createDeviceTileMap(String partName){
-		partName = FileTools.removeSpeedGrade(partName);
+		partName = PartNameTools.removeSpeedGrade(partName);
 		HashMap<String,Integer> tileMap = new HashMap<String, Integer>();
 		String xdlrcFileName = partName + "_brief.xdlrc";
 		if(!RunXilinxTools.generateBriefXDLRCFile(partName, xdlrcFileName)){

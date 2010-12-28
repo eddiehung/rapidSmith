@@ -39,6 +39,7 @@ import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;
 
 import edu.byu.ece.rapidSmith.device.helper.WireExpressions;
+import edu.byu.ece.rapidSmith.util.FamilyType;
 import edu.byu.ece.rapidSmith.util.FileTools;
 
 /**
@@ -65,7 +66,7 @@ public class WireEnumerator implements Serializable {
 	/** Keeps track of unique copy in memory */
 	private static WireEnumerator singleton = null;
 	/** Xilinx FPGA family name (virtex4, virtex5, ...) */
-	private String familyName = null;
+	private FamilyType familyType = null;
 	
 	/**
 	 * Constructor, does not initialize anything
@@ -73,8 +74,15 @@ public class WireEnumerator implements Serializable {
 	public WireEnumerator(){
 	}
 	
-	public static WireEnumerator getInstance(String familyName){
-		if(singleton == null || !singleton.familyName.equals(familyName)){
+	/**
+	 * This method will either return the currently loaded wire enumerator
+	 * if the wire enumerator exists in memory, or will return a new empty
+	 * wire enumerator.
+	 * @param familyType The base family type to be loaded.
+	 * @return A new wire enumerator or the currently matching loaded wire enumerator.
+	 */
+	public static WireEnumerator getInstance(FamilyType familyType){
+		if(singleton == null || !singleton.familyType.equals(familyType)){
 			singleton = new WireEnumerator();
 		}
 		return singleton;
@@ -238,7 +246,16 @@ public class WireEnumerator implements Serializable {
 	 * @return The family name of this wire enumerator.
 	 */
 	public String getFamilyName(){
-		return familyName;
+		return familyType.toString().toLowerCase();
+	}
+	
+	/**
+	 * Gets and returns the family type enumeration that corresponds
+	 * to this instance of the wire enumerator
+	 * @return The family type of this wire enumerator.
+	 */
+	public FamilyType getFamilyType(){
+		return familyType;
 	}
 	
 	/**
@@ -313,9 +330,9 @@ public class WireEnumerator implements Serializable {
 		return true;
 	}
 	
-	public boolean readCompactEnumFile(String fileName, String familyName){
+	public boolean readCompactEnumFile(String fileName, FamilyType familyType){
 		// Set the family name for this wire enumerator
-		this.familyName = familyName;
+		this.familyType = familyType;
 		
 		try {
 			Hessian2Input his = FileTools.getInputStream(fileName);

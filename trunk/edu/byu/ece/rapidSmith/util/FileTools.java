@@ -745,21 +745,6 @@ public class FileTools {
 	//===================================================================================//
 	
 	/**
-	 * This method removes the speed grade (ex: -10) from a conventional Xilinx part name.
-	 * @param partName The name of the part to remove the speed grade from.
-	 * @return The base part name with speed grade removed.  If no speed grade is present, returns
-	 * the original string.
-	 */
-	public static String removeSpeedGrade(String partName){
-		if(partName != null && partName.contains("-")){
-			return partName.substring(0, partName.indexOf("-"));
-		}
-		else{
-			return partName;
-		}
-	}
-	
-	/**
 	 * Gets and returns the value of the environment variable rapidSmithPathVariableName
 	 * @return The string of the path to the rapidSmith project location
 	 */
@@ -779,43 +764,6 @@ public class FileTools {
 	}
 	
 	/**
-	 * Gets the root name (virtex4, spartan6, ...) from the String partName.  This only works with
-	 * current Xilinx devices supported in ISE 11.1+.
-	 * @param partName The name of the Xilinx part to get the root name from.
-	 * @return The root name of the device specified by partName.
-	 */
-	public static String getFamilyNameFromPart(String partName){
-		String number = partName.substring(2, 3);
-		String partType = partName.substring(3, 4).equalsIgnoreCase("v") ? "virtex" : "spartan";
-		String extra = "";
-		if(partName.substring(3, 4).equalsIgnoreCase("s") && number.equals("3")){
-			if(partName.substring(4, 5).equalsIgnoreCase("d")){
-				extra = "adsp";
-			}
-			else if(partName.indexOf('a', 4) != -1 || partName.indexOf('A', 4) != -1){
-				extra = "a";
-			}
-			else if(partName.indexOf('e', 4) != -1 || partName.indexOf('E', 4) != -1){
-				extra = "e";
-			}
-		}
-		return partType + number + extra;
-	}
-	
-	/**
-	 * Gets the subfamily name (LX, SX, FX, ...) from the part name.
-	 * @param partName The name of the Xilinx part to get the family name from.
-	 * @return The subfamily name of the part specified or null if none.
-	 */
-	public static String getSubFamilyNameFromPart(String partName){
-		if(partName.substring(2, 4).equalsIgnoreCase("3s")){
-			return null;
-		}
-		return partName.substring(4, 6);
-	}
-	
-	
-	/**
 	 * Gets and returns the path of the folder where the part files resides for partName.
 	 * @param partName Name of the part to get its corresponding folder path.
 	 * @return The path of the folder where the parts files resides.
@@ -825,7 +773,7 @@ public class FileTools {
 				File.separator +
 				deviceFolderName + 
 				File.separator + 
-				getFamilyNameFromPart(partName) + 
+				PartNameTools.getFamilyNameFromPart(partName) + 
 				File.separator;
 	}
 	
@@ -836,7 +784,7 @@ public class FileTools {
 	 */
 	public static String getDeviceFileName(String partName){
 		return getPartFolderPath(partName) +
-				removeSpeedGrade(partName) + 
+				PartNameTools.removeSpeedGrade(partName) + 
 				deviceFileSuffix;
 	}
 	
@@ -847,7 +795,7 @@ public class FileTools {
 	 * @return The device or null if there was an error.
 	 */
 	public static Device loadDevice(String partName){
-		String canonicalName = removeSpeedGrade(partName);
+		String canonicalName = PartNameTools.removeSpeedGrade(partName);
 		Device device = Device.getInstance(canonicalName);
 		String path = getDeviceFileName(canonicalName);
 
@@ -881,15 +829,15 @@ public class FileTools {
 	 * @return The WireEnumerator or null if there was an error.
 	 */
 	public static WireEnumerator loadWireEnumerator(String partName){
-		String familyName = getFamilyNameFromPart(partName);
-		WireEnumerator we = WireEnumerator.getInstance(familyName);
+		FamilyType familyType = PartNameTools.getFamilyTypeFromPart(partName);
+		WireEnumerator we = WireEnumerator.getInstance(familyType);
 		String path = getWireEnumeratorFileName(partName);
 		
 		if(we.getFamilyName() != null){
 			return we;
 		}
 		
-		if(!we.readCompactEnumFile(path, familyName)){
+		if(!we.readCompactEnumFile(path, familyType)){
 			return null;
 		}
 		else{ 
@@ -974,5 +922,24 @@ public class FileTools {
 	public static String getTimeString(){
 		SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy");
 		return formatter.format(new java.util.Date());
+	}
+
+	/**
+	 * Gets and returns the file separator character for the given OS
+	 */
+	public static String getDirectorySeparator(){
+		if(FileTools.cygwinInstalled()){
+			return "/";
+		}
+		else{
+			return File.separator;
+		}
+	}
+
+	/**
+	 * Checks if Cygwin is installed on the system
+	 */
+	public static boolean cygwinInstalled(){
+		return System.getenv("CYGWIN") != null;
 	}
 }

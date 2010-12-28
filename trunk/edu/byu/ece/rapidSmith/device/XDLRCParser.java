@@ -33,6 +33,7 @@ import edu.byu.ece.rapidSmith.primitiveDefs.PrimitiveDef;
 import edu.byu.ece.rapidSmith.primitiveDefs.PrimitiveDefList;
 import edu.byu.ece.rapidSmith.util.FileTools;
 import edu.byu.ece.rapidSmith.util.MessageGenerator;
+import edu.byu.ece.rapidSmith.util.PartNameTools;
 import edu.byu.ece.rapidSmith.util.StringPool;
 
 /**
@@ -309,7 +310,7 @@ public class XDLRCParser{
 			}
 			else if(line.startsWith("(xdl_resource_report ")){
 				parts = line.split("\\s");
-				dev.setPartName(FileTools.removeSpeedGrade(parts[2]));
+				dev.setPartName(PartNameTools.removeSpeedGrade(parts[2]));
 				we = FileTools.loadWireEnumerator(parts[2]);
 			}
 			else if(line.startsWith("(primitive_defs ")){
