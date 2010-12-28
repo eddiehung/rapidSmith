@@ -47,6 +47,7 @@ import edu.byu.ece.rapidSmith.device.helper.WireConnection;
 import edu.byu.ece.rapidSmith.router.Node;
 import edu.byu.ece.rapidSmith.util.FileTools;
 import edu.byu.ece.rapidSmith.util.MessageGenerator;
+import edu.byu.ece.rapidSmith.util.PartNameTools;
 
 /**
  * This is the main class that stores information about each Xilinx part.  It contains
@@ -368,7 +369,7 @@ public class Device implements Serializable{
 	 * @return the partName The part name of this device.
 	 */
 	public String getPartName(){
-		return FileTools.removeSpeedGrade(partName);
+		return PartNameTools.removeSpeedGrade(partName);
 	}
 
 	/**

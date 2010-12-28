@@ -115,8 +115,8 @@ public class HardMacroGenerator {
 	 */
 	public HardMacroGenerator(Design design){
 		this.design = design;
-		if(!(this.design.getFamilyName().contains("virtex4") || this.design.getFamilyName().contains("virtex5"))){
-			MessageGenerator.briefErrorAndExit("HMG does not support " + design.getFamilyName());
+		if(!(this.design.getExactFamilyName().contains("virtex4") || this.design.getExactFamilyName().contains("virtex5"))){
+			MessageGenerator.briefErrorAndExit("HMG does not support " + design.getExactFamilyName());
 		}
 
 		// Get the System's line terminator string
@@ -289,11 +289,11 @@ public class HardMacroGenerator {
 							if(pin.getInstance().equals(inst)){
 								pin.setInstance(newSLICE);
 								String pinName = pin.getName();
-								if(design.getFamilyName().contains("virtex4")){
+								if(design.getExactFamilyName().contains("virtex4")){
 									if(pinName.equals("CE1")) pin.setPinName("CE");
 									if(pinName.equals("D")) pin.setPinName("BY");
 									if(pinName.equals("Q1")) pin.setPinName("YQ");
-								}else if(design.getFamilyName().contains("virtex5")){
+								}else if(design.getExactFamilyName().contains("virtex5")){
 									//TODO V5
 									if(pinName.equals("CE1")) pin.setPinName("CE");
 									if(pinName.equals("D")) pin.setPinName("DX");
@@ -327,11 +327,11 @@ public class HardMacroGenerator {
 							if(pin.getInstance().equals(inst)){
 								pin.setInstance(newSLICE);
 								String pinName = pin.getName();
-								if(design.getFamilyName().contains("virtex4")){
+								if(design.getExactFamilyName().contains("virtex4")){
 									if(pinName.equals("OCE")) pin.setPinName("CE");
 									if(pinName.equals("D1")) pin.setPinName("BY");
 									if(pinName.equals("OQ")) pin.setPinName("YQ");
-								}else if(design.getFamilyName().contains("virtex5")){
+								}else if(design.getExactFamilyName().contains("virtex5")){
 									//TODO V5
 									if(pinName.equals("OCE")) pin.setPinName("CE");
 									if(pinName.equals("D1")) pin.setPinName("DX");
@@ -458,10 +458,10 @@ public class HardMacroGenerator {
 				}
 				if(!foundBadInstance){
 					inst.getAttributes().clear();
-					if(design.getFamilyName().contains("virtex4")){
+					if(design.getExactFamilyName().contains("virtex4")){
 						inst.getAttributes().add(new Attribute("G","","#LUT:D=0"));
 						inst.getAttributes().add(new Attribute("YUSED","","0"));
-					}else if(design.getFamilyName().contains("virtex5")){
+					}else if(design.getExactFamilyName().contains("virtex5")){
 						//TODO V5
 						inst.getAttributes().add(new Attribute("D6LUT","","#LUT:O6=0"));
 						inst.getAttributes().add(new Attribute("DUSED","","0"));
@@ -640,13 +640,13 @@ public class HardMacroGenerator {
 		Instance inst = new Instance();
 		inst.setName(name);
 		inst.setType(PrimitiveType.SLICEL);
-		if(design.getFamilyName().contains("virtex4")){
+		if(design.getExactFamilyName().contains("virtex4")){
 			inst.getAttributes().add(new Attribute("DYMUX","","BY"));
 			inst.getAttributes().add(new Attribute("FFY","","#FF"));
 			inst.getAttributes().add(new Attribute("FFY_INIT_ATTR","","INIT0"));
 			inst.getAttributes().add(new Attribute("FFY_SR_ATTR","","SRLOW"));
 			inst.getAttributes().add(new Attribute("SYNC_ATTR","","SYNC"));
-		}else if(design.getFamilyName().contains("virtex5")){
+		}else if(design.getExactFamilyName().contains("virtex5")){
 			//TODO V5
 			//might need?: inst.getAttributes().add(new Attribute("CEUSED","","0"));
 			inst.getAttributes().add(new Attribute("DFFMUX","","DX"));
@@ -760,9 +760,9 @@ public class HardMacroGenerator {
 					Instance inst = createStaticSliceSource(net.getType());
 					placeStaticSlice(inst, true);
 					Pin newPin = null;
-					if(design.getFamilyName().contains("virtex4")){
+					if(design.getExactFamilyName().contains("virtex4")){
 						 newPin = new Pin(true,"Y",inst);
-					}else if(design.getFamilyName().contains("virtex5")){
+					}else if(design.getExactFamilyName().contains("virtex5")){
 						//TODO V5
 						newPin = new Pin(true,"D",inst);
 					}
@@ -819,9 +819,9 @@ public class HardMacroGenerator {
 					Instance inst = createStaticSliceSource(net.getType());
 					placeStaticSlice(inst, true);
 					Pin newPin = null;
-					if(design.getFamilyName().contains("virtex4")){
+					if(design.getExactFamilyName().contains("virtex4")){
 						 newPin = new Pin(true,"Y",inst);
-					}else if(design.getFamilyName().contains("virtex5")){
+					}else if(design.getExactFamilyName().contains("virtex5")){
 						//TODO V5
 						newPin = new Pin(true,"D",inst);
 					}
@@ -866,17 +866,17 @@ public class HardMacroGenerator {
 				instancesToAdd.add(newLUT);
 				newOutputNet.setName(net.getName() + "_OUTPUT");
 				Pin newLUTPin = null;
-				if(design.getFamilyName().contains("virtex4")){
+				if(design.getExactFamilyName().contains("virtex4")){
 					 newLUTPin = new Pin(true,"Y",newLUT);
-				}else if(design.getFamilyName().contains("virtex5")){
+				}else if(design.getExactFamilyName().contains("virtex5")){
 					//TODO V5
 					newLUTPin = new Pin(true,"D",newLUT);
 				}
 				newOutputNet.getPins().add(newLUTPin);
 				Pin newPin = null;
-				if(design.getFamilyName().contains("virtex4")){
+				if(design.getExactFamilyName().contains("virtex4")){
 					 newPin = new Pin(false,"G1",newLUT);
-				}else if(design.getFamilyName().contains("virtex5")){
+				}else if(design.getExactFamilyName().contains("virtex5")){
 					//TODO V5
 					newPin = new Pin(false,"D1",newLUT);
 				}
@@ -1033,10 +1033,10 @@ public class HardMacroGenerator {
 		Instance inst = new Instance();
 		inst.setName("RS_DUMMY_CLB");
 		inst.setType(PrimitiveType.SLICEL);
-		if(design.getFamilyName().contains("virtex4")){
+		if(design.getExactFamilyName().contains("virtex4")){
 			inst.getAttributes().add(new Attribute("G","","#LUT:D=" + (netType.equals(NetType.GND) ? "0" :"1")));
 			inst.getAttributes().add(new Attribute("YUSED","","0"));
-		}else if(design.getFamilyName().contains("virtex5")){
+		}else if(design.getExactFamilyName().contains("virtex5")){
 			//TODO V5
 			inst.getAttributes().add(new Attribute("DUSED","","0"));
 			inst.getAttributes().add(new Attribute("D6LUT","","#LUT:O6=" + (netType.equals(NetType.GND) ? "0" :"1")));
@@ -1052,10 +1052,10 @@ public class HardMacroGenerator {
 		Instance inst = new Instance();
 		inst.setName("XDL_LUT");
 		inst.setType(PrimitiveType.SLICEL);
-		if(design.getFamilyName().contains("virtex4")){
+		if(design.getExactFamilyName().contains("virtex4")){
 			inst.getAttributes().add(new Attribute("YUSED","","0"));
 			inst.getAttributes().add(new Attribute("G","","#LUT:D=A1"));			
-		}else if(design.getFamilyName().contains("virtex5")){
+		}else if(design.getExactFamilyName().contains("virtex5")){
 			//TODO V5
 			inst.getAttributes().add(new Attribute("DUSED","","0"));
 			inst.getAttributes().add(new Attribute("D6LUT","","#LUT:O6=A1"));

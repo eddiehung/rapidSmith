@@ -37,8 +37,10 @@ import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.PrimitiveType;
 import edu.byu.ece.rapidSmith.device.WireEnumerator;
+import edu.byu.ece.rapidSmith.util.FamilyType;
 import edu.byu.ece.rapidSmith.util.FileTools;
 import edu.byu.ece.rapidSmith.util.MessageGenerator;
+import edu.byu.ece.rapidSmith.util.PartNameTools;
 
 /**
  * The design class houses an entire XDL design or hard macro.  It keeps
@@ -333,14 +335,50 @@ public class Design implements Serializable{
 	}
 	
 	/**
-	 * Gets and returns the Xilinx family name of the part this design targets.
-	 * A Xilinx family name (virtex4, spartan3, virtex5, ...) can be extracted
-	 * from the part name.
-	 * @return The Xilinx family name of the part this design targets.
+	 * Gets and returns the all lower case exact Xilinx family name this design 
+	 * targets (ex: qvirtex4 instead of virtex4). DO NOT use exact family 
+	 * methods if it is to be used for accessing device or wire enumeration 
+	 * files as RapidSmith does not generate files for devices that have 
+	 * XDLRC compatible files.  
+	 * @return The exact Xilinx family name this design targets.
+	 */
+	public String getExactFamilyName(){
+		return PartNameTools.getExactFamilyNameFromPart(partName);
+	}
+	
+	/**
+	 * Gets and returns the all lower case base family name this design 
+	 * targets. This ensures compatibility with all RapidSmith files. For 
+	 * differentiating family names (qvirtex4 rather than virtex4) use 
+	 * getExactFamilyName().
+	 * @return The base family name of the part this design targets.
 	 */
 	public String getFamilyName(){
-		return FileTools.getFamilyNameFromPart(partName);
+		return PartNameTools.getFamilyNameFromPart(partName);
 	}
+	
+	/**
+	 * Gets and returns the all lower case exact Xilinx family type this design 
+	 * targets (ex: qvirtex4 instead of virtex4). DO NOT use exact family 
+	 * methods if it is to be used for accessing device or wire enumeration 
+	 * files as RapidSmith does not generate files for devices that have 
+	 * XDLRC compatible files.  
+	 * @return The exact Xilinx family type this design targets.
+	 */
+	public FamilyType getExactFamilyType(){
+		return PartNameTools.getExactFamilyTypeFromPart(partName);
+	}
+	
+	/**
+	 * Gets and returns the base family type this design targets. This
+	 * ensures compatibility with all RapidSmith files. For differentiating
+	 * family types (qvirtex4 rather than virtex4) use getExactFamilyType().
+	 * @return The base family type of the part this design targets.
+	 */
+	public FamilyType getFamilyType(){
+		return PartNameTools.getFamilyTypeFromPart(partName);
+	}
+	
 	
 	/**
 	 * Gets the NCD version present in the XDL design.
