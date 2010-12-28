@@ -26,7 +26,6 @@ import java.util.HashMap;
 import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.Tile;
-import edu.byu.ece.rapidSmith.util.MessageGenerator;
 
 /**
  * There is no direct representation of a module instance in XDL. Each member of
