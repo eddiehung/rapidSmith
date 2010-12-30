@@ -246,6 +246,7 @@ public class WireEnumerator implements Serializable {
 	 * @return The family name of this wire enumerator.
 	 */
 	public String getFamilyName(){
+		if(familyType == null) return null;
 		return familyType.toString().toLowerCase();
 	}
 	
