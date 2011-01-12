@@ -49,7 +49,7 @@ import edu.byu.ece.rapidSmith.util.MessageGenerator;
  * jars to run.
  * @author marc
  */
-public class PartTileBrowser extends QMainWindow {
+public class PartTileBrowser extends QMainWindow{
 
 	private PartTileBrowserView view;
 	private QLabel statusLabel;
@@ -58,7 +58,8 @@ public class PartTileBrowser extends QMainWindow {
 	private String currPart;
 	private QTreeWidget treeWidget;
 
-	public static void main(String[] args) {
+	public static void main(String[] args){
+		QApplication.setGraphicsSystem("raster");
 		QApplication.initialize(args);
 		PartTileBrowser testPTB = new PartTileBrowser(null);
 		testPTB.show();
