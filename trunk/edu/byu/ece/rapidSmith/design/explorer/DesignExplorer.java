@@ -93,7 +93,8 @@ public class DesignExplorer extends QMainWindow{
 	protected static final String MODULE_INSTANCES = "Module Instances";
 	protected static final String RESOURCE_REPORT = "Resource Report";
 	
-	public static void main(String[] args) {
+	public static void main(String[] args){
+		QApplication.setGraphicsSystem("raster");
 		QApplication.initialize(args);
 
 		String fileToOpen = null;

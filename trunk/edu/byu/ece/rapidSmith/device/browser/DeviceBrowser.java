@@ -82,6 +82,7 @@ public class DeviceBrowser extends QMainWindow{
 	 * @param args
 	 */
 	public static void main(String[] args){
+		QApplication.setGraphicsSystem("raster");
 		QApplication.initialize(args);
 		DeviceBrowser testPTB = new DeviceBrowser(null);
 		testPTB.show();
