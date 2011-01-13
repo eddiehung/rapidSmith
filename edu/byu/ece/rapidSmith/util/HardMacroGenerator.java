@@ -524,7 +524,7 @@ public class HardMacroGenerator {
 					net.setName(net.getName() + "_VCC");
 				else
 					net.setName(net.getName() + "_GND");
-				net.setType(NetType.UNKNOWN);
+				net.setType(NetType.WIRE);
 			}
 		}
 	}
