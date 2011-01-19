@@ -23,6 +23,9 @@ package edu.byu.ece.rapidSmith.device;
 import java.io.Serializable;
 import java.util.HashMap;
 
+import edu.byu.ece.rapidSmith.util.FamilyType;
+import edu.byu.ece.rapidSmith.util.PartNameTools;
+
 /**
  * This class represents the primitive sites found in XDLRC files.  Theses
  * represent places on the FPGA where a particular instance of a primitive (or
@@ -32,27 +35,17 @@ import java.util.HashMap;
 public class PrimitiveSite implements Serializable{
 
 	private static final long serialVersionUID = 4891980590392076374L;
-	/** Name of the primitive instance with X and Y coordinate (ie. SLICE_X0Y0) */
+	/** Name of the primitive site with X and Y coordinates (ie. SLICE_X0Y0) */
 	protected String name;
-	/** The type of the instance */
+	/** The primitive type of the site */
 	protected PrimitiveType type;
-	/** The tile where this instance resides */
+	/** The tile where this site resides */
 	protected Tile tile;
 	/** Keeps track of all the in/out pins in the primitive with their wire enumeration value */
 	protected HashMap<String,Integer> pins;
-	/** A list of valid primitive types that can reside in a RAMBFIFO36 primitive site */
-	public static java.util.HashSet<PrimitiveType> v5RAMBFIFO36Compatible;
-	static{
-		v5RAMBFIFO36Compatible = new java.util.HashSet<PrimitiveType>(8);
-		v5RAMBFIFO36Compatible.add(PrimitiveType.FIFO36_72_EXP);
-		v5RAMBFIFO36Compatible.add(PrimitiveType.FIFO36_EXP);
-		v5RAMBFIFO36Compatible.add(PrimitiveType.RAMB18X2);
-		v5RAMBFIFO36Compatible.add(PrimitiveType.RAMB18X2SDP);
-		v5RAMBFIFO36Compatible.add(PrimitiveType.RAMB36SDP_EXP);
-		v5RAMBFIFO36Compatible.add(PrimitiveType.RAMB36_EXP);
-		v5RAMBFIFO36Compatible.add(PrimitiveType.RAMBFIFO18);
-		v5RAMBFIFO36Compatible.add(PrimitiveType.RAMBFIFO18_36);
-	}
+	/** Keeps track of extra site types on which primitive types can be placed */
+	@SuppressWarnings("unchecked")
+	public static HashMap<PrimitiveType, PrimitiveType[]>[] compatibleTypesArray = new HashMap[FamilyType.values().length];
 	
 	/**
 	 * Constructor for a new PrimitiveSite
@@ -159,21 +152,24 @@ public class PrimitiveSite implements Serializable{
 	 * @return True if otherType can be placed at this primitive site, false otherwise.
 	 */
 	public boolean isCompatiblePrimitiveType(PrimitiveType otherType){
+		// All primitive types can reside in a site of their own type
 		if(type.equals(otherType)){
 			return true;
 		}
-		else if(otherType.equals(PrimitiveType.SLICEL) && type.equals(PrimitiveType.SLICEM)){
-			return true;
+		// If its not an exact match, lets check if this site can accommodate
+		// the otherType 
+		FamilyType baseFamilyType = tile.getDevice().getFamilyType();
+		PrimitiveType[] compatibleTypes = compatibleTypesArray[baseFamilyType.ordinal()].get(otherType);
+		if(compatibleTypes == null){
+			return false;
 		}
-		else if(otherType.equals(PrimitiveType.IOB) && 
-				(type.equals(PrimitiveType.IOBM) || type.equals(PrimitiveType.IOBS))){
-			return true;
-		}
-		else if(type.equals(PrimitiveType.RAMBFIFO36) && v5RAMBFIFO36Compatible.contains(otherType)){
-			return true;
-		}
-		else if(type.equals(PrimitiveType.BUFGCTRL) && otherType.equals(PrimitiveType.BUFG)){
-			return true;
+		// Check if this site is in the compatible type list for otherType
+		// (NOTE: These arrays are generally very short, so hopefully this will
+		// not be a bottleneck)
+		for(PrimitiveType compatibleType : compatibleTypes){
+			if(compatibleType.equals(this.type)){
+				return true;
+			}
 		}
 		return false;
 	}
@@ -225,5 +221,202 @@ public class PrimitiveSite implements Serializable{
 		else if(!type.equals(other.type))
 			return false;
 		return true;
+	}
+	
+	// Static initialization stuff
+	static{
+		HashMap<PrimitiveType, PrimitiveType[]> compatibleSites;
+		for (FamilyType specificFamilyType : FamilyType.values()){
+			compatibleSites = new HashMap<PrimitiveType, PrimitiveType[]>();
+			switch (PartNameTools.getBaseTypeFromFamilyType(specificFamilyType)){
+				/*case SPARTAN2:
+					compatibleSites.put(PrimitiveType.IOB,
+							new PrimitiveType[]{PrimitiveType.PCIIOB});
+					break;
+				case SPARTAN2E:
+					compatibleSites.put(PrimitiveType.IOB,
+							new PrimitiveType[]{PrimitiveType.DLLIOB, PrimitiveType.PCIIOB});
+					break;
+				case SPARTAN3:
+					compatibleSites.put(PrimitiveType.IOB,
+							new PrimitiveType[]{PrimitiveType.DIFFM, PrimitiveType.DIFFS});
+					compatibleSites.put(PrimitiveType.SLICEL,
+							new PrimitiveType[]{PrimitiveType.SLICEM});
+					break;*/
+				case SPARTAN3A:
+					compatibleSites.put(PrimitiveType.DIFFM,
+							new PrimitiveType[]{PrimitiveType.DIFFMLR, PrimitiveType.DIFFMTB});
+					compatibleSites.put(PrimitiveType.DIFFMI,
+							new PrimitiveType[]{PrimitiveType.DIFFMLR, PrimitiveType.DIFFMTB});
+					compatibleSites.put(PrimitiveType.DIFFMI_NDT,
+							new PrimitiveType[]{PrimitiveType.DIFFMLR, PrimitiveType.DIFFMTB});
+					compatibleSites.put(PrimitiveType.DIFFS,
+							new PrimitiveType[]{PrimitiveType.DIFFSLR, PrimitiveType.DIFFSTB});
+					compatibleSites.put(PrimitiveType.DIFFSI,
+							new PrimitiveType[]{PrimitiveType.DIFFSLR, PrimitiveType.DIFFSTB});
+					compatibleSites.put(PrimitiveType.DIFFSI_NDT,
+							new PrimitiveType[]{PrimitiveType.DIFFSLR, PrimitiveType.DIFFSTB});		
+					compatibleSites.put(PrimitiveType.IBUF,
+							new PrimitiveType[]{PrimitiveType.DIFFMLR, PrimitiveType.DIFFMTB, PrimitiveType.DIFFSLR, PrimitiveType.DIFFSTB, PrimitiveType.DIFFSI_NDT, PrimitiveType.DIFFMI_NDT});
+					compatibleSites.put(PrimitiveType.IOB,
+							new PrimitiveType[]{PrimitiveType.IBUF, PrimitiveType.DIFFMLR, PrimitiveType.DIFFMTB, PrimitiveType.DIFFSLR, PrimitiveType.DIFFSTB});
+					compatibleSites.put(PrimitiveType.IOBLR,
+							new PrimitiveType[]{PrimitiveType.DIFFSLR, PrimitiveType.DIFFMLR});
+					compatibleSites.put(PrimitiveType.SLICEL,
+							new PrimitiveType[]{PrimitiveType.SLICEM});
+					break;
+				case SPARTAN3ADSP:
+					compatibleSites.put(PrimitiveType.DIFFM,
+							new PrimitiveType[]{PrimitiveType.DIFFMLR, PrimitiveType.DIFFMTB});
+					compatibleSites.put(PrimitiveType.DIFFMI,
+							new PrimitiveType[]{PrimitiveType.DIFFMLR, PrimitiveType.DIFFMTB});
+					compatibleSites.put(PrimitiveType.DIFFMI_NDT,
+							new PrimitiveType[]{PrimitiveType.DIFFMLR, PrimitiveType.DIFFMTB});
+					compatibleSites.put(PrimitiveType.DIFFS,
+							new PrimitiveType[]{PrimitiveType.DIFFSLR, PrimitiveType.DIFFSTB});
+					compatibleSites.put(PrimitiveType.DIFFSI,
+							new PrimitiveType[]{PrimitiveType.DIFFSLR, PrimitiveType.DIFFSTB});
+					compatibleSites.put(PrimitiveType.DIFFSI_NDT,
+							new PrimitiveType[]{PrimitiveType.DIFFSLR, PrimitiveType.DIFFSTB});
+					compatibleSites.put(PrimitiveType.IBUF,
+							new PrimitiveType[]{PrimitiveType.DIFFMI_NDT, PrimitiveType.DIFFSI_NDT, PrimitiveType.DIFFMLR, PrimitiveType.DIFFMTB, PrimitiveType.DIFFSLR, PrimitiveType.DIFFSTB});
+					compatibleSites.put(PrimitiveType.IOB,
+							new PrimitiveType[]{PrimitiveType.IBUF, PrimitiveType.DIFFMLR, PrimitiveType.DIFFMTB, PrimitiveType.DIFFSLR, PrimitiveType.DIFFSTB});
+					compatibleSites.put(PrimitiveType.IOBLR,
+							new PrimitiveType[]{PrimitiveType.IOBLR, PrimitiveType.DIFFMLR, PrimitiveType.DIFFSLR});
+					compatibleSites.put(PrimitiveType.SLICEL,
+							new PrimitiveType[]{PrimitiveType.SLICEM});
+					break;
+				case SPARTAN3E:
+					compatibleSites.put(PrimitiveType.DIFFMI,
+							new PrimitiveType[]{PrimitiveType.DIFFM});
+					compatibleSites.put(PrimitiveType.DIFFSI,
+							new PrimitiveType[]{PrimitiveType.DIFFS});
+					compatibleSites.put(PrimitiveType.IBUF,
+							new PrimitiveType[]{PrimitiveType.IOB, PrimitiveType.DIFFM, PrimitiveType.DIFFMI, PrimitiveType.DIFFS, PrimitiveType.DIFFSI});
+					compatibleSites.put(PrimitiveType.IOB,
+							new PrimitiveType[]{PrimitiveType.DIFFM, PrimitiveType.DIFFS});
+					compatibleSites.put(PrimitiveType.SLICEL,
+							new PrimitiveType[]{PrimitiveType.SLICEM});
+					break;
+				case SPARTAN6:
+					compatibleSites.put(PrimitiveType.BUFG,
+							new PrimitiveType[]{PrimitiveType.BUFGMUX});
+					compatibleSites.put(PrimitiveType.BUFIO2FB_2CLK,
+							new PrimitiveType[]{PrimitiveType.BUFIO2FB});
+					compatibleSites.put(PrimitiveType.BUFIO2_2CLK,
+							new PrimitiveType[]{PrimitiveType.BUFIO2});
+					compatibleSites.put(PrimitiveType.DCM_CLKGEN,
+							new PrimitiveType[]{PrimitiveType.DCM});
+					compatibleSites.put(PrimitiveType.IOB,
+							new PrimitiveType[]{PrimitiveType.IOBM, PrimitiveType.IOBS});
+					compatibleSites.put(PrimitiveType.IODRP2,
+							new PrimitiveType[]{PrimitiveType.IODELAY2});
+					compatibleSites.put(PrimitiveType.IODRP2_MCB,
+							new PrimitiveType[]{PrimitiveType.IODELAY2});
+					compatibleSites.put(PrimitiveType.ISERDES2,
+							new PrimitiveType[]{PrimitiveType.ILOGIC2});
+					compatibleSites.put(PrimitiveType.OSERDES2,
+							new PrimitiveType[]{PrimitiveType.OLOGIC2});
+					compatibleSites.put(PrimitiveType.SLICEL,
+							new PrimitiveType[]{PrimitiveType.SLICEM});
+					compatibleSites.put(PrimitiveType.SLICEX,
+							new PrimitiveType[]{PrimitiveType.SLICEL, PrimitiveType.SLICEM});
+					break;
+				/*case VIRTEX:
+					compatibleSites.put(PrimitiveType.IOB,
+							new PrimitiveType[]{PrimitiveType.PCIIOB});
+					break;
+				case VIRTEX2:
+					compatibleSites.put(PrimitiveType.IOB,
+							new PrimitiveType[]{PrimitiveType.DIFFM, PrimitiveType.DIFFS});
+					break;
+				case VIRTEX2P:
+					compatibleSites.put(PrimitiveType.IOB,
+							new PrimitiveType[]{PrimitiveType.DIFFM, PrimitiveType.DIFFS});
+					break;*/
+				case VIRTEX4:
+					compatibleSites.put(PrimitiveType.BUFG,
+							new PrimitiveType[]{PrimitiveType.BUFGCTRL});
+					compatibleSites.put(PrimitiveType.IOB,
+							new PrimitiveType[]{PrimitiveType.IOBM, PrimitiveType.IOBS, PrimitiveType.LOWCAPIOB});
+					compatibleSites.put(PrimitiveType.IOBM,
+							new PrimitiveType[]{PrimitiveType.NOMCAPIOB});
+					compatibleSites.put(PrimitiveType.IOBS,
+							new PrimitiveType[]{PrimitiveType.NOMCAPIOB});
+					compatibleSites.put(PrimitiveType.IPAD,
+							new PrimitiveType[]{PrimitiveType.IOBM, PrimitiveType.IOBS, PrimitiveType.LOWCAPIOB});
+					compatibleSites.put(PrimitiveType.ILOGIC,
+							new PrimitiveType[]{PrimitiveType.ISERDES});
+					compatibleSites.put(PrimitiveType.OLOGIC,
+							new PrimitiveType[]{PrimitiveType.OSERDES});
+					compatibleSites.put(PrimitiveType.SLICEL,
+							new PrimitiveType[]{PrimitiveType.SLICEM});	
+					break;
+				case VIRTEX5:
+					compatibleSites.put(PrimitiveType.BUFG,
+							new PrimitiveType[]{PrimitiveType.BUFGCTRL});
+					compatibleSites.put(PrimitiveType.FIFO36_72_EXP,
+							new PrimitiveType[]{PrimitiveType.RAMBFIFO36});
+					compatibleSites.put(PrimitiveType.FIFO36_EXP,
+							new PrimitiveType[]{PrimitiveType.RAMBFIFO36});
+					compatibleSites.put(PrimitiveType.IOB,
+							new PrimitiveType[]{PrimitiveType.IOBM, PrimitiveType.IOBS});
+					compatibleSites.put(PrimitiveType.IPAD,
+							new PrimitiveType[]{PrimitiveType.IOBM, PrimitiveType.IOBS});
+					compatibleSites.put(PrimitiveType.ISERDES,
+							new PrimitiveType[]{PrimitiveType.ILOGIC});
+					compatibleSites.put(PrimitiveType.OSERDES,
+							new PrimitiveType[]{PrimitiveType.OLOGIC});		
+					compatibleSites.put(PrimitiveType.RAMB18X2,
+							new PrimitiveType[]{PrimitiveType.RAMBFIFO36});
+					compatibleSites.put(PrimitiveType.RAMB18X2SDP,
+							new PrimitiveType[]{PrimitiveType.RAMBFIFO36});
+					compatibleSites.put(PrimitiveType.RAMB36SDP_EXP,
+							new PrimitiveType[]{PrimitiveType.RAMBFIFO36});
+					compatibleSites.put(PrimitiveType.RAMB36_EXP,
+							new PrimitiveType[]{PrimitiveType.RAMBFIFO36});
+					compatibleSites.put(PrimitiveType.RAMBFIFO18,
+							new PrimitiveType[]{PrimitiveType.RAMBFIFO36});
+					compatibleSites.put(PrimitiveType.RAMBFIFO18_36,
+							new PrimitiveType[]{PrimitiveType.RAMBFIFO36});
+					compatibleSites.put(PrimitiveType.SLICEL,
+							new PrimitiveType[]{PrimitiveType.SLICEM});
+					break;			
+				case VIRTEX6:
+					compatibleSites.put(PrimitiveType.BUFG,
+							new PrimitiveType[]{PrimitiveType.BUFGCTRL});
+					compatibleSites.put(PrimitiveType.FIFO36E1,
+							new PrimitiveType[]{PrimitiveType.RAMBFIFO36E1});
+					compatibleSites.put(PrimitiveType.ISERDESE1,
+							new PrimitiveType[]{PrimitiveType.ILOGICE1});
+					compatibleSites.put(PrimitiveType.IOB,
+							new PrimitiveType[]{PrimitiveType.IOBM, PrimitiveType.IOBS});
+					compatibleSites.put(PrimitiveType.IPAD,
+							new PrimitiveType[]{PrimitiveType.IOBM, PrimitiveType.IOBS});
+					compatibleSites.put(PrimitiveType.OSERDESE1,
+							new PrimitiveType[]{PrimitiveType.OLOGICE1});
+					compatibleSites.put(PrimitiveType.RAMB18E1,
+							new PrimitiveType[]{PrimitiveType.FIFO18E1});
+					compatibleSites.put(PrimitiveType.RAMB36E1,
+							new PrimitiveType[]{PrimitiveType.RAMBFIFO36E1});	
+					compatibleSites.put(PrimitiveType.SLICEL,
+							new PrimitiveType[]{PrimitiveType.SLICEM});		
+					break;
+				/*case VIRTEXE:
+					compatibleSites.put(PrimitiveType.IOB,
+							new PrimitiveType[]{PrimitiveType.DLLIOB, PrimitiveType.PCIIOB});
+					break;*/
+				case ARTIX7:
+					break;
+				case KINTEX7:
+					break;
+				case VIRTEX7:
+					break;
+				default:
+					break;
+			}
+			compatibleTypesArray[specificFamilyType.ordinal()] = compatibleSites;
+		}
 	}
 }

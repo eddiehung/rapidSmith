@@ -60,6 +60,8 @@ public class Tile implements Serializable{
 	private int tileYCoordinate;
 	/** This is the X coordinate in the tile name (ex: 0 in INT_X0Y5) */
 	private int tileXCoordinate;
+	/** Reference to this tile's device object */
+	private Device dev;
 
 	/**
 	 * Constructor for the tile class, initializes all the private variables to empty 
@@ -70,8 +72,25 @@ public class Tile implements Serializable{
 		sources = null;
 		wires = new HashMap<Integer,Wire[]>();
 		sinks = new HashMap<Integer, SinkPin>();
+		dev = null;
 	}
 	
+	/**
+	 * Sets the device which owns this tile.
+	 * @param device The device to set
+	 */
+	public void setDevice(Device device){
+		this.dev = device;
+	}
+
+	/**
+	 * Gets the device to which this tile belongs.
+	 * @return The device to which this tile belongs.
+	 */
+	public Device getDevice(){
+		return dev;
+	}
+
 	/**
 	 * Gets and returns the HashMap containing the sinks for this tile.  The keys are
 	 * the actual sink wires and the values are the SinkPin objects.
@@ -293,10 +312,9 @@ public class Tile implements Serializable{
 	/**
 	 * Gets a unique integer address for this tile (useful for representing a tile
 	 * as a single integer).
-	 * @param dev The device this tile belongs to.
-	 * @return The unique integer address of this tile in the device dev.
+	 * @return The unique integer address of this tile.
 	 */
-	public int getUniqueAddress(Device dev){
+	public int getUniqueAddress(){
 		return dev.getColumns()*this.row + this.column; 
 	}
 	
