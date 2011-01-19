@@ -431,6 +431,25 @@ public class Instance implements Serializable{
 	}
 
 	/**
+	 * This does a brute force search over this nets connecting this
+	 * Instance to find a pin with the matching name, pinName. Unfortunately,
+	 * that means that this method is slow and probably will need to be 
+	 * improved upon.
+	 * @param pinName Name of the pin to find.
+	 * @return The Pin object with a matching pin name.
+	 */
+	public Pin getPin(String pinName){
+		for(Net net : netList){
+			for(Pin pin : net.getPins()){
+				if(pin.getName().equals(pinName) && pin.getInstanceName().equals(name)){
+					return pin;
+				}
+			}
+		}
+		return null;
+	}
+	
+	/**
 	 * Generates a hash code for the instance based on instance name. Instance
 	 * names should be unique throughout a design.
 	 */
