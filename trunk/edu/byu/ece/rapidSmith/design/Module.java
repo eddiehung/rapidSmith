@@ -490,7 +490,7 @@ public class Module implements Serializable{
 				hos.writeInt(net.getPIPs().size());
 				for(PIP p : net.getPIPs()){
 					// Tile tile;
-					hos.writeInt(p.getTile().getUniqueAddress(dev));
+					hos.writeInt(p.getTile().getUniqueAddress());
 					// int startWire;
 					hos.writeInt(p.getStartWire());
 					// int endWire;

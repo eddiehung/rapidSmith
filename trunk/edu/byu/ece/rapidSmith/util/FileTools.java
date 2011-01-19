@@ -293,7 +293,7 @@ public class FileTools {
 			dos.writeInt(p.getType().ordinal());
 			
 			// Write Tile (Unique Integer)
-			dos.writeInt(p.getTile().getUniqueAddress(device));
+			dos.writeInt(p.getTile().getUniqueAddress());
 		
 			// Write PinMap
 			dos.writeInt(primitivePinPool.getEnumerationValue(new PrimitivePinMap(p.getPins())));

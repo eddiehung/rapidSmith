@@ -45,6 +45,7 @@ import edu.byu.ece.rapidSmith.device.helper.TileWires;
 import edu.byu.ece.rapidSmith.device.helper.WireArray;
 import edu.byu.ece.rapidSmith.device.helper.WireConnection;
 import edu.byu.ece.rapidSmith.router.Node;
+import edu.byu.ece.rapidSmith.util.FamilyType;
 import edu.byu.ece.rapidSmith.util.FileTools;
 import edu.byu.ece.rapidSmith.util.MessageGenerator;
 import edu.byu.ece.rapidSmith.util.PartNameTools;
@@ -93,8 +94,10 @@ public class Device implements Serializable{
 	//========================================================================//
 	/** Loaded only for Virtex5 parts to patch a hole in RAMB pin mappings */
 	private V5RAMBPatch v5Patch;
-	/** Created on demand by user calling getPrimitiveSiteIndex(), where the ArrayList index is the ordinal of the InstanceType */
+	/** Created on demand when user calls getPrimitiveSiteIndex(), where the ArrayList index is the ordinal of the PrimitiveType */
 	private ArrayList<PrimitiveSite[]> primitiveSiteIndex;
+	/** Created on demand when user calls getCompatibleSites(), where the ArrayList index is the ordinal of the PrimitiveType */
+	private ArrayList<PrimitiveSite[]> compatibleSiteIndex;
 	/** A set of all TileTypes that have switch matrices in them */
 	private HashSet<TileType> switchMatrixTypes;
 	
@@ -373,6 +376,28 @@ public class Device implements Serializable{
 	}
 
 	/**
+	 * Gets and returns the all lower case exact Xilinx family type for this  
+	 * device (ex: qvirtex4 instead of virtex4). DO NOT use exact family 
+	 * methods if it is to be used for accessing device or wire enumeration 
+	 * files as RapidSmith does not generate files for devices that have 
+	 * XDLRC compatible files.  
+	 * @return The exact Xilinx family type for this device.
+	 */
+	public FamilyType getExactFamilyType(){
+		return PartNameTools.getExactFamilyTypeFromPart(partName);
+	}
+	
+	/**
+	 * Gets and returns the base family type for this device. This
+	 * ensures compatibility with all RapidSmith files. For differentiating
+	 * family types (qvirtex4 rather than virtex4) use getExactFamilyType().
+	 * @return The base family type of the part for this device.
+	 */
+	public FamilyType getFamilyType(){
+		return PartNameTools.getFamilyTypeFromPart(partName);
+	}
+	
+	/**
 	 * Sets the part name of this device.  This part name should only have the package
 	 * information but not speed grade (ex: xc4vfx12ff668).
 	 * @param partName the partName to set.
@@ -406,12 +431,14 @@ public class Device implements Serializable{
 	}
 
 	/**
-	 * This method will get (create if null) a data structure which stores all of the device's
-	 * primitive sites by type.  To get all of the primitive sites of a particular
-	 * type, use the PrimitiveType.ordinal() method to get the representative integer
-	 * and use that value to index into the ArrayList.  This will return an array of 
-	 * all primitive sites of that same type.  
-	 * @return The data structure which stores all of the primitive sites separated by type. 
+	 * This method will get (create if null) a data structure which stores all 
+	 * of the device's primitive sites by type.  To get all of the primitive 
+	 * sites of a particular type, use the PrimitiveType.ordinal() method to 
+	 * get the representative integer and use that value to index into the 
+	 * ArrayList.  This will return an array of all primitive sites of that 
+	 * same type.  
+	 * @return The data structure which stores all of the primitive sites 
+	 * separated by type. 
 	 */
 	public ArrayList<PrimitiveSite[]> getPrimitiveSiteIndex(){
 		if(primitiveSiteIndex == null){
@@ -421,8 +448,25 @@ public class Device implements Serializable{
 	}
 	
 	/**
+	 * This method will get (create if null) a data structure which stores all 
+	 * of the compatible primitive sites for each primitive type.  To get all 
+	 * the compatible primitive sites of a particular type, use the 
+	 * PrimitiveType.ordinal() method to get the representative integer and use
+	 * that value to index into the ArrayList.  This will return an array of 
+	 * all compatible primitive sites of that same type.  
+	 * @return The data structure which stores all compatible primitive sites 
+	 * for each primitive type. 
+	 */
+	public ArrayList<PrimitiveSite[]> getCompatibleSiteIndex(){
+		if(compatibleSiteIndex == null){
+			createCompatibleSiteIndex();
+		}
+		return compatibleSiteIndex;
+	}
+	
+	/**
 	 * This method will get all primitive sites with the same base type as
-	 * that passed as a parameter type.  This does not necessarily get all
+	 * that passed as a parameter type.  This does not get all
 	 * compatible sites for the PrimitiveType type as a SLICEL request would
 	 * only return all SLICEL type sites and no SLICEM types which can also 
 	 * be a valid site for SLICELs.
@@ -431,6 +475,52 @@ public class Device implements Serializable{
 	 */
 	public PrimitiveSite[] getAllPrimitiveSitesOfType(PrimitiveType type){
 		return getPrimitiveSiteIndex().get(type.ordinal());
+	}
+	
+	/**
+	 * This method will get all compatible primitive sites for a particular 
+	 * primitive type in this device.  For example, a SLICEL can be placed at 
+	 * all SLICEL sites AND all SLICEM sites.  If the type given were SLICEL, 
+	 * this method would return an array of all SLICEL and SLICEM sites.
+	 * @param type The type for which to find compatible primitive sites.
+	 * @return An array of compatible sites suitable for placement of a 
+	 * primitive of type type.
+	 */
+	public PrimitiveSite[] getAllCompatibleSites(PrimitiveType type){
+		int size = 0;
+		// Check if there are sites of the given type
+		ArrayList<PrimitiveSite[]> compatibleList = new ArrayList<PrimitiveSite[]>();
+		PrimitiveSite[] match = getAllPrimitiveSitesOfType(type);
+		if(match != null){
+			size += match.length;
+			compatibleList.add(match);
+		}
+		
+		// Check for other compatible site types
+		PrimitiveType[] compatibleTypes = PrimitiveSite.compatibleTypesArray[getFamilyType().ordinal()].get(type);
+		if(compatibleTypes != null){
+			for(PrimitiveType compatibleType : compatibleTypes){
+				match = getAllPrimitiveSitesOfType(compatibleType);
+				if(match != null){
+					size += match.length;
+					compatibleList.add(match);
+				}
+			}
+		}
+		
+		// If there are no compatible sites, return null
+		if(compatibleList.size() == 0){
+			return null;
+		}
+		int i = 0;
+		PrimitiveSite[] newArray = new PrimitiveSite[size];
+		for(PrimitiveSite[] sites : compatibleList){
+			for(PrimitiveSite site : sites){
+				newArray[i] = site;
+				i++;
+			}
+		}
+		return newArray;
 	}
 	
 	
@@ -447,6 +537,90 @@ public class Device implements Serializable{
 	//========================================================================//
 	// Object Population Methods
 	//========================================================================//
+	/**
+	 * This will create a data structure which organizes all primitive sites by types.
+	 * The outer ArrayList uses the PrimitiveType.ordinal() value as the index for
+	 * each type of primitive site.
+	 */
+	private void createPrimitiveSiteIndex(){
+		ArrayList<ArrayList<PrimitiveSite>> tmp = new ArrayList<ArrayList<PrimitiveSite>>(PrimitiveType.values().length);
+		for(int i = 0; i < PrimitiveType.values().length; i++){
+			tmp.add(new ArrayList<PrimitiveSite>());
+		}
+			
+		for(int i=0; i < this.rows; i++){
+			for(int j=0; j < this.columns; j++){
+				PrimitiveSite[] sites = tiles[i][j].getPrimitiveSites();
+				if(sites == null) continue;
+				for(PrimitiveSite site : sites){
+					tmp.get(site.getType().ordinal()).add(site);
+				}
+			}
+		}
+		
+		ArrayList<PrimitiveSite[]> index = new ArrayList<PrimitiveSite[]>();
+		for(ArrayList<PrimitiveSite> list : tmp){
+			if(list.size() == 0){
+				index.add(null);
+			}
+			else{
+				PrimitiveSite[] tmpArray = new PrimitiveSite[list.size()];
+				index.add(list.toArray(tmpArray));
+			}
+		}
+		this.primitiveSiteIndex = index;
+	}
+	
+	/**
+	 * This will create a data structure which finds all compatible primitive 
+	 * sites for a given primitive type.  It populates the compatibleSiteIndex
+	 * where the outer ArrayList uses the PrimitiveType.ordinal() value as 
+	 * the index of the type to get the compatible sites.
+	 */
+	private void createCompatibleSiteIndex(){
+		int size = 0;
+		compatibleSiteIndex = new ArrayList<PrimitiveSite[]>(PrimitiveType.values().length);
+		
+		// For each primitive type
+		for(PrimitiveType type: PrimitiveType.values()){
+			// Check if there are sites of the given type
+			ArrayList<PrimitiveSite[]> compatibleList = new ArrayList<PrimitiveSite[]>();
+			PrimitiveSite[] match = getAllPrimitiveSitesOfType(type);
+			if(match != null){
+				size += match.length;
+				compatibleList.add(match);
+			}
+			
+			// Check for other compatible site types
+			PrimitiveType[] compatibleTypes = PrimitiveSite.compatibleTypesArray[getFamilyType().ordinal()].get(type);
+			if(compatibleTypes != null){
+				for(PrimitiveType compatibleType : compatibleTypes){
+					match = getAllPrimitiveSitesOfType(compatibleType);
+					if(match != null){
+						size += match.length;
+						compatibleList.add(match);
+					}
+				}
+			}
+			
+			// If there are no compatible sites, return null
+			if(compatibleList.size() == 0){
+				compatibleSiteIndex.set(type.ordinal(), null);
+				continue;
+			}
+			int j = 0;
+			PrimitiveSite[] newArray = new PrimitiveSite[size];
+			for(PrimitiveSite[] sites : compatibleList){
+				for(PrimitiveSite site : sites){
+					newArray[j] = site;
+					j++;
+				}
+			}
+			compatibleSiteIndex.set(type.ordinal(), newArray);
+		}		
+	}
+	
+	
 	
 	/**
 	 * This method populated the tile map after parsing is complete.
@@ -574,40 +748,6 @@ public class Device implements Serializable{
 				}
 			}
 		}
-	}
-	
-	/**
-	 * This will create a data structure which organizes all primitive sites by types.
-	 * The outer ArrayList uses the PrimitiveType.ordinal() value as the index for
-	 * each type of primitive site.
-	 */
-	private void createPrimitiveSiteIndex(){
-		ArrayList<ArrayList<PrimitiveSite>> tmp = new ArrayList<ArrayList<PrimitiveSite>>(PrimitiveType.values().length);
-		for(int i = 0; i < PrimitiveType.values().length; i++){
-			tmp.add(new ArrayList<PrimitiveSite>());
-		}
-			
-		for(int i=0; i < this.rows; i++){
-			for(int j=0; j < this.columns; j++){
-				PrimitiveSite[] sites = tiles[i][j].getPrimitiveSites();
-				if(sites == null) continue;
-				for(PrimitiveSite site : sites){
-					tmp.get(site.getType().ordinal()).add(site);
-				}
-			}
-		}
-		
-		ArrayList<PrimitiveSite[]> index = new ArrayList<PrimitiveSite[]>();
-		for(ArrayList<PrimitiveSite> list : tmp){
-			if(list.size() == 0){
-				index.add(null);
-			}
-			else{
-				PrimitiveSite[] tmpArray = new PrimitiveSite[list.size()];
-				index.add(list.toArray(tmpArray));
-			}
-		}
-		this.primitiveSiteIndex = index;
 	}
 	
 	//========================================================================//
@@ -1022,7 +1162,10 @@ public class Device implements Serializable{
 
 					// Populate tileMap
 					tileMap.put(tileNames[index], t);
-
+					
+					// Populate Device reference
+					t.setDevice(this);
+					
 					index++;
 				}
 			}
