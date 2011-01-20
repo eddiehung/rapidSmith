@@ -328,6 +328,93 @@ public class PartNameTools {
 		return getFamilyTypeFromPart(partName).toString().toLowerCase();
 	}
 	
+	
+	public static String getSubFamilyFromPart(String partName){
+		partName = partName.toLowerCase();
+		switch(getFamilyTypeFromPart(partName)){
+			case SPARTAN3A:
+				return partName.contains("an") ? "AN" : "A";
+			case SPARTAN6:
+				if(partName.contains("t") && !(partName.contains("tq") || partName.contains("tg"))){
+					return "LXT";
+				}else{
+					return "LX";
+				}
+			case VIRTEX4: 
+				if(partName.contains("lx")){
+					return "LX";
+				}else if(partName.contains("sx")){
+					return "SX";
+				}else if(partName.contains("fx")){
+					return "FX";
+				}
+			case VIRTEX5: 
+				if(partName.contains("lx")){
+					if(partName.contains("t")){
+						return "LXT";
+					}else{
+						return "LX";
+					}
+				}else if(partName.contains("sx")){
+					return "SXT";
+				}else if(partName.contains("fx")){
+					return "FXT";
+				}else if(partName.contains("tx")){
+					return "TXT";
+				}
+			case VIRTEX6:
+			case VIRTEX6L: 
+				if(partName.contains("lx")){
+					return "LXT";
+				}else if(partName.contains("sx")){
+					return "SXT";
+				}else if(partName.contains("hx")){
+					return "HXT";
+				}else if(partName.contains("cx")){
+					return "CXT";
+				}
+			case VIRTEX7:
+				if(partName.contains("ht")){
+					return "HT";
+				}else if(partName.contains("xt")){
+					return "XT";
+				}else if(partName.contains("t")){
+					return "T";
+				}
+			default: 
+				return null;
+		}
+	}
+	
+	/**
+	 * This method will return the formal family name as given by Xilinx 'partgen.'  
+	 * @param type Type of family to get formal name.
+	 * @return The formal family name or null if none exists.
+	 */
+	public static String getFormalFamilyNameFromType(FamilyType type){
+		switch(getBaseTypeFromFamilyType(type)){
+			case ARTIX7: return "Artix7";
+			case KINTEX7: return "Kintex7";
+			case SPARTAN2: return "Spartan2";
+			case SPARTAN2E: return "Spartan2E";
+			case SPARTAN3: return "Spartan3";
+			case SPARTAN3A: return "Spartan3A and Spartan3AN";
+			case SPARTAN3ADSP: return "Spartan-3A DSP";
+			case SPARTAN3E: return "Spartan3E";
+			case SPARTAN6: return "Spartan6";
+			case VIRTEX: return "Virtex";
+			case VIRTEX2: return "Virtex2";
+			case VIRTEX2P: return "Virtex2P";
+			case VIRTEX4: return "Virtex4";
+			case VIRTEX5: return "Virtex5";
+			case VIRTEX6: return "Virtex6";
+			case VIRTEX7: return "Virtex7";
+			case VIRTEXE: return "VirtexE";
+			default: return null;
+		}
+	}
+	
+	
 	public static void main(String[] args){
 		// Run some tests to make sure we are doing things right
 		for(FamilyType type : FamilyType.values()){

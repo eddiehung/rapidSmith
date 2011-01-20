@@ -18,56 +18,32 @@
  * get a copy of the license at <http://www.gnu.org/licenses/>.
  * 
  */
-package edu.byu.ece.rapidSmith.util;
+package edu.byu.ece.rapidSmith.timing;
 
-/**
- * These names are taken from the Xilinx tool 'partgen.'  They are the
- * architecture names given, however, here they are called the family name. 
- * See the PartNameTools class for supporting methods.
- * @author Chris Lavin
- */
-public enum FamilyType{
-	ARTIX7,
-	ASPARTAN2E,
-	ASPARTAN3,
-	ASPARTAN3A,
-	ASPARTAN3ADSP,
-	ASPARTAN3E,
-	ASPARTAN6,
-	KINTEX7,
-	QARTIX7,
-	QKINTEX7,
-	QRVIRTEX,
-	QRVIRTEX2,
-	QRVIRTEX4,
-	QRVIRTEX5,
-	QRVIRTEX6,
-	QRVIRTEX7,
-	QSPARTAN6,
-	QSPARTAN6L,
-	QVIRTEX,
-	QVIRTEX2,
-	QVIRTEX2P,
-	QVIRTEX4,
-	QVIRTEX5,
-	QVIRTEX6,
-	QVIRTEX7,
-	QVIRTEXE,
-	SPARTAN2,
-	SPARTAN2E,
-	SPARTAN3,
-	SPARTAN3A,
-	SPARTAN3ADSP,
-	SPARTAN3E,
-	SPARTAN6,
-	SPARTAN6L,
-	VIRTEX,
-	VIRTEX2,
-	VIRTEX2P,
-	VIRTEX4,
-	VIRTEX5,
-	VIRTEX6,
-	VIRTEX6L,
-	VIRTEX7,
-	VIRTEXE
+import java.io.Serializable;
+
+import edu.byu.ece.rapidSmith.design.Net;
+
+public class RoutingPathElement extends PathElement implements Serializable{
+	
+	private static final long serialVersionUID = -8322328106512170640L;
+	
+	/** The net or physical resource */
+	private Net net;
+
+	/**
+	 * @param net the net to set
+	 */
+	public void setNet(Net net){
+		this.net = net;
+	}
+
+	/**
+	 * @return the net
+	 */
+	public Net getNet(){
+		return net;
+	}
+	
+	
 }

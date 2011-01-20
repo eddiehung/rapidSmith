@@ -21,6 +21,7 @@
 package edu.byu.ece.rapidSmith.design.explorer;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import com.trolltech.qt.core.Qt.WindowModality;
 import com.trolltech.qt.gui.QAction;
@@ -44,6 +45,9 @@ import edu.byu.ece.rapidSmith.design.Design;
 import edu.byu.ece.rapidSmith.design.explorer.FilterWindow.FilterType;
 import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.WireEnumerator;
+import edu.byu.ece.rapidSmith.timing.PathDelay;
+import edu.byu.ece.rapidSmith.timing.PathOffset;
+import edu.byu.ece.rapidSmith.timing.TraceReportParser;
 import edu.byu.ece.rapidSmith.util.FileTools;
 
 /**
@@ -60,11 +64,13 @@ public class DesignExplorer extends QMainWindow{
 	/** Device of the current design that is open */
 	protected Device device;
 	/** The design that is current and active */
-	protected Design currDesign;
+	protected Design design;
 	/** WireEnumerator of the current design that is open */
 	protected WireEnumerator we;
 	/** XDL File Type Filter */
 	protected Filter xdlFilter = new Filter("Xilinx Design Language Files (*.xdl)");
+	/** TWR Xilinx Trace Report File Type Filter */
+	protected Filter twrFilter = new Filter("Xilinx Trace Report Files (*.twr)");
 	/** Name of the Program */
 	protected static String title = "Design Explorer";
 	/** File Name of the current design that is open */
@@ -84,6 +90,15 @@ public class DesignExplorer extends QMainWindow{
 	/** This is the list of module instances in the design */
 	protected FilterWindow moduleInstanceWindow;
 	
+	/** This is the list of path delays in the design */
+	protected FilterWindow delayWindow;
+	/** This is the list of path offsets in the design */
+	protected FilterWindow offsetWindow;
+	/** Optional path delays for the design, loaded from timing report (.TWR) */
+	protected ArrayList<PathDelay> delays;
+	/** Optional path offsets for the design, loaded from timing report (.TWR) */
+	protected ArrayList<PathOffset> offsets;
+	
 	// Names of the tabs
 	protected static final String TILE_LAYOUT = "Tiles";
 	protected static final String NETS = "Nets";
@@ -92,17 +107,24 @@ public class DesignExplorer extends QMainWindow{
 	protected static final String MODULES = "Modules";
 	protected static final String MODULE_INSTANCES = "Module Instances";
 	protected static final String RESOURCE_REPORT = "Resource Report";
+	protected static final String PATH_DELAYS = "Path Delays";
+	protected static final String PATH_OFFSETS = "Path Offsets";
+	
 	
 	public static void main(String[] args){
 		QApplication.setGraphicsSystem("raster");
 		QApplication.initialize(args);
 
 		String fileToOpen = null;
+		String traceFileToOpen = null;
 		if(args.length > 0){
 			fileToOpen = args[0];
 		}
+		if(args.length > 1){
+			traceFileToOpen = args[1];
+		}
 		
-		DesignExplorer designExplorer = new DesignExplorer(null, fileToOpen);
+		DesignExplorer designExplorer = new DesignExplorer(null, fileToOpen, traceFileToOpen);
 
 		designExplorer.show();
 
@@ -113,8 +135,9 @@ public class DesignExplorer extends QMainWindow{
 	 * Constructor for the design explorer
 	 * @param parent Parent QWidget for window hierarchy.
 	 * @param fileToOpen The name of the design to open
+	 * @param traceFileToOpen Name of the trace report file (TWR) to load 
 	 */
-	public DesignExplorer(QWidget parent, String fileToOpen){
+	public DesignExplorer(QWidget parent, String fileToOpen, String traceFileToOpen){
 		super(parent);
 		
 		setupFileActions();
@@ -143,6 +166,14 @@ public class DesignExplorer extends QMainWindow{
 		tabs.addTab(moduleWindow, MODULES);
 		tabs.addTab(moduleInstanceWindow, MODULE_INSTANCES);
 		
+		if(fileToOpen != null){
+			internalOpenDesign(fileToOpen);
+		}
+		
+		if(traceFileToOpen != null){
+			internalLoadDesignTimingInfo(traceFileToOpen);
+		}
+		
 		if(currOpenFileName == null){
         	openDesign();
         }
@@ -150,17 +181,26 @@ public class DesignExplorer extends QMainWindow{
         resize(800, 600);
 	}
 
+	/**
+	 * Initializes the tile window
+	 */
 	private void setupTileWindow(){
         tileWindow = new TileWindow(this);
         int tabIndex = tabs.addTab(tileWindow, TILE_LAYOUT);
         tabs.setCurrentIndex(tabIndex);
 	}
 	
+	/**
+	 * Creates the message when choosing about on the menu.
+	 */
 	protected void about(){
 		QMessageBox.information(this, "Info",
 				"This is the first try \nat an XDL Design Explorer.");
 	}
 	
+	/**
+	 * Opens a file chooser dialog to load an XDL file.
+	 */
 	protected void openDesign(){
 		String fileName = QFileDialog.getOpenFileName(this, "Choose a file...",
 				".", xdlFilter);
@@ -169,6 +209,38 @@ public class DesignExplorer extends QMainWindow{
 		}
 	}
 	
+	/**
+	 * Opens a file chooser dialog to load a TWR (timing report) file.
+	 */
+	protected void loadDesignTimingInfo(){
+		String fileName = QFileDialog.getOpenFileName(this, "Choose corresponding timing report...",
+				".", twrFilter);
+		if(fileName.endsWith(".twr")){
+			internalLoadDesignTimingInfo(fileName);
+		}
+	}
+	
+	/**
+	 * Loads the timing report fileName into the delay and offset windows.
+	 * @param fileName Name of the TWR (timing report) file to load.
+	 */
+	private void internalLoadDesignTimingInfo(String fileName){
+		TraceReportParser parser = new TraceReportParser();
+		parser.parseTWR(fileName, design);
+		delays = parser.getPathDelays();
+		offsets = parser.getPathOffsets();
+
+		// Create 2 more tabs for timing information
+		delayWindow = new FilterWindow(this, FilterType.DELAYS);
+		offsetWindow = new FilterWindow(this, FilterType.OFFSETS);
+		tabs.addTab(delayWindow, PATH_DELAYS);
+		tabs.addTab(offsetWindow, PATH_OFFSETS);
+	}
+	
+	/**
+	 * Loads the XDL design fileName into the design explorer.
+	 * @param fileName Name of the XDL file to load.
+	 */
 	private void internalOpenDesign(String fileName){
 		currOpenFileName = fileName;
 		String shortFileName = fileName.substring(fileName.lastIndexOf('/')+1);
@@ -179,19 +251,19 @@ public class DesignExplorer extends QMainWindow{
 		progress.show();
 		progress.setValue(0);	
 		progress.setValue(10);
-		currDesign = new Design();
+		design = new Design();
 		progress.setValue(20);
-		currDesign.loadXDLFile(fileName);
+		design.loadXDLFile(fileName);
 		progress.setValue(50);
-		device = currDesign.getDevice();
-		we = currDesign.getWireEnumerator();
+		device = design.getDevice();
+		we = design.getWireEnumerator();
 		progress.setValue(70);
 		progress.setValue(80);
 		progress.setValue(90);
 		setWindowTitle(shortFileName + " - " + title);
 		progress.setValue(100);
 		statusBar().showMessage(currOpenFileName + " loaded.", 2000);
-		tileWindow.setDesign(currDesign);
+		tileWindow.setDesign(design);
 		netWindow.loadCurrentDesignData();
 		instanceWindow.loadCurrentDesignData();
 		moduleWindow.loadCurrentDesignData();
@@ -231,7 +303,7 @@ public class DesignExplorer extends QMainWindow{
 	}
 
 	/**
-	 * Creates a file menu with actions.  These are also added to the toolbar.
+	 * Creates a file menu with actions.  These are also added to the tool bar.
 	 */
 	private void setupFileActions(){
 		QToolBar tb = new QToolBar(this);
@@ -241,7 +313,8 @@ public class DesignExplorer extends QMainWindow{
 		QMenu fileMenu = new QMenu(tr("&File"), this);
 		menuBar().addMenu(fileMenu);
 
-		action(tr("Open"), "fileopen", StandardKey.Open, "openDesign()",fileMenu, tb);		
+		action(tr("Open XDL Design"), "open", StandardKey.Open, "openDesign()",fileMenu, tb);		
+		action(tr("Load Timing Info"), "openTimingReport", StandardKey.UnknownKey, "loadDesignTimingInfo()",fileMenu, tb);
 		fileMenu.addSeparator();
 		action(tr("&Quit"), null, "Ctrl+Q", "close()", fileMenu, null);
 	}
