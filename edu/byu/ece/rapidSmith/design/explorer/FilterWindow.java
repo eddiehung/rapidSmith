@@ -21,6 +21,7 @@
 package edu.byu.ece.rapidSmith.design.explorer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.trolltech.qt.core.QAbstractItemModel;
 import com.trolltech.qt.core.QModelIndex;
@@ -28,6 +29,7 @@ import com.trolltech.qt.core.QObject;
 import com.trolltech.qt.core.QRegExp;
 import com.trolltech.qt.core.Qt;
 import com.trolltech.qt.core.Qt.CursorShape;
+import com.trolltech.qt.core.Qt.Orientation;
 import com.trolltech.qt.gui.QBrush;
 import com.trolltech.qt.gui.QCheckBox;
 import com.trolltech.qt.gui.QColor;
@@ -51,6 +53,15 @@ import edu.byu.ece.rapidSmith.design.Instance;
 import edu.byu.ece.rapidSmith.design.Module;
 import edu.byu.ece.rapidSmith.design.ModuleInstance;
 import edu.byu.ece.rapidSmith.design.Net;
+import edu.byu.ece.rapidSmith.design.PIP;
+import edu.byu.ece.rapidSmith.design.Pin;
+import edu.byu.ece.rapidSmith.device.Tile;
+import edu.byu.ece.rapidSmith.timing.LogicPathElement;
+import edu.byu.ece.rapidSmith.timing.Path;
+import edu.byu.ece.rapidSmith.timing.PathDelay;
+import edu.byu.ece.rapidSmith.timing.PathElement;
+import edu.byu.ece.rapidSmith.timing.PathOffset;
+import edu.byu.ece.rapidSmith.timing.RoutingPathElement;
 
 /**
  * This class creates the various tabs of the DesignExplorer.
@@ -73,7 +84,7 @@ public class FilterWindow extends QWidget{
 	private QComboBox filterSyntaxComboBox;
 	/** The layout object for the window */
 	private QGridLayout proxyLayout;
-	/** The editable text box for the user to enter a filter for the data */
+	/** The edit-able text box for the user to enter a filter for the data */
 	private QLineEdit filterPatternLineEdit;
 	/** The label for the filter pattern edit box */
 	private QLabel filterPatternLabel; 
@@ -87,15 +98,29 @@ public class FilterWindow extends QWidget{
 	private QStandardItemModel[] subModels;
 	/** The associated views with the other subModels */
 	private QTreeView[] subViews;
+	/** Provides a mapping from the path elements in the delay/offsets windows to the actual object */
+	private HashMap<String, Path> pathMap;
+	/** A font used for hyperlinks */
+	private QFont hyperlink = new QFont();
+	/** A brush used for hyperlinks */
+	private QBrush blue = new QBrush(QColor.blue);
+	
 	/** Helps differentiate tab windows */
 	enum FilterType {
 		NETS,
 		INSTANCES,
 		MODULES,
-		MODULE_INSTANCES
+		MODULE_INSTANCES,
+		DELAYS,
+		OFFSETS
 	}
 	
-	public QTreeView createNewView(boolean signals){
+	/**
+	 * Creates a new view object and sets the appropriate signals.
+	 * @param signals A flag indicating if the signals should be connected.
+	 * @return The new view object.
+	 */
+	private QTreeView createNewView(boolean signals){
 		QTreeView newView = new QTreeView();
 		newView.setMouseTracking(true);
 		newView.setRootIsDecorated(false);
@@ -108,13 +133,20 @@ public class FilterWindow extends QWidget{
 		return newView;
 	}
 	
+	/**
+	 * Initializes the filter window
+	 * @param parent The parent Qt widget class.
+	 * @param type The type of filter window to instantiate.
+	 */
 	public FilterWindow(QWidget parent, FilterType type){
 		super(parent);
 		this.type = type;
 		this.explorer = (DesignExplorer) parent;
 		
 		view = createNewView(true);
-        
+		
+		hyperlink.setUnderline(true);
+		
 		loadCurrentDesignData();
 		
         filterPatternLineEdit = new QLineEdit();
@@ -148,177 +180,179 @@ public class FilterWindow extends QWidget{
         		subViews = new QTreeView[1];
         		subViews[0] = createNewView(false);
         		proxyLayout.addWidget(new QLabel("Attributes"));
-        		proxyLayout.addWidget(subViews[0], 3, 0, 1, 3);
+        		proxyLayout.addWidget(subViews[0], 3, 0, 1, 5);
         		subModels = new QStandardItemModel[1];
         		subModels[0] = new QStandardItemModel(0, 3, this);
-        		subModels[0].setHeaderData(0, Qt.Orientation.Horizontal, tr("Physical Name"));
-        		subModels[0].setHeaderData(1, Qt.Orientation.Horizontal, tr("Logical Name"));
-        		subModels[0].setHeaderData(2, Qt.Orientation.Horizontal, tr("Value"));
+        		setHeaders(subModels[0], new String[]{"Physical Name", "Logical Name", "Value"});
         		subViews[0].setModel(subModels[0]);
         		break;
         	case NETS:
+        		subViews = new QTreeView[2];
+        		subModels = new QStandardItemModel[2];
+        		
+        		subViews[0] = createNewView(true);        		
+        		proxyLayout.addWidget(new QLabel("Pins"));
+        		proxyLayout.addWidget(subViews[0], 3, 0, 1, 5);
+        		
+        		subModels[0] = new QStandardItemModel(0, 3, this);
+        		subModels[0].setObjectName("Pins");
+        		setHeaders(subModels[0], new String[]{"Direction", "Instance Name", "Pin Name"});
+        		subViews[0].setModel(subModels[0]);
+        		
+        		subViews[1] = createNewView(true);        		
+        		proxyLayout.addWidget(new QLabel("PIPs"));
+        		proxyLayout.addWidget(subViews[1], 6, 0, 1, 5);
+        		subModels[1] = new QStandardItemModel(0, 3, this);
+        		subModels[1].setObjectName("PIPs");
+        		setHeaders(subModels[1], new String[]{"Tile", "Start Wire", "End Wire"});
+        		subViews[1].setModel(subModels[1]);
         		break;
         	case MODULES:
         		break;        		
         	case MODULE_INSTANCES:
-        		break;        		
+        		break; 
+        	case DELAYS:
+        		subViews = new QTreeView[1];
+        		subViews[0] = createNewView(true);
+        		proxyLayout.addWidget(new QLabel("Maximum Data Path"));
+        		proxyLayout.addWidget(subViews[0], 3, 0, 1, 5);
+        		subModels = new QStandardItemModel[1];
+        		subModels[0] = new QStandardItemModel(0, 4, this);
+        		subModels[0].setObjectName("Max");
+        		setHeaders(subModels[0], new String[]{"Location", "Delay Type", "Delay (ns)", "Physical Resource"});
+        		subViews[0].setModel(subModels[0]);
+        		break;
+        	case OFFSETS:
+        		subViews = new QTreeView[2];
+        		subModels = new QStandardItemModel[2];
+        		
+        		subViews[0] = createNewView(true);        		
+        		proxyLayout.addWidget(new QLabel("Maximum Data Path"));
+        		proxyLayout.addWidget(subViews[0], 3, 0, 1, 5);
+        		
+        		subModels[0] = new QStandardItemModel(0, 4, this);
+        		subModels[0].setObjectName("Max");
+        		setHeaders(subModels[0], new String[]{"Location", "Delay Type", "Delay (ns)", "Physical Resource"});
+        		subViews[0].setModel(subModels[0]);
+        		
+        		subViews[1] = createNewView(true);        		
+        		proxyLayout.addWidget(new QLabel("Minimum Data Path"));
+        		proxyLayout.addWidget(subViews[1], 6, 0, 1, 5);
+        		subModels[1] = new QStandardItemModel(0, 4, this);
+        		subModels[1].setObjectName("Min");
+        		setHeaders(subModels[1], new String[]{"Location", "Delay Type", "Delay (ns)", "Physical Resource"});
+        		subViews[1].setModel(subModels[1]);
+        		break;
         }
-        
-        setLayout(proxyLayout);
-        
+        setLayout(proxyLayout);        
         textFilterChanged();
 	}
 	
+	/**
+	 * Populates the window with appropriate design/timing data.
+	 */
 	public void loadCurrentDesignData(){
-		QFont hyperlink = new QFont();
-		hyperlink.setUnderline(true);
-		QBrush blue = new QBrush(QColor.blue);
-		switch(this.type) {
+		switch(this.type){
 			case NETS:
 				model = new QStandardItemModel(0, 7, this);
-	            model.setHeaderData(0, Qt.Orientation.Horizontal, tr("Name"));
-	            model.setHeaderData(1, Qt.Orientation.Horizontal, tr("Type"));
-	            model.setHeaderData(2, Qt.Orientation.Horizontal, tr("Source Instance"));
-	            model.setHeaderData(3, Qt.Orientation.Horizontal, tr("Fanout"));
-	            model.setHeaderData(4, Qt.Orientation.Horizontal, tr("PIP Count"));
-	            model.setHeaderData(5, Qt.Orientation.Horizontal, tr("Module Instance Name"));
-	            model.setHeaderData(6, Qt.Orientation.Horizontal, tr("Module Name"));
-	            if(explorer.currDesign != null){	        	
-		        	for(Net net : explorer.currDesign.getNets()){
-			        	if(net.getPins().size() > 0){
-			        		ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
-			        		
-			        		// Net Name
-			        		items.add(new QStandardItem(net.getName()));
-			        		
-			        		// Net Type
-			        		items.add(new QStandardItem(net.getType().toString()));
-			        		
-			        		// Net Source Instance
-			        		QStandardItem item = new QStandardItem(net.getSource() == null ? null : net.getSource().getInstanceName());
-			        		item.setFont(hyperlink);
-			        		item.setForeground(blue);
-			        		items.add(item);
-			        		
-			        		// Net Pin Count
-			        		items.add(new QStandardItem(String.format("%3d", net.getPins().size()-1)));
-			        		
-			        		// Net PIP Count
-			        		items.add(new QStandardItem(String.format("%5d", net.getPIPs().size())));
-
-			        		item = new QStandardItem(net.getModuleInstance()==null ? null : net.getModuleInstance().getName());
-			        		item.setFont(hyperlink);
-			        		item.setForeground(blue);
-			        		items.add(item);
-			        		
-			        		item = new QStandardItem(net.getModuleTemplate()==null ? null : net.getModuleTemplate().getName());
-			        		item.setFont(hyperlink);
-			        		item.setForeground(blue);
-			        		items.add(item);
-			        		
-			        		model.appendRow(items);			        		
-			        	}
-			        }
-	            }
+				setHeaders(model, new String[]
+				          {"Name", "Type", "Source Instance", "Fanout", "PIP Count", "Module Instance Name", "Module Name"});
+				if(explorer.design == null) break;
+				for(Net net : explorer.design.getNets()){
+		        	if(net.getPins().size() == 0) continue; 
+	        		ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
+	        		items.add(new QStandardItem(net.getName()));
+	        		items.add(new QStandardItem(net.getType().toString()));
+	        		items.add(createNewHyperlinkItem(net.getSource() == null ? null : net.getSource().getInstanceName()));
+	        		items.add(new QStandardItem(String.format("%3d", net.getPins().size()-1)));
+	        		items.add(new QStandardItem(String.format("%5d", net.getPIPs().size())));
+	        		items.add(createNewHyperlinkItem(net.getModuleInstance()==null ? null : net.getModuleInstance().getName()));
+	        		items.add(createNewHyperlinkItem(net.getModuleTemplate()==null ? null : net.getModuleTemplate().getName()));
+	        		model.appendRow(items);			        		
+		        }
 	            break;
 			case INSTANCES:
 				model = new QStandardItemModel(0, 6, this);
-	            model.setHeaderData(0, Qt.Orientation.Horizontal, tr("Name"));
-	            model.setHeaderData(1, Qt.Orientation.Horizontal, tr("Type"));
-	            model.setHeaderData(2, Qt.Orientation.Horizontal, tr("Primitive Site"));
-	            model.setHeaderData(3, Qt.Orientation.Horizontal, tr("Primitive Tile"));
-	            model.setHeaderData(4, Qt.Orientation.Horizontal, tr("Module Instance Name"));
-	            model.setHeaderData(5, Qt.Orientation.Horizontal, tr("Module Name"));
-	            if(explorer.currDesign != null){
-	            	for(Instance instance : explorer.currDesign.getInstances()){
-	            		ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
-	            		
-	            		items.add(new QStandardItem(instance.getName()));
-	            		items.add(new QStandardItem(instance.getType().toString()));
-	            		
-	            		QStandardItem item = new QStandardItem(instance.getPrimitiveSiteName());
-		        		item.setFont(hyperlink);
-		        		item.setForeground(blue);
-		        		items.add(item);
-		        		
-		        		item = new QStandardItem(instance.getPrimitiveSite()==null ? null : instance.getPrimitiveSite().getTile().toString());
-		        		item.setFont(hyperlink);
-		        		item.setForeground(blue);
-		        		items.add(item);
-	            		
-		        		item = new QStandardItem(instance.getModuleInstanceName());
-		        		item.setFont(hyperlink);
-		        		item.setForeground(blue);
-		        		items.add(item);
-		        		
-		        		item = new QStandardItem(instance.getModuleTemplate()==null ? null : instance.getModuleTemplate().getName());
-		        		item.setFont(hyperlink);
-		        		item.setForeground(blue);
-		        		items.add(item);
-		        				
-		        		model.appendRow(items);
-	                }
-	            }
+				setHeaders(model, new String[]
+				          {"Name", "Type", "Primitive Site", "Tile", "Module Instance Name", "Module Name"});
+				if(explorer.design == null) break;
+            	for(Instance instance : explorer.design.getInstances()){
+            		ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
+            		items.add(new QStandardItem(instance.getName()));
+            		items.add(new QStandardItem(instance.getType().toString()));
+            		items.add(createNewHyperlinkItem(instance.getPrimitiveSiteName()));
+            		items.add(createNewHyperlinkItem(instance.getPrimitiveSite()==null ? null : instance.getPrimitiveSite().getTile().toString()));	            		
+            		items.add(createNewHyperlinkItem(instance.getModuleInstanceName()));
+            		items.add(createNewHyperlinkItem(instance.getModuleTemplate()==null ? null : instance.getModuleTemplate().getName()));
+	        		model.appendRow(items);
+                }
 	            break;
 			case MODULES:
 				model = new QStandardItemModel(0, 6, this);
-	            model.setHeaderData(0, Qt.Orientation.Horizontal, tr("Name"));
-	            model.setHeaderData(1, Qt.Orientation.Horizontal, tr("Anchor Name"));
-	            model.setHeaderData(2, Qt.Orientation.Horizontal, tr("Anchor Site"));
-	            model.setHeaderData(3, Qt.Orientation.Horizontal, tr("Instance Count"));
-	            model.setHeaderData(4, Qt.Orientation.Horizontal, tr("Net Count"));
-	            model.setHeaderData(5, Qt.Orientation.Horizontal, tr("Port Count"));
-	            if(explorer.currDesign != null){
-		        	for(Module module : explorer.currDesign.getModules()){
-	            		ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
-	            		
-	            		items.add(new QStandardItem(module.getName()));
-	            		
-	            		items.add(new QStandardItem(module.getAnchor().getName()));
-	            		
-	            		QStandardItem item = new QStandardItem(module.getAnchor().getPrimitiveSiteName());
-		        		item.setFont(hyperlink);
-		        		item.setForeground(blue);
-		        		items.add(item);
-		        		
-		        		items.add(new QStandardItem(String.format("%5d", module.getInstances().size())));
-            		
-		        		items.add(new QStandardItem(String.format("%5d", module.getNets().size())));
-		        		
-		        		items.add(new QStandardItem(String.format("%5d", module.getPorts().size())));
-		        				
-		        		model.appendRow(items);
-			        }
-	            }
+				setHeaders(model, new String[]
+				          {"Name", "Anchor Name", "Anchor Site", "Instance Count", "Net Count", "Port Count"});
+				if(explorer.design == null) break;
+	        	for(Module module : explorer.design.getModules()){
+            		ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
+            		items.add(new QStandardItem(module.getName()));
+            		items.add(new QStandardItem(module.getAnchor().getName()));
+            		items.add(createNewHyperlinkItem(module.getAnchor().getPrimitiveSiteName()));
+	        		items.add(new QStandardItem(String.format("%5d", module.getInstances().size())));
+	        		items.add(new QStandardItem(String.format("%5d", module.getNets().size())));
+	        		items.add(new QStandardItem(String.format("%5d", module.getPorts().size())));
+	        		model.appendRow(items);
+		        }
 	            break;
 			case MODULE_INSTANCES:
 				model = new QStandardItemModel(0, 4, this);
-	            model.setHeaderData(0, Qt.Orientation.Horizontal, tr("Name"));
-	            model.setHeaderData(1, Qt.Orientation.Horizontal, tr("Anchor Name"));
-	            model.setHeaderData(2, Qt.Orientation.Horizontal, tr("Anchor Site"));
-	            model.setHeaderData(3, Qt.Orientation.Horizontal, tr("Module Template"));
-	            if(explorer.currDesign != null){
-		        	for(ModuleInstance moduleInstance : explorer.currDesign.getModuleInstances()){
-		        		ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
-	            		
-	            		items.add(new QStandardItem(moduleInstance.getName()));
-	            		
-	            		items.add(new QStandardItem(moduleInstance.getAnchor().getName()));
-	            		
-	            		QStandardItem item = new QStandardItem(moduleInstance.getAnchor().getPrimitiveSiteName());
-		        		item.setFont(hyperlink);
-		        		item.setForeground(blue);
-		        		items.add(item);
-
-	            		item = new QStandardItem(moduleInstance.getModule().getName());
-		        		item.setFont(hyperlink);
-		        		item.setForeground(blue);
-		        		items.add(item);
-
-		        		model.appendRow(items);
-			        }
-	            }
+				setHeaders(model, new String[]
+				          {"Name", "Anchor Name", "Anchor Site", "Module Template"});
+				if(explorer.design == null) break;
+	        	for(ModuleInstance moduleInstance : explorer.design.getModuleInstances()){
+	        		ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
+            		items.add(new QStandardItem(moduleInstance.getName()));
+            		items.add(new QStandardItem(moduleInstance.getAnchor().getName()));
+            		items.add(createNewHyperlinkItem(moduleInstance.getAnchor().getPrimitiveSiteName()));
+            		items.add(createNewHyperlinkItem(moduleInstance.getModule().getName()));
+	        		model.appendRow(items);
+		        }
 	            break;
+			case DELAYS:
+				pathMap = new HashMap<String, Path>();
+				model = new QStandardItemModel(0, 5, this);
+				setHeaders(model, new String[]
+				          {"Delay", "Source", "Destination", "Data Path Delay", "Levels of Logic"});
+	            if(explorer.delays == null) break;
+            	for(PathDelay pd : explorer.delays){
+            		ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
+            		items.add(new QStandardItem(String.format("%5.3f", pd.getDelay()) + "ns"));
+            		items.add(new QStandardItem(pd.getSource()));
+            		items.add(new QStandardItem(pd.getDestination()));
+            		items.add(new QStandardItem(String.format("%5.3f", pd.getDataPathDelay()) + "ns"));
+            		items.add(new QStandardItem(String.format("%5d", pd.getLevelsOfLogic())));
+            		model.appendRow(items);
+            		mapPathItems(items, pd);
+            	}
+				break;
+			case OFFSETS:
+				pathMap = new HashMap<String, Path>();
+				model = new QStandardItemModel(0, 7, this);
+				setHeaders(model, new String[]
+				          {"Offset", "Source", "Destination", "Data Path Delay", "Levels of Logic (Data)", "Clock Path Delay", "Levels of Logic (Clock)"});
+	            if(explorer.offsets == null) break;
+            	for(PathOffset po : explorer.offsets){
+            		ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();	            		
+            		items.add(new QStandardItem(String.format("%5.3f", po.getOffset()) + "ns"));
+            		items.add(new QStandardItem(po.getSource()));
+            		items.add(new QStandardItem(po.getDestination()));
+            		items.add(new QStandardItem(String.format("%5.3f", po.getDataPathDelay()) + "ns"));
+            		items.add(new QStandardItem(String.format("%5d", po.getLevelsOfLogic())));
+            		items.add(new QStandardItem(String.format("%5.3f", po.getClockPathDelay()) + "ns"));
+            		items.add(new QStandardItem(String.format("%5d", po.getClockLevelsOfLogic())));
+            		model.appendRow(items);
+            		mapPathItems(items, po);
+            	}
+				break;
 		}
 
 		proxyModel = new MySortFilterProxyModel(this);
@@ -334,24 +368,66 @@ public class FilterWindow extends QWidget{
         
 	}
 	
+	/**
+	 * This method enables populating lower tables with data based on clicked
+	 * data from the main table.  It also serves to implement the hyperlink
+	 * functionality of the program.  This method is only called by Qt.
+	 * @param index Index of the object that was clicked on.
+	 */
 	protected void singleClick(QModelIndex index){
+		String data = (String)index.data();
 		switch(type){
 			case NETS:
+				if(index.model().objectName().equals("Pins")){
+					if(index.column() == 1) switchToInstanceTab(data);
+					break;
+				}
+				else if(index.model().objectName().equals("PIPs")){
+					if(index.column() == 0) switchToTileTab(data);
+					break;
+				}
+				subModels[0].removeRows(0, subModels[0].rowCount());
+				subModels[1].removeRows(0, subModels[1].rowCount());
+				
+				Net net = explorer.design.getNet(proxyModel.data(index.row(),0).toString());
+				// Populate Pins
+				for(Pin pin : net.getPins()){
+					ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
+					items.add(new QStandardItem(pin.isOutPin() ? "outpin" : "inpin"));
+					items.add(createNewHyperlinkItem(pin.getInstanceName())); 
+					items.add(new QStandardItem(pin.getName()));
+					subModels[0].appendRow(items);
+				}
+				subViews[0].setSortingEnabled(true);
+				subViews[0].sortByColumn(0, Qt.SortOrder.AscendingOrder);
+				// Populate PIPs
+				for(PIP pip : net.getPIPs()){
+					ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
+					items.add(createNewHyperlinkItem(pip.getTile().getName()));
+					items.add(new QStandardItem(pip.getStartWireName(explorer.we)));
+					items.add(new QStandardItem(pip.getEndWireName(explorer.we)));
+					subModels[1].appendRow(items);
+				}
+				subViews[1].setSortingEnabled(true);
+				subViews[1].sortByColumn(0, Qt.SortOrder.AscendingOrder);
+
 				if(index.column() == 2){
-					explorer.tabs.setCurrentWidget(explorer.instanceWindow);
-					for(int i = 0; i < explorer.instanceWindow.proxyModel.rowCount(); i++){
-						if(explorer.instanceWindow.proxyModel.data(i, 0).toString().equals(proxyModel.data(index).toString())){
-							QModelIndex dstIndex = explorer.instanceWindow.proxyModel.index(i, 0);
-							explorer.instanceWindow.view.scrollTo(dstIndex,ScrollHint.PositionAtCenter);
-							explorer.instanceWindow.selectionModel.setCurrentIndex(dstIndex, QItemSelectionModel.SelectionFlag.SelectCurrent);
-						}
-					}
+					switchToInstanceTab(data);
+					break;
+				}
+				else if(index.column() == 5){ // Module Instance
+					switchToModuleInstanceTab(data);
+					break;
+				}
+				else if(index.column() == 6){ // Module
+					switchToModuleTab(data);
+					break;
 				}
 				break;
 			case INSTANCES:
 				// populate attributes
 				subModels[0].removeRows(0, subModels[0].rowCount());
-				Instance instance = explorer.currDesign.getInstance(proxyModel.data(index.row(),0).toString());
+				Instance instance = explorer.design.getInstance(proxyModel.data(index.row(),0).toString());
 				for(Attribute attribute : instance.getAttributes()){
 					ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
 					items.add(new QStandardItem(attribute.getPhysicalName()));
@@ -364,63 +440,188 @@ public class FilterWindow extends QWidget{
 				
 				// check for hyperlinks
 				if(index.column() == 2){
-					explorer.tabs.setCurrentWidget(explorer.tileWindow);
-					explorer.tileWindow.moveToTile(explorer.device.getPrimitiveSite(proxyModel.data(index).toString()).getTile().getName());
+					switchToTileTab(explorer.device.getPrimitiveSite(data).getTile().getName());
 				}
 				else if(index.column() == 3){
-					explorer.tabs.setCurrentWidget(explorer.tileWindow);
-					explorer.tileWindow.moveToTile(proxyModel.data(index).toString());
+					switchToTileTab(data);
+				}
+				else if(index.column() == 3){
+					switchToTileTab(data);
 				}
 				else if(index.column() == 4){
-					explorer.tabs.setCurrentWidget(explorer.moduleInstanceWindow);
-					for(int i = 0; i < explorer.moduleInstanceWindow.proxyModel.rowCount(); i++){
-						if(explorer.moduleInstanceWindow.proxyModel.data(i, 0).toString().equals(proxyModel.data(index).toString())){
-							QModelIndex dstIndex = explorer.moduleInstanceWindow.proxyModel.index(i, 0);
-							explorer.moduleInstanceWindow.view.scrollTo(dstIndex,ScrollHint.PositionAtCenter);
-							explorer.moduleInstanceWindow.selectionModel.setCurrentIndex(dstIndex, QItemSelectionModel.SelectionFlag.SelectCurrent);
-						}
-					}
+					switchToModuleInstanceTab(data);
 				}
 				else if(index.column() == 5){
-					explorer.tabs.setCurrentWidget(explorer.moduleWindow);
-					for(int i = 0; i < explorer.moduleWindow.proxyModel.rowCount(); i++){
-						if(explorer.moduleWindow.proxyModel.data(i, 0).toString().equals(proxyModel.data(index).toString())){
-							QModelIndex dstIndex = explorer.moduleWindow.proxyModel.index(i, 0);
-							explorer.moduleWindow.view.scrollTo(dstIndex,ScrollHint.PositionAtCenter);
-							explorer.moduleWindow.selectionModel.setCurrentIndex(dstIndex, QItemSelectionModel.SelectionFlag.SelectCurrent);
-						}
-					}
+					switchToModuleTab(data);
 				}
 				break;
 			case MODULES:
-				if(index.column() == 2){
-					explorer.tabs.setCurrentWidget(explorer.tileWindow);
-					explorer.tileWindow.moveToTile(explorer.device.getPrimitiveSite(proxyModel.data(index).toString()).getTile().getName());
+				if(index.column() == 2) {
+					String tileName = explorer.device.getPrimitiveSite(data).getTile().getName();
+					switchToTileTab(tileName);
 				}
 				break;
 			case MODULE_INSTANCES:
 				if(index.column() == 2){
-					explorer.tabs.setCurrentWidget(explorer.tileWindow);
-					explorer.tileWindow.moveToTile(explorer.device.getPrimitiveSite(proxyModel.data(index).toString()).getTile().getName());
+					String tileName = explorer.device.getPrimitiveSite(data).getTile().getName();
+					switchToTileTab(tileName);
 				}
-				else if(index.column() == 3){
-					explorer.tabs.setCurrentWidget(explorer.moduleWindow);
-					for(int i = 0; i < explorer.moduleWindow.proxyModel.rowCount(); i++){
-						if(explorer.moduleWindow.proxyModel.data(i, 0).toString().equals(proxyModel.data(index).toString())){
-							QModelIndex dstIndex = explorer.moduleWindow.proxyModel.index(i, 0);
-							explorer.moduleWindow.view.scrollTo(dstIndex,ScrollHint.PositionAtCenter);
-							explorer.moduleWindow.selectionModel.setCurrentIndex(dstIndex, QItemSelectionModel.SelectionFlag.SelectCurrent);
+				else if(index.column() == 3) switchToModuleTab((String)index.data());
+				break;
+			case DELAYS:
+				if(index.model().objectName().equals("Max")){
+					if(index.column() == 0){
+						Tile t = explorer.device.getPrimitiveSite(data.substring(0, data.indexOf('.')-1)).getTile();
+						switchToTileTab(t.getName());
+					}
+					else if(index.column() == 3){
+						if(((String)index.model().data(index.row(), 1)).startsWith("NET")){
+							switchToNetTab(data);
+						}
+						else{
+							switchToInstanceTab(data);
 						}
 					}
 				}
+				else{
+					subModels[0].removeRows(0, subModels[0].rowCount());
+					subViews[0].setSortingEnabled(true);
+					subViews[0].sortByColumn(0, Qt.SortOrder.AscendingOrder);
+					Path pd = pathMap.get(index.row() + "," + index.column());
+					for(PathElement pe : pd.getMaxDataPath()){
+						if(pe.getClass().equals(LogicPathElement.class)){
+							LogicPathElement lpe = (LogicPathElement) pe;
+							ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
+							items.add(createNewHyperlinkItem(lpe.getInstance().getPrimitiveSiteName() + "." + lpe.getPin().getName()));
+							items.add(new QStandardItem(lpe.getType().toString()));
+							items.add(new QStandardItem(String.format("%5.3f", lpe.getDelay())));
+							items.add(createNewHyperlinkItem(lpe.getInstance().getName()));
+							subModels[0].appendRow(items);
+						}
+						else{
+							RoutingPathElement rpe = (RoutingPathElement) pe;
+							ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
+							items.add(createNewHyperlinkItem(rpe.getPin().getInstance().getPrimitiveSiteName() + "." + rpe.getPin().getName()));
+							items.add(new QStandardItem(rpe.getType().toString() + " (fanout=" + rpe.getNet().getFanOut() + ")"));
+							items.add(new QStandardItem(String.format("%5.3f", rpe.getDelay())));
+							items.add(createNewHyperlinkItem(rpe.getNet().getName()));
+							subModels[0].appendRow(items);
+						}
+					}					
+				}
+				break;
+			case OFFSETS:
+				if(index.model().objectName().equals("Max")){
+					if(index.column() == 0){
+						Tile t = explorer.device.getPrimitiveSite(data.substring(0, data.indexOf('.')-1)).getTile();
+						switchToTileTab(t.getName());
+					}
+					else if(index.column() == 3){
+						if(((String)index.model().data(index.row(), 1)).startsWith("NET")){
+							switchToNetTab(data);
+						}
+						else{
+							switchToInstanceTab(data);
+						}
+					}
+				}
+				else if(index.model().objectName().equals("Min")){
+					if(index.column() == 0){
+						Tile t = explorer.device.getPrimitiveSite(data.substring(0, data.indexOf('.')-1)).getTile();
+						switchToTileTab(t.getName());
+					}
+					else if(index.column() == 3){
+						if(((String)index.model().data(index.row(), 1)).startsWith("NET")){
+							switchToNetTab(data);
+						}
+						else{
+							switchToInstanceTab(data);
+						}
+					}
+				}
+				else{
+					subModels[0].removeRows(0, subModels[0].rowCount());
+					subModels[1].removeRows(0, subModels[1].rowCount());
+					subViews[0].setSortingEnabled(true);
+					subViews[0].sortByColumn(0, Qt.SortOrder.AscendingOrder);
+					subViews[1].setSortingEnabled(true);
+					subViews[1].sortByColumn(0, Qt.SortOrder.AscendingOrder);
+					Path pd2 = pathMap.get(index.row() + "," + index.column());
+					for(PathElement pe : pd2.getMaxDataPath()){
+						if(pe.getClass().equals(LogicPathElement.class)){
+							LogicPathElement lpe = (LogicPathElement) pe;
+							ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
+							items.add(createNewHyperlinkItem(lpe.getInstance().getPrimitiveSiteName() + "." + lpe.getPin().getName()));
+							items.add(new QStandardItem(lpe.getType().toString()));
+							items.add(new QStandardItem(String.format("%5.3f", lpe.getDelay())));
+							items.add(createNewHyperlinkItem(lpe.getInstance().getName()));
+							subModels[0].appendRow(items);
+						}
+						else{
+							RoutingPathElement rpe = (RoutingPathElement) pe;
+							ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
+							items.add(createNewHyperlinkItem(rpe.getPin().getInstance().getPrimitiveSiteName() + "." + rpe.getPin().getName()));
+							items.add(new QStandardItem(rpe.getType().toString() + " (fanout=" + rpe.getNet().getFanOut() + ")"));
+							items.add(new QStandardItem(String.format("%5.3f", rpe.getDelay())));
+							items.add(createNewHyperlinkItem(rpe.getNet().getName()));
+							subModels[0].appendRow(items);
+						}
+					}
+					
+					for(PathElement pe : ((PathOffset)pd2).getMinDataPath()){
+						if(pe.getClass().equals(LogicPathElement.class)){
+							LogicPathElement lpe = (LogicPathElement) pe;
+							ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
+							items.add(createNewHyperlinkItem(lpe.getInstance().getPrimitiveSiteName() + "." + lpe.getPin().getName()));
+							items.add(new QStandardItem(lpe.getType().toString()));
+							items.add(new QStandardItem(String.format("%5.3f", lpe.getDelay())));
+							items.add(createNewHyperlinkItem(lpe.getInstance().getName()));
+							subModels[1].appendRow(items);
+						}
+						else{
+							RoutingPathElement rpe = (RoutingPathElement) pe;
+							ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
+							items.add(createNewHyperlinkItem(rpe.getPin().getInstance().getPrimitiveSiteName() + "." + rpe.getPin().getName()));
+							items.add(new QStandardItem(rpe.getType().toString() + " (fanout=" + rpe.getNet().getFanOut() + ")"));
+							items.add(new QStandardItem(String.format("%5.3f", rpe.getDelay())));
+							items.add(createNewHyperlinkItem(rpe.getNet().getName()));
+							subModels[1].appendRow(items);
+						}
+					}					
+				}
 				break;
 		}
-		
 	}
 	
+	/**
+	 * This method is called when the mouse enters a new data cell in a table.
+	 * This method will change the mouse from an arrow to a pointing finger
+	 * to indicate to the user that the data is hyperlinked.
+	 * @param index Index of the data that was clicked on.
+	 */
 	protected void onHover(QModelIndex index){
+		if(((String)index.data()).equals("")){
+			view.setCursor(arrow);
+			if(subViews != null && subViews.length > 0){
+				subViews[0].setCursor(arrow);
+				if(subViews.length > 1){
+					subViews[1].setCursor(arrow);					
+				}
+			}
+			return;
+		}
 		switch(type){
 			case NETS:
+				if(index.model().objectName().equals("Pins")){
+					if(index.column() == 1) subViews[0].setCursor(pointingFinger);
+					else subViews[0].setCursor(arrow);
+					break;
+				}
+				else if(index.model().objectName().equals("PIPs")){
+					if(index.column() == 0) subViews[1].setCursor(pointingFinger);
+					else subViews[1].setCursor(arrow);
+					break;
+				}
 				if(index.column() == 2 || index.column() > 4) view.setCursor(pointingFinger);
 				else view.setCursor(arrow);
 				break;
@@ -436,9 +637,30 @@ public class FilterWindow extends QWidget{
 				if(index.column() > 1) view.setCursor(pointingFinger);
 				else view.setCursor(arrow);
 				break;
+			case DELAYS:
+				if(index.column() == 0 || index.column() == 3) subViews[0].setCursor(pointingFinger);
+				else subViews[0].setCursor(arrow);
+				break;
+			case OFFSETS:
+				if(index.model().objectName().equals("Max")){
+					if(index.column() == 0 || index.column() == 3) subViews[0].setCursor(pointingFinger);
+					else subViews[0].setCursor(arrow);
+					break;
+				}
+				else if(index.model().objectName().equals("Min")){
+					if(index.column() == 0 || index.column() == 3) subViews[1].setCursor(pointingFinger);
+					else subViews[1].setCursor(arrow);
+					break;
+				}
+				break;
+
 		}
 	}
 	
+	/**
+	 * This is a signaled method that executes each time the text box used for filtering
+	 * the table entries.
+	 */
 	private void textFilterChanged(){
         QRegExp.PatternSyntax syntax;
         int index = filterSyntaxComboBox.currentIndex();
@@ -455,16 +677,16 @@ public class FilterWindow extends QWidget{
         proxyModel.setFilterRegExp(regExp);
     }
 	
+	/**
+	 * This is a class to allow sorting of the tables in each window.
+	 * @author Chris Lavin
+	 */
     private class MySortFilterProxyModel extends QSortFilterProxyModel {
-
         private MySortFilterProxyModel(QObject parent) {
             super(parent);
         }
-
         @Override
         protected boolean filterAcceptsRow(int sourceRow, QModelIndex sourceParent){
-
-
             QRegExp filter = filterRegExp();
             QAbstractItemModel model = sourceModel();
             boolean matchFound = false;
@@ -473,13 +695,11 @@ public class FilterWindow extends QWidget{
             	Object data = model.data(sourceModel().index(sourceRow, i, sourceParent));
             	matchFound |= data != null && filter.indexIn(data.toString()) != -1;
             }
-
             return matchFound;
         }
 
         @Override
         protected boolean lessThan(QModelIndex left, QModelIndex right) {
-
             boolean result = false;
             Object leftData = sourceModel().data(left);
             Object rightData = sourceModel().data(right);
@@ -497,5 +717,98 @@ public class FilterWindow extends QWidget{
             result = leftString.compareTo(rightString) < 0;
             return result;
         }
+    }
+    
+    private QStandardItem createNewHyperlinkItem(String value){
+    	QStandardItem item = new QStandardItem(value);
+    	item.setFont(hyperlink);
+		item.setForeground(blue);
+		return item;
+    }
+    
+    private void setHeaders(QStandardItemModel model, String[] headers){
+    	for (int i = 0; i < headers.length; i++) {
+			model.setHeaderData(i, Orientation.Horizontal, headers[i]);
+		}
+    }
+    
+    private void mapPathItems(ArrayList<QStandardItem> items, Path path){
+    	for(QStandardItem item : items){
+    		pathMap.put(item.row() + "," + item.column(), path);
+    	}
+    }
+
+    /**
+     * Helper method to switch to a Net Tab
+     * @param data Name of the net
+     */
+    private void switchToNetTab(String data){
+    	if(data.equals("")) return;
+    	explorer.tabs.setCurrentWidget(explorer.netWindow);
+		for(int i = 0; i < explorer.netWindow.proxyModel.rowCount(); i++){
+			if(explorer.netWindow.proxyModel.data(i, 0).toString().equals(data)){
+				QModelIndex dstIndex = explorer.netWindow.proxyModel.index(i, 0);
+				explorer.netWindow.view.scrollTo(dstIndex,ScrollHint.PositionAtCenter);
+				explorer.netWindow.selectionModel.setCurrentIndex(dstIndex, QItemSelectionModel.SelectionFlag.SelectCurrent);
+			}
+		}
+    }
+    
+    /**
+     * Helper method to switch to the Instance Tab
+     * @param data Name of the instance
+     */
+    private void switchToInstanceTab(String data){
+    	if(data.equals("")) return;
+    	explorer.tabs.setCurrentWidget(explorer.instanceWindow);
+		for(int i = 0; i < explorer.instanceWindow.proxyModel.rowCount(); i++){
+			if(explorer.instanceWindow.proxyModel.data(i, 0).toString().equals(data)){
+				QModelIndex dstIndex = explorer.instanceWindow.proxyModel.index(i, 0);
+				explorer.instanceWindow.view.scrollTo(dstIndex,ScrollHint.PositionAtCenter);
+				explorer.instanceWindow.selectionModel.setCurrentIndex(dstIndex, QItemSelectionModel.SelectionFlag.SelectCurrent);
+			}
+		}
+    }
+    
+    /**
+     * Helper method to switch to the Module Tab
+     * @param data Name of the module name
+     */
+    private void switchToModuleTab(String data){
+    	if(data.equals("")) return;
+    	explorer.tabs.setCurrentWidget(explorer.moduleWindow);
+		for(int i = 0; i < explorer.moduleWindow.proxyModel.rowCount(); i++){
+			if(explorer.moduleWindow.proxyModel.data(i, 0).toString().equals(data)){
+				QModelIndex dstIndex = explorer.moduleWindow.proxyModel.index(i, 0);
+				explorer.moduleWindow.view.scrollTo(dstIndex,ScrollHint.PositionAtCenter);
+				explorer.moduleWindow.selectionModel.setCurrentIndex(dstIndex, QItemSelectionModel.SelectionFlag.SelectCurrent);
+			}
+		}
+    }
+    
+    /**
+     * Helper method to switch to the ModuleInstance Tab
+     * @param data Name of the module instance
+     */
+    private void switchToModuleInstanceTab(String data){
+    	if(data.equals("")) return;
+    	explorer.tabs.setCurrentWidget(explorer.moduleInstanceWindow);
+		for(int i = 0; i < explorer.moduleInstanceWindow.proxyModel.rowCount(); i++){
+			if(explorer.moduleInstanceWindow.proxyModel.data(i, 0).toString().equals(data)){
+				QModelIndex dstIndex = explorer.moduleInstanceWindow.proxyModel.index(i, 0);
+				explorer.moduleInstanceWindow.view.scrollTo(dstIndex,ScrollHint.PositionAtCenter);
+				explorer.moduleInstanceWindow.selectionModel.setCurrentIndex(dstIndex, QItemSelectionModel.SelectionFlag.SelectCurrent);
+			}
+		}    	
+    }
+    
+    /**
+     * Helper method to switch to the Tile Tab
+     * @param data Name of the tile
+     */
+    private void switchToTileTab(String data){
+    	if(data.equals("")) return;
+    	explorer.tabs.setCurrentWidget(explorer.tileWindow);
+		explorer.tileWindow.moveToTile(data);    	
     }
 }
