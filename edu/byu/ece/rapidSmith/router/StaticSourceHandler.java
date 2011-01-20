@@ -39,6 +39,7 @@ import edu.byu.ece.rapidSmith.device.WireDirection;
 import edu.byu.ece.rapidSmith.device.WireEnumerator;
 import edu.byu.ece.rapidSmith.device.WireType;
 import edu.byu.ece.rapidSmith.router.PinSorter.StaticSink;
+import edu.byu.ece.rapidSmith.util.FamilyType;
 import edu.byu.ece.rapidSmith.util.MessageGenerator;
 
 /**
@@ -428,7 +429,6 @@ public class StaticSourceHandler{
 						tmp = new PinSorter();
 						tileMap.put(switchMatrixSink.tile, tmp);
 					}
-					
 					tmp.addPin(switchMatrixSink, pin, net, needsHard1, needsNonTIEOFFSource);
 				}
 			}
@@ -509,14 +509,23 @@ public class StaticSourceHandler{
 					}
 				}
 				if(matchingNet == null){
-					Net newNet = createNewNet(ss.net, ss.pin);
-					finalStaticNets.add(newNet);
-					inst.addToNetList(newNet);
-					createAndAddPin(newNet, inst, true);
+					matchingNet = createNewNet(ss.net, ss.pin);
+					finalStaticNets.add(matchingNet);
+					inst.addToNetList(matchingNet);
+					createAndAddPin(matchingNet, inst, true);
 				}
 				else{
 					matchingNet.addPin(ss.pin);
 					ss.pin.getInstance().addToNetList(matchingNet);
+				}
+				
+				// Special case with CLK pins BRAMs on Virtex5 devices, when competing for FANs against GND Nets
+				if(dev.getFamilyType().equals(FamilyType.VIRTEX5)){
+					if(ss.pin.getInstance().getPrimitiveSite().getType().equals(PrimitiveType.RAMBFIFO36) && ss.pin.getName().contains("CLK")){
+						String[] fanWireNames = fanBounceMap.get(we.getWireName(ss.node.wire));
+						Node nn = new Node(inst.getTile(), we.getWireEnum(fanWireNames[0]), null, 0);
+						addReservedNode(nn, matchingNet);
+					}
 				}
 			}
 			
@@ -531,14 +540,23 @@ public class StaticSourceHandler{
 					}
 				}
 				if(matchingNet == null){
-					Net newNet = createNewNet(ss.net, ss.pin);
-					finalStaticNets.add(newNet);
-					inst.addToNetList(newNet);
-					createAndAddPin(newNet, inst, false);
+					matchingNet = createNewNet(ss.net, ss.pin);
+					finalStaticNets.add(matchingNet);
+					inst.addToNetList(matchingNet);
+					createAndAddPin(matchingNet, inst, false);
 				}
 				else{
 					matchingNet.addPin(ss.pin);
 					ss.pin.getInstance().addToNetList(matchingNet);
+				}
+				
+				
+				// Special case with CLK pins BRAMs on Virtex5 devices, when competing for FANs against GND Nets
+				if(dev.getFamilyType().equals(FamilyType.VIRTEX5)){
+					if(ss.pin.getInstance().getPrimitiveSite().getType().equals(PrimitiveType.DSP48E) && ss.pin.getName().contains("CEP")){
+						Node nn = new Node(inst.getTile(), we.getWireEnum("CTRL1"), null, 0);
+						addReservedNode(nn, matchingNet);
+					}
 				}
 			}
 			
