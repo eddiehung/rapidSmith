@@ -33,11 +33,11 @@ import com.trolltech.qt.gui.QMainWindow;
 import com.trolltech.qt.gui.QProgressDialog;
 import com.trolltech.qt.gui.QStatusBar;
 import com.trolltech.qt.gui.QTreeWidget;
-import com.trolltech.qt.gui.QTreeWidgetItem;
 import com.trolltech.qt.gui.QWidget;
 import com.trolltech.qt.gui.QDockWidget.DockWidgetFeature;
 
 import edu.byu.ece.rapidSmith.device.Device;
+import edu.byu.ece.rapidSmith.gui.WidgetMaker;
 import edu.byu.ece.rapidSmith.util.FileTools;
 import edu.byu.ece.rapidSmith.util.MessageGenerator;
 
@@ -50,22 +50,37 @@ import edu.byu.ece.rapidSmith.util.MessageGenerator;
  * @author marc
  */
 public class PartTileBrowser extends QMainWindow{
-
+	/** This is the Qt View object for the tile browser */
 	private PartTileBrowserView view;
+	/** This is the container for the text in the Status Bar at the bottom of the screen */
 	private QLabel statusLabel;
+	/** This is the Qt Scene object for the tile browser */
 	private PartTileBrowserScene scene;
+	/** The current device that has been loaded */
 	Device device;
-	private String currPart;
+	/** The current part name */
+	private String currPartName;
+	/** This is the part chooser widget */
 	private QTreeWidget treeWidget;
 
+	/**
+	 * Main method
+	 * @param args
+	 */
 	public static void main(String[] args){
+		// This line fixes slow performance under Linux
 		QApplication.setGraphicsSystem("raster");
+		
 		QApplication.initialize(args);
 		PartTileBrowser testPTB = new PartTileBrowser(null);
 		testPTB.show();
 		QApplication.exec();
 	}
 
+	/**
+	 * Constructor of a new PartTileBrowser
+	 * @param parent Parent widget to which this object belongs.
+	 */
 	public PartTileBrowser(QWidget parent) {
 		super(parent);
 		setWindowTitle("Part Tile Browser");
@@ -75,16 +90,14 @@ public class PartTileBrowser extends QMainWindow{
 		if(parts.size() < 1){
 			MessageGenerator.briefErrorAndExit("Error: No available parts. Please generate part database files.");
 		}
-		currPart = parts.get(0);
-		device = FileTools.loadDevice(currPart);
+		currPartName = parts.get(0);
+		device = FileTools.loadDevice(currPartName);
 		
 		scene = new PartTileBrowserScene(device);
 
 		view = new PartTileBrowserView(scene);
 
 		setCentralWidget(view);
-		
-
 		
 		scene.updateStatus.connect(this, "updateStatus()");
 		statusLabel = new QLabel("Status Bar");
@@ -96,70 +109,7 @@ public class PartTileBrowser extends QMainWindow{
 	}
 
 	private void createTreeView() {
-		treeWidget = new QTreeWidget();
-		treeWidget.setColumnCount(1);
-		treeWidget.setHeaderLabel("Select a part...");
-		QTreeWidgetItem xc4 = new QTreeWidgetItem(treeWidget);
-		xc4.setText(0, tr("Virtex4"));
-		QTreeWidgetItem xc4vfx = new QTreeWidgetItem(xc4);
-		xc4vfx.setText(0, tr("FX"));
-		QTreeWidgetItem xc4vlx = new QTreeWidgetItem(xc4);
-		xc4vlx.setText(0, tr("LX"));
-		QTreeWidgetItem xc4vsx = new QTreeWidgetItem(xc4);
-		xc4vsx.setText(0, tr("SX"));
-		
-		QTreeWidgetItem xc5 = new QTreeWidgetItem(treeWidget);
-		xc5.setText(0, tr("Virtex5"));
-		QTreeWidgetItem xc5vfx = new QTreeWidgetItem(xc5);
-		xc5vfx.setText(0, tr("FX"));
-		QTreeWidgetItem xc5vlx = new QTreeWidgetItem(xc5);
-		xc5vlx.setText(0, tr("LX"));
-		QTreeWidgetItem xc5vsx = new QTreeWidgetItem(xc5);
-		xc5vsx.setText(0, tr("SX"));
-		QTreeWidgetItem xc5vtx = new QTreeWidgetItem(xc5);
-		xc5vtx.setText(0, tr("TX"));
-		
-		QTreeWidgetItem xc6 = new QTreeWidgetItem(treeWidget);
-		xc6.setText(0, tr("Virtex6"));
-		QTreeWidgetItem xc6vcx = new QTreeWidgetItem(xc6);
-		xc6vcx.setText(0, tr("CX"));
-		QTreeWidgetItem xc6vhx = new QTreeWidgetItem(xc6);
-		xc6vhx.setText(0, tr("HX"));
-		QTreeWidgetItem xc6vlx = new QTreeWidgetItem(xc6);
-		xc6vlx.setText(0, tr("LX"));
-		QTreeWidgetItem xc6vsx = new QTreeWidgetItem(xc6);
-		xc6vsx.setText(0, tr("SX"));
-		
-		for(String partName : FileTools.getAvailableParts()){
-			QTreeWidgetItem partItem= null;
-			if(partName.startsWith("xc4vfx"))
-				partItem = new QTreeWidgetItem(xc4vfx);
-			else if(partName.startsWith("xc4vlx"))
-				partItem = new QTreeWidgetItem(xc4vlx);
-			else if(partName.startsWith("xc4vsx"))
-				partItem = new QTreeWidgetItem(xc4vsx);
-			else if(partName.startsWith("xc5vfx"))
-				partItem = new QTreeWidgetItem(xc5vfx);
-			else if(partName.startsWith("xc5vlx"))
-				partItem = new QTreeWidgetItem(xc5vlx);
-			else if(partName.startsWith("xc5vsx"))
-				partItem = new QTreeWidgetItem(xc5vsx);
-			else if(partName.startsWith("xc5vtx"))
-				partItem = new QTreeWidgetItem(xc5vtx);
-			else if(partName.startsWith("xc6vcx"))				
-				partItem = new QTreeWidgetItem(xc6vcx);
-			else if(partName.startsWith("xc6vhx"))
-				partItem = new QTreeWidgetItem(xc6vhx);			
-			else if(partName.startsWith("xc6vlx"))
-				partItem = new QTreeWidgetItem(xc6vlx);
-			else if(partName.startsWith("xc6vsx"))
-				partItem = new QTreeWidgetItem(xc6vsx);
-			else
-				partItem = new QTreeWidgetItem(treeWidget);
-	        partItem.setText(0, tr(partName));
-	        partItem.setData(0, ItemDataRole.AccessibleDescriptionRole, partName);
-		}
-		
+		treeWidget = WidgetMaker.createAvailablePartTreeWidget("Select a part...");	
 		treeWidget.doubleClicked.connect(this,"showPart(QModelIndex)");
 		
 		QDockWidget dockWidget = new QDockWidget(tr("Part Browser"), this);
@@ -173,20 +123,20 @@ public class PartTileBrowser extends QMainWindow{
 	private void showPart(QModelIndex qmIndex){
 		Object data = qmIndex.data(ItemDataRole.AccessibleDescriptionRole);
 		if( data != null){
-			if(currPart.equals(data))
+			if(currPartName.equals(data))
 				return;
-			currPart = (String) data;
-			QProgressDialog progress = new QProgressDialog("Loading "+currPart.toUpperCase()+"...", "", 0, 100, this);
+			currPartName = (String) data;
+			QProgressDialog progress = new QProgressDialog("Loading "+currPartName.toUpperCase()+"...", "", 0, 100, this);
 			progress.setWindowTitle("Load Progress");
 			progress.setWindowModality(WindowModality.WindowModal);
 			progress.setCancelButton(null);
 			progress.show();
 			progress.setValue(10);
 			
-			device = FileTools.loadDevice(currPart);
+			device = FileTools.loadDevice(currPartName);
 			progress.setValue(100);
 			scene.setDevice(device);
-			statusLabel.setText("Loaded: "+currPart.toUpperCase());
+			statusLabel.setText("Loaded: "+currPartName.toUpperCase());
 
 			
 		}
@@ -196,7 +146,7 @@ public class PartTileBrowser extends QMainWindow{
 		int y = (int) scene.getCurrY();
 		if (x >= 0 && x < device.getColumns() && y >= 0 && y < device.getRows()){
 			String tileName = device.getTile(y, x).getName();
-			statusLabel.setText("Part: "+currPart.toUpperCase() +"  Tile: "+ tileName+" ("+x+","+y+")");
+			statusLabel.setText("Part: "+currPartName.toUpperCase() +"  Tile: "+ tileName+" ("+x+","+y+")");
 		}
 	}
 

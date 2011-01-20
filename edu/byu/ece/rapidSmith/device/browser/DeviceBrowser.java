@@ -41,6 +41,7 @@ import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.Tile;
 import edu.byu.ece.rapidSmith.device.Wire;
 import edu.byu.ece.rapidSmith.device.WireEnumerator;
+import edu.byu.ece.rapidSmith.gui.WidgetMaker;
 import edu.byu.ece.rapidSmith.util.FileTools;
 import edu.byu.ece.rapidSmith.util.MessageGenerator;
 
@@ -143,76 +144,7 @@ public class DeviceBrowser extends QMainWindow{
 	 * the windows for the primitive site list and wire list.
 	 */
 	private void initializeSideBar(){
-		treeWidget = new QTreeWidget();
-		treeWidget.setColumnCount(1);
-		treeWidget.setHeaderLabel("Select a part...");
-		
-		QTreeWidgetItem xc4 = new QTreeWidgetItem(treeWidget);
-		xc4.setText(0, tr("Virtex4"));
-		QTreeWidgetItem xc4vfx = new QTreeWidgetItem(xc4);
-		xc4vfx.setText(0, tr("FX"));
-		QTreeWidgetItem xc4vlx = new QTreeWidgetItem(xc4);
-		xc4vlx.setText(0, tr("LX"));
-		QTreeWidgetItem xc4vsx = new QTreeWidgetItem(xc4);
-		xc4vsx.setText(0, tr("SX"));
-		
-		QTreeWidgetItem xc5 = new QTreeWidgetItem(treeWidget);
-		xc5.setText(0, tr("Virtex5"));
-		QTreeWidgetItem xc5vfx = new QTreeWidgetItem(xc5);
-		xc5vfx.setText(0, tr("FX"));
-		QTreeWidgetItem xc5vlx = new QTreeWidgetItem(xc5);
-		xc5vlx.setText(0, tr("LX"));
-		QTreeWidgetItem xc5vsx = new QTreeWidgetItem(xc5);
-		xc5vsx.setText(0, tr("SX"));
-		QTreeWidgetItem xc5vtx = new QTreeWidgetItem(xc5);
-		xc5vtx.setText(0, tr("TX"));
-		
-		QTreeWidgetItem xc6 = new QTreeWidgetItem(treeWidget);
-		xc6.setText(0, tr("Virtex6"));
-		QTreeWidgetItem xc6vcx = new QTreeWidgetItem(xc6);
-		xc6vcx.setText(0, tr("CX"));
-		QTreeWidgetItem xc6vhx = new QTreeWidgetItem(xc6);
-		xc6vhx.setText(0, tr("HX"));
-		QTreeWidgetItem xc6vlx = new QTreeWidgetItem(xc6);
-		xc6vlx.setText(0, tr("LX"));
-		QTreeWidgetItem xc6vsx = new QTreeWidgetItem(xc6);
-		xc6vsx.setText(0, tr("SX"));
-		
-		QTreeWidgetItem xc6s = new QTreeWidgetItem(treeWidget);
-		xc6s.setText(0, tr("Spartan6"));
-		
-		for(String partName : FileTools.getAvailableParts()){
-			QTreeWidgetItem partItem= null;
-			if(partName.startsWith("xc4vfx"))
-				partItem = new QTreeWidgetItem(xc4vfx);
-			else if(partName.startsWith("xc4vlx"))
-				partItem = new QTreeWidgetItem(xc4vlx);
-			else if(partName.startsWith("xc4vsx"))
-				partItem = new QTreeWidgetItem(xc4vsx);
-			else if(partName.startsWith("xc5vfx"))
-				partItem = new QTreeWidgetItem(xc5vfx);
-			else if(partName.startsWith("xc5vlx"))
-				partItem = new QTreeWidgetItem(xc5vlx);
-			else if(partName.startsWith("xc5vsx"))
-				partItem = new QTreeWidgetItem(xc5vsx);
-			else if(partName.startsWith("xc5vtx"))
-				partItem = new QTreeWidgetItem(xc5vtx);
-			else if(partName.startsWith("xc6vcx"))				
-				partItem = new QTreeWidgetItem(xc6vcx);
-			else if(partName.startsWith("xc6vhx"))
-				partItem = new QTreeWidgetItem(xc6vhx);			
-			else if(partName.startsWith("xc6vlx"))
-				partItem = new QTreeWidgetItem(xc6vlx);
-			else if(partName.startsWith("xc6vsx"))
-				partItem = new QTreeWidgetItem(xc6vsx);
-			else if(partName.startsWith("xc6s"))
-				partItem = new QTreeWidgetItem(xc6s);
-			else
-				partItem = new QTreeWidgetItem(treeWidget);
-	        partItem.setText(0, tr(partName));
-	        partItem.setData(0, ItemDataRole.AccessibleDescriptionRole, partName);
-		}
-		
+		treeWidget = WidgetMaker.createAvailablePartTreeWidget("Select a part...");
 		treeWidget.doubleClicked.connect(this,"showPart(QModelIndex)");
 		
 		QDockWidget dockWidget = new QDockWidget(tr("Part Browser"), this);
