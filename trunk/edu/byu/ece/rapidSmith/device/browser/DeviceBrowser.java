@@ -287,8 +287,8 @@ public class DeviceBrowser extends QMainWindow{
 		int x = (int) scene.getCurrX();
 		int y = (int) scene.getCurrY();
 		if (x >= 0 && x < device.getColumns() && y >= 0 && y < device.getRows()){
-			String tileName = device.getTile(y, x).getName();
-			statusLabel.setText("Part: "+currPart.toUpperCase() +"  Tile: "+ tileName+" ("+x+","+y+")");
+			Tile tile = device.getTile(y, x);
+			statusLabel.setText("Part: "+currPart.toUpperCase() +"  Tile: "+ tile.getName() +" ("+x+","+y+")" + " Type: " + tile.getType());
 		}
 	}
 }

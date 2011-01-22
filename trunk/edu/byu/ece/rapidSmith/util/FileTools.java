@@ -778,6 +778,21 @@ public class FileTools {
 	}
 	
 	/**
+	 * Gets and returns the path of the folder where the family type resides.
+	 * @param familyType The family type corresponding folder path.
+	 * @return The path of the folder where the parts of familyType reside.
+	 */
+	public static String getPartFolderPath(FamilyType familyType){
+		familyType = PartNameTools.getBaseTypeFromFamilyType(familyType);
+		return getRapidSmithPath() + 
+				File.separator +
+				deviceFolderName + 
+				File.separator + 
+				familyType.toString().toLowerCase() + 
+				File.separator;
+	}
+	
+	/**
 	 * Gets the device file path and name for the given partName.
 	 * @param partName Name of the part to get corresponding device file for.
 	 * @return The full path to the device file specified by partName.
@@ -821,6 +836,16 @@ public class FileTools {
 		return getPartFolderPath(partName) +
 				File.separator + wireEnumeratorFileName;
 	}
+
+	/**
+	 * Gets the wire enumerator file path and name for the given familyType.
+	 * @param familyType Name of the family type to get corresponding wire enumerator file for.
+	 * @return The full path to the wire enumerator file specified by familyType.
+	 */
+	public static String getWireEnumeratorFileName(FamilyType familyType){
+		return getPartFolderPath(familyType) +
+				File.separator + wireEnumeratorFileName;
+	}
 	
 	/**
 	 * Loads the appropriate WireEnumerator file based on the part name.  Accounts for 
@@ -830,8 +855,19 @@ public class FileTools {
 	 */
 	public static WireEnumerator loadWireEnumerator(String partName){
 		FamilyType familyType = PartNameTools.getFamilyTypeFromPart(partName);
+		return loadWireEnumerator(familyType);
+	}
+	
+	/**
+	 * Loads the appropriate WireEnumerator file based on the part name.  Accounts for 
+	 * speed grade in file name.
+	 * @param partName Name of the part or device to load the information for.
+	 * @return The WireEnumerator or null if there was an error.
+	 */
+	public static WireEnumerator loadWireEnumerator(FamilyType familyType){
+		familyType = PartNameTools.getBaseTypeFromFamilyType(familyType);
 		WireEnumerator we = WireEnumerator.getInstance(familyType);
-		String path = getWireEnumeratorFileName(partName);
+		String path = getWireEnumeratorFileName(familyType);
 		
 		if(we.getFamilyName() != null){
 			return we;
@@ -845,6 +881,7 @@ public class FileTools {
 		}
 	}
 	
+	
 	/**
 	 * Gets the primitive defs file path and name for the given partName.
 	 * @param partName Name of the part to get corresponding primitive defs file for.
@@ -852,6 +889,15 @@ public class FileTools {
 	 */
 	public static String getPrimitiveDefsFileName(String partName){
 		return getPartFolderPath(partName) + primitiveDefFileName;
+	}
+	
+	/**
+	 * Gets the primitive defs file path and name for the given familyType.
+	 * @param familyType Family type to get corresponding primitive defs file for.
+	 * @return The full path to the primitive defs file specified by fileName.
+	 */
+	public static String getPrimitiveDefsFileName(FamilyType familyType){
+		return getPartFolderPath(familyType) + primitiveDefFileName;
 	}
 	
 	/**
@@ -864,6 +910,17 @@ public class FileTools {
 		return (PrimitiveDefList) loadFromCompressedFile(path);
 	}
 	
+	/**
+	 * Loads the primitiveDefs file for the appropriate family based on FamilyType. 
+	 * @param familyType the Xilinx FPGA family to load primitive defs for.
+	 * @return The PrimitiveDefList object containing the primitives used in the family.
+	 */
+	public static PrimitiveDefList loadPrimitiveDefs(FamilyType familyType){
+		String path = getPrimitiveDefsFileName(familyType);
+		return (PrimitiveDefList) loadFromCompressedFile(path);
+	}
+
+
 	/**
 	 * Checks for all device files present in the current RapidSmith path and returns
 	 * a list of strings of those part names available to be used by the tool.

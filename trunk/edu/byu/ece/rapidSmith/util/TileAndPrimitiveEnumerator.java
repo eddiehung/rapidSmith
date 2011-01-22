@@ -44,8 +44,12 @@ public class TileAndPrimitiveEnumerator{
 	/** Keeps all the unique instance names/types in a sorted set */
 	private SortedSet<String> primitiveSet;
 	/** Stores the names of the FPGA family names (Virtex4, Virtex5, ...)*/
-	private static final String[] families = {"virtex4","virtex5","virtex6",
-		"spartan3a","spartan3adsp","spartan3e","spartan6"};
+	private static final FamilyType[] families = {FamilyType.SPARTAN2, 
+		FamilyType.SPARTAN2E, FamilyType.SPARTAN3, FamilyType.SPARTAN3A,
+		FamilyType.SPARTAN3ADSP, FamilyType.SPARTAN3E, FamilyType.SPARTAN6,
+		FamilyType.VIRTEX, FamilyType.VIRTEX2, FamilyType.VIRTEX2P, 
+		FamilyType.VIRTEX4, FamilyType.VIRTEX5, FamilyType.VIRTEX6, 
+		FamilyType.VIRTEXE};
 	/** All of the part names to check */ 
 	public ArrayList<String> partNames;
 	/** List of all xdlrc file names generated */
@@ -76,34 +80,77 @@ public class TileAndPrimitiveEnumerator{
 	 * (virtex4, virtex5, virtex6, spartan3a, spartan3adsp, spartan3e, spartan6).
 	 */
 	private void generatePartNames(){
-		// virtex4
-		partNames.add("xc4vfx12ff668");
-		partNames.add("xc4vfx100ff1517");
-		// virtex5
-		partNames.add("xc5vlx20tff323");
-		partNames.add("xc5vlx30ff324");
-		partNames.add("xc5vtx150tff1156");
-		partNames.add("xc5vfx70tff1136");
-		// virtex6
-		partNames.add("xc6vhx255tff1155");
-		partNames.add("xc6vcx130tff484");
-		// spartan3a
-		partNames.add("xc3s1400afg484");
-		partNames.add("xc3s700anfgg484");
-		partNames.add("xc3s200aft256");
-		partNames.add("xc3s50atq144");
-		// spartan3adsp
-		partNames.add("xc3sd1800acs484");
-		// spartan3e
-		partNames.add("xc3s100evq100");
-		partNames.add("xc3s250evq100");
-		partNames.add("xc3s1200eft256");
-		// spartan6
-		partNames.add("xc6slx45fgg484");
-		partNames.add("xc6slx75csg484");
-		partNames.add("xc6slx100tfgg484");
-		partNames.add("xc6slx25csg324");
-		partNames.add("xc6slx4tqg144");
+		for(FamilyType type : families){
+			switch(type){
+			case ARTIX7: 
+				break;
+			case KINTEX7: 
+				break;
+			case SPARTAN2:
+				partNames.add("xc2s15cs144");
+				break;
+			case SPARTAN2E:
+				partNames.add("xc2s50eft256");
+				partNames.add("xc2s600efg456");
+				break;
+			case SPARTAN3:
+				partNames.add("xc3s50pq208");
+				partNames.add("xc3s400fg456");
+				partNames.add("xc3s4000fg676");
+				break;
+			case SPARTAN3A:
+				partNames.add("xc3s1400afg484");
+				partNames.add("xc3s700anfgg484");
+				partNames.add("xc3s200aft256");
+				partNames.add("xc3s50atq144");
+				break;
+			case SPARTAN3ADSP:
+				partNames.add("xc3sd1800acs484");
+				break;
+			case SPARTAN3E:
+				partNames.add("xc3s100evq100");
+				partNames.add("xc3s250evq100");
+				partNames.add("xc3s1200eft256");
+				break;
+			case SPARTAN6:
+				partNames.add("xc6slx45fgg484");
+				partNames.add("xc6slx75csg484");
+				partNames.add("xc6slx100tfgg484");
+				partNames.add("xc6slx25csg324");
+				partNames.add("xc6slx4tqg144");
+				break;
+			case VIRTEX:
+				partNames.add("xcv400bg432");
+				break;
+			case VIRTEX2:
+				partNames.add("xc2v500fg256");
+				break;
+			case VIRTEX2P:
+				partNames.add("xc2vp2fg256");
+				partNames.add("xc2vpx70ff1704");		
+				break;
+			case VIRTEX4:
+				partNames.add("xc4vfx12ff668");
+				partNames.add("xc4vfx100ff1517");
+				break;
+			case VIRTEX5: 
+				partNames.add("xc5vlx20tff323");
+				partNames.add("xc5vlx30ff324");
+				partNames.add("xc5vtx150tff1156");
+				partNames.add("xc5vfx70tff1136");
+				break;
+			case VIRTEX6:
+				partNames.add("xc6vhx255tff1155");
+				partNames.add("xc6vcx130tff484");
+				break;
+			case VIRTEX7: 
+				break;
+			case VIRTEXE:
+				partNames.add("xcv50ecs144");
+				partNames.add("xcv405ebg560");
+				break;
+			}
+		}
 	}
 	
 	/**
@@ -183,8 +230,8 @@ public class TileAndPrimitiveEnumerator{
 		bw.write(" *   " + FileTools.getTimeString() + nl);
 		bw.write(" * The following Xilinx families are supported:" + nl);
 		bw.write(" *   ");
-		for(String family : families){
-			bw.write(family + " ");
+		for(FamilyType family : families){
+			bw.write(family.toString().toLowerCase() + " ");
 		}
 		bw.write(nl);
 		bw.write(" */" + nl);
@@ -218,8 +265,8 @@ public class TileAndPrimitiveEnumerator{
 			bw.write("/**" + nl);
 			bw.write(" * This enum enumerates all of the Tile types of the following FPGA families: " + nl);
 			bw.write(" *   ");
-			for(String family : families){
-				bw.write(family + " ");
+			for(FamilyType family : families){
+				bw.write(family.toString().toLowerCase() + " ");
 			}
 			bw.write(nl);
 			bw.write(" */" + nl);
@@ -248,8 +295,8 @@ public class TileAndPrimitiveEnumerator{
 			bw.write("/**" + nl);
 			bw.write(" * This enum enumerates all of the Primitive types of the following FPGA families: " + nl);
 			bw.write(" *   ");
-			for(String family : families){
-				bw.write(family + " ");
+			for(FamilyType family : families){
+				bw.write(family.toString().toLowerCase() + " ");
 			}
 			bw.write(nl);
 			bw.write(" */" + nl);
@@ -356,29 +403,13 @@ public class TileAndPrimitiveEnumerator{
 		
 		return true;
 	}
-	
-	/**
-	 * Helper method to get tile name prefixes.
-	 * @param tileName The complete tile name.
-	 * @return The tile name prefix.
-	 */
-	private String removeCoordinates(String tileName){
-		int endIndex = tileName.length()-1;
-		
-		while(endIndex >= 0 && tileName.charAt(endIndex) != '_'){
-			endIndex--;
-		}
-		if(endIndex == -1) 
-			return tileName;
-		else
-			return tileName.substring(0, endIndex);
-	}
 
 	/**
-	 * Gets and returns a list of Xilinx FPGA families compatible with this tool.
-	 * @return A list of Xilinx FPGA families compatible with this tool.
+	 * Gets and returns a list of Xilinx FPGA base families compatible with 
+	 * this tool.
+	 * @return A list of Xilinx FPGA base families compatible with this tool.
 	 */
-	public static String[] getFamilies(){
+	public static FamilyType[] getFamilies(){
 		return families;
 	}
 	
@@ -443,11 +474,13 @@ public class TileAndPrimitiveEnumerator{
 		
 		System.out.println("DONE!");
 		
-		// Delete the XDLRC file when finished
-		System.gc();
-		for(String fileName : me.xdlrcFileNames){
-			System.out.println("Removing: " + fileName);
-			FileTools.deleteFile(fileName);
+		// Delete the XDLRC files when finished
+		if(args.length > 0 && args[0].equals("-deleteXDLRC")){
+			System.gc();
+			for(String fileName : me.xdlrcFileNames){
+				System.out.println("Removing: " + fileName);
+				FileTools.deleteFile(fileName);
+			}			
 		}
 	}
 }

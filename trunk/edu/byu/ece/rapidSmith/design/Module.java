@@ -51,7 +51,7 @@ public class Module implements Serializable{
 
 	private static final long serialVersionUID = 7127893920489370872L;
 	/** This is the current module file version (saved in file to ensure proper compatibility) */
-	public static final String moduleFileVersion = "0.4";
+	public static final String moduleFileVersion = "0.5";
 	/** Unique name of this module */
 	private String name;
 	/** All of the attributes in this module */

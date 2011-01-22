@@ -1357,9 +1357,11 @@ public class Design implements Serializable{
 	
 	static {
 		sliceTypes = new HashSet<PrimitiveType>();
+		sliceTypes.add(PrimitiveType.SLICE);
 		sliceTypes.add(PrimitiveType.SLICEL);
 		sliceTypes.add(PrimitiveType.SLICEM);
 		sliceTypes.add(PrimitiveType.SLICEX);
+
 		
 		dspTypes = new HashSet<PrimitiveType>();
 		dspTypes.add(PrimitiveType.DSP48);
@@ -1369,6 +1371,12 @@ public class Design implements Serializable{
 		dspTypes.add(PrimitiveType.DSP48E1);
 		
 		bramTypes = new HashSet<PrimitiveType>();
+		bramTypes.add(PrimitiveType.BLOCKRAM);
+		bramTypes.add(PrimitiveType.FIFO16);
+		bramTypes.add(PrimitiveType.FIFO18E1);
+		bramTypes.add(PrimitiveType.FIFO36_72_EXP);
+		bramTypes.add(PrimitiveType.FIFO36_EXP);
+		bramTypes.add(PrimitiveType.FIFO36E1);		
 		bramTypes.add(PrimitiveType.RAMB16);
 		bramTypes.add(PrimitiveType.RAMB16BWE);
 		bramTypes.add(PrimitiveType.RAMB16BWER);
