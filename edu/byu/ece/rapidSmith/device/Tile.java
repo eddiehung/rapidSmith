@@ -233,6 +233,10 @@ public class Tile implements Serializable{
 		// Set the name
 		this.name = name;
 		
+		if(!name.contains("_X")){
+			return;
+		}
+		
 		// Populate the X and Y coordinates based on name
 		int i = name.length();
 		int end = i;

@@ -41,6 +41,8 @@ import com.caucho.hessian.io.Hessian2Output;
 import edu.byu.ece.rapidSmith.device.helper.WireExpressions;
 import edu.byu.ece.rapidSmith.util.FamilyType;
 import edu.byu.ece.rapidSmith.util.FileTools;
+import edu.byu.ece.rapidSmith.util.MessageGenerator;
+import edu.byu.ece.rapidSmith.util.PartNameTools;
 
 /**
  * This utility class creates and governs the translation of the wires enumeration value from its
@@ -68,6 +70,8 @@ public class WireEnumerator implements Serializable {
 	/** Xilinx FPGA family name (virtex4, virtex5, ...) */
 	private FamilyType familyType = null;
 	
+	public static final String wireEnumeratorVersion = "0.1";
+	
 	/**
 	 * Constructor, does not initialize anything
 	 */
@@ -82,7 +86,14 @@ public class WireEnumerator implements Serializable {
 	 * @return A new wire enumerator or the currently matching loaded wire enumerator.
 	 */
 	public static WireEnumerator getInstance(FamilyType familyType){
-		if(singleton == null || !singleton.familyType.equals(familyType)){
+		if(singleton == null){
+			return singleton = new WireEnumerator();
+		}
+		
+		FamilyType baseFamilyType = 
+			PartNameTools.getBaseTypeFromFamilyType(singleton.familyType);
+		familyType = PartNameTools.getBaseTypeFromFamilyType(familyType);
+		if(!baseFamilyType.equals(familyType)){
 			singleton = new WireEnumerator();
 		}
 		return singleton;
@@ -283,6 +294,11 @@ public class WireEnumerator implements Serializable {
 			Hessian2Output hos = FileTools.getOutputStream(fileName);
 			
 			//=======================================================//
+			/* public static final String wireEnumeratorVersion;     */
+			//=======================================================//
+			hos.writeString(wireEnumeratorVersion);
+			
+			//=======================================================//
 			/* private HashMap<String,Integer> wireMap;              */
 			//=======================================================//
 		     	// We'll rebuild this from wireArray
@@ -338,6 +354,20 @@ public class WireEnumerator implements Serializable {
 		try {
 			Hessian2Input his = FileTools.getInputStream(fileName);
  			
+			//=======================================================//
+			/* public static final String wireEnumeratorVersion;     */
+			//=======================================================//
+			String check = his.readString();
+			if(!check.equals(wireEnumeratorVersion)){
+				MessageGenerator.briefErrorAndExit("Error, the current version " +
+					"of RAPIDSMITH is not compatible with the wire enumerator " +
+					"file(s) present on this installation.  Delete the 'device' " +
+					"directory and run the Installer again to regenerate new wire" +
+					" enumerator files.\nCurrent RAPIDSMITH wire enumerator file " +
+					"version: " + wireEnumeratorVersion +", existing device file " +
+					"version: " + check + ".");
+			}
+			
 			//=======================================================//
 			/* private String[] wireArray;                           */
 			//=======================================================//
@@ -532,5 +562,15 @@ public class WireEnumerator implements Serializable {
 		System.out.print("DONE!\n");
 		System.out.println("  TOTAL:" + (stop-start) + "ns");
 		System.out.println("  PER  :" + (((double)stop-(double)start)/(double)testSize) + "ns");		
+	}
+	
+	public static void main(String[] args){
+		if(args.length != 1){
+			MessageGenerator.briefMessageAndExit("USAGE: <partname>");
+		}
+		WireEnumerator we = FileTools.loadWireEnumerator(args[0]);
+		for (int i = 0; i < we.wireArray.length; i++) {
+			System.out.println(i + " " + we.wireArray[i]);
+		}
 	}
 }

@@ -203,10 +203,12 @@ public class RunXilinxTools {
 			}
 		} 
 		catch (IOException e){
+			e.printStackTrace();
 			MessageGenerator.briefError("Part name generation failed: error reading partgen output.");
 			return null;
 		}
 		catch (InterruptedException e){
+			e.printStackTrace();
 			MessageGenerator.briefError("Part name generation failed: interruption during pargen.");
 			return null;
 		}

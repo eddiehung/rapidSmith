@@ -65,9 +65,9 @@ public class Device implements Serializable{
 	/** Serializable Version */
 	private static final long serialVersionUID = 6336619462392618775L;
 	/** The current release of the tools */
-	public static final String rapidSmithVersion = "0.2.2";
+	public static final String rapidSmithVersion = "0.3.0";
 	/** This is the current device file version (saved in file to ensure proper compatibility) */
-	public static final String deviceFileVersion = "0.3";
+	public static final String deviceFileVersion = "0.4";
 	
 	//========================================================================//
 	// Class Members
@@ -846,6 +846,12 @@ public class Device implements Serializable{
 	 * @return True if operation is successful, false otherwise.
 	 */
 	public boolean writeDeviceToCompactFile(String fileName){
+		// Update tile references to the device
+		for(Tile[] tiles : getTiles()){
+			for(Tile tile : tiles){
+				tile.setDevice(this);
+			}
+		}
 		try{		
 			FileOutputStream fos = new FileOutputStream(fileName);
 			Hessian2Output h2os = new Hessian2Output(fos);
@@ -1052,10 +1058,13 @@ public class Device implements Serializable{
 			//=======================================================//
 			String check = his.readString();
 			if(!check.equals(deviceFileVersion)){
-				MessageGenerator.briefErrorAndExit("Error, the current version of RAPIDSMITH is not" +
-					"compatible with the device files present on this installation.  Run the Installer " +
-					"again to regenerate new device files.\nCurrent RAPIDSMITH device file version: " + 
-					deviceFileVersion +", existing device file version: " + check + ".");
+				MessageGenerator.briefErrorAndExit("Error, the current version " +
+					"of RAPIDSMITH is not compatible with the device " +
+					"file(s) present on this installation.  Delete the 'device' " +
+					"directory and run the Installer again to regenerate new " +
+					"device files.\nCurrent RAPIDSMITH device file " +
+					"version: " + deviceFileVersion +", existing device file " +
+					"version: " + check + ".");
 			}
 			
 			//=======================================================//

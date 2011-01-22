@@ -44,6 +44,7 @@ import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.Tile;
 import edu.byu.ece.rapidSmith.device.Wire;
 import edu.byu.ece.rapidSmith.device.WireEnumerator;
+import edu.byu.ece.rapidSmith.gui.TileColors;
 
 /**
  * This class was written specifically for the DeviceBrowser class.  It
@@ -140,25 +141,11 @@ public class DeviceBrowserScene extends QGraphicsScene {
 					hash = name.substring(0, idx).hashCode();
 				}
 				
-				QColor color = QColor.fromRgb(hash);
-
-				if(name.contains("HCLK")){
-					color = QColor.cyan;
-				} else if(name.startsWith("DSP")){
-					color = QColor.darkCyan;
-				} else if (name.startsWith("BRAM")){
-					color = QColor.darkMagenta;
-				} else if (name.startsWith("INT")){
-					color = QColor.darkYellow;
-				} else if (name.startsWith("CLB") || name.startsWith("CLEX")){
-					color = QColor.blue;
-				} else if (name.startsWith("DCM") || name.startsWith("CMT")){
-					color = QColor.darkRed;
-				} else if (name.startsWith("IOB") || name.startsWith("IOI")){
-					color = QColor.darkGreen;
-				} else if (name.startsWith("EMPTY") || name.startsWith("NULL")){
-					color = QColor.fromRgb(240, 141, 45);
+				QColor color = TileColors.getSuggestedTileColor(tile);
+				if(color == null){
+					color = QColor.fromRgb(hash);
 				}
+
 				painter.fillRect(j * tileSize, i * tileSize, tileSize - 2, tileSize - 2, new QBrush(color));
 			}
 		}

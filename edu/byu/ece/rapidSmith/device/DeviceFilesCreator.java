@@ -113,6 +113,7 @@ public class DeviceFilesCreator{
 				break;
 			case VIRTEX2P:
 				partNames.add("xc2vp20fg676");
+				partNames.add("xc2vpx20ff896");
 				break;
 			case VIRTEX4:
 				partNames.add("xc4vfx12ff668");

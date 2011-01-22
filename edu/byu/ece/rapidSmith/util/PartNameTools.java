@@ -21,6 +21,7 @@
 package edu.byu.ece.rapidSmith.util;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,6 +29,29 @@ import java.util.regex.Pattern;
 public class PartNameTools {
 
 	private static Pattern partNamePattern = Pattern.compile("([a-z]+)|([0-9]+)|([a-z]*)|([0-9]*)|([a-z]*)");
+	
+	private static HashSet<FamilyType> legacyTypes;
+	
+	static{
+		legacyTypes = new HashSet<FamilyType>();
+		legacyTypes.add(FamilyType.SPARTAN2);
+		legacyTypes.add(FamilyType.SPARTAN2E);
+		legacyTypes.add(FamilyType.VIRTEX);
+		legacyTypes.add(FamilyType.VIRTEXE);
+		legacyTypes.add(FamilyType.VIRTEX2);
+		legacyTypes.add(FamilyType.VIRTEX2P);
+	}
+	
+	/**
+	 * This method determines which family types require the older version
+	 * of the Xilinx tools (10.1.3 or older).  
+	 * @param familyType The family type to check.
+	 * @return True if this part requires older tools (10.1.03) or older, false otherwise.
+	 */
+	public static boolean isFamilyTypeLegacy(FamilyType familyType){
+		getBaseTypeFromFamilyType(familyType);
+		return legacyTypes.contains(familyType);
+	}
 	
 	/**
 	 * This method removes the speed grade (ex: -10) from a conventional Xilinx part name.
@@ -365,13 +389,17 @@ public class PartNameTools {
 			case VIRTEX6:
 			case VIRTEX6L: 
 				if(partName.contains("lx")){
-					return "LXT";
+					if(partName.contains("t")) return "LXT";
+					else return "LX";					
 				}else if(partName.contains("sx")){
-					return "SXT";
+					if(partName.contains("t")) return "SXT";
+					else return "SX";	
 				}else if(partName.contains("hx")){
-					return "HXT";
+					if(partName.contains("t")) return "HXT";
+					else return "HX";	
 				}else if(partName.contains("cx")){
-					return "CXT";
+					if(partName.contains("t")) return "CXT";
+					else return "CX";	
 				}
 			case VIRTEX7:
 				if(partName.contains("ht")){
@@ -392,9 +420,25 @@ public class PartNameTools {
 	 * @return The formal family name or null if none exists.
 	 */
 	public static String getFormalFamilyNameFromType(FamilyType type){
-		switch(getBaseTypeFromFamilyType(type)){
-			case ARTIX7: return "Artix7";
-			case KINTEX7: return "Kintex7";
+		switch(type){
+			case ASPARTAN2E: return "Automotive Spartan2E";
+			case ASPARTAN3: return "Automotive Spartan3";
+			case ASPARTAN3A: return "Automotive Spartan3A";
+			case ASPARTAN3ADSP: return "Automotive Spartan-3A DSP";
+			case ASPARTAN3E: return "Automotive Spartan3E";
+			case ASPARTAN6: return "Automotive Spartan6";
+			case QSPARTAN6: return "Defense-Grade Spartan-6Q";
+			case QSPARTAN6L: return "Defense-Grade Spartan-6Q Lower Power";
+			case QVIRTEX4: return "Defense-Grade Virtex-4Q";
+			case QVIRTEX5: return "Defense-Grade Virtex-5Q";
+			case QVIRTEX6: return "Defense-Grade Virtex-6Q";
+			case QVIRTEX: return "QPro Virtex Hi-Rel";
+			case QRVIRTEX: return "QPro Virtex Rad-Hard";
+			case QVIRTEX2: return "QPro Virtex2 Military";
+			case QRVIRTEX2: return "QPro Virtex2 Rad Tolerant";
+			case QVIRTEX2P: return "QPro Virtex2P Hi-Rel";
+			case QVIRTEXE: return "QPro VirtexE Military";
+			case QRVIRTEX4: return "Space-Grade Virtex-4QV";
 			case SPARTAN2: return "Spartan2";
 			case SPARTAN2E: return "Spartan2E";
 			case SPARTAN3: return "Spartan3";
@@ -402,13 +446,14 @@ public class PartNameTools {
 			case SPARTAN3ADSP: return "Spartan-3A DSP";
 			case SPARTAN3E: return "Spartan3E";
 			case SPARTAN6: return "Spartan6";
+			case SPARTAN6L: return "Spartan6 Lower Power";
 			case VIRTEX: return "Virtex";
 			case VIRTEX2: return "Virtex2";
 			case VIRTEX2P: return "Virtex2P";
 			case VIRTEX4: return "Virtex4";
 			case VIRTEX5: return "Virtex5";
 			case VIRTEX6: return "Virtex6";
-			case VIRTEX7: return "Virtex7";
+			case VIRTEX6L: return "Virtex6 Lower Power";
 			case VIRTEXE: return "VirtexE";
 			default: return null;
 		}

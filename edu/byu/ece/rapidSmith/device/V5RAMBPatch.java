@@ -43,8 +43,15 @@ public class V5RAMBPatch{
 	
 	@SuppressWarnings("unchecked")
 	public V5RAMBPatch(){
-		rambPinMappings = (HashMap<PrimitiveType,HashMap<String,Integer>>) 
-						FileTools.loadFromCompressedFile(getV5RAMBPatchFileName());
+		if(new File(getV5RAMBPatchFileName()).exists()){
+			rambPinMappings = (HashMap<PrimitiveType,HashMap<String,Integer>>) 
+			FileTools.loadFromCompressedFile(getV5RAMBPatchFileName());
+		}
+		else{
+			MessageGenerator.briefError("Warning: Missing Virtex 5 RAMB " +
+				"patch file, some routing functionality will not work.");
+		}
+		
 	}
 
 	public Integer getExternalPin(Pin pin){
