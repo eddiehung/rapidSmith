@@ -442,6 +442,22 @@ public class StaticSourceHandler{
 			PinSorter ps = tileMap.get(tile);
 			ArrayList<StaticSink> removeThese = new ArrayList<StaticSink>();
 			
+			/*if(tile.getName().equals("INT_X79Y222")){
+				System.out.println("==High Priority TIEOFF==");
+				for(StaticSink sink : ps.highPriorityForTIEOFF){
+					System.out.println("  " + sink.net.getType() + " " + sink.node.toString(we) + " " + sink.pin.toString());
+				}
+				System.out.println("==Attempt TIEOFF==");
+				for(StaticSink sink : ps.attemptTIEOFF){
+					System.out.println("  " + sink.net.getType() + " " + sink.node.toString(we) + " " + sink.pin.toString());
+				}
+				System.out.println("==Use SLICE==");
+				for(StaticSink sink : ps.useSLICE){
+					System.out.println("  " + sink.net.getType() + " " + sink.node.toString(we) + " " + sink.pin.toString());
+				}
+			}*/
+			
+			
 			// Virtex 5 has some special pins that we should reserve
 			if(dev.getFamilyType().equals(FamilyType.VIRTEX5)){
 				for(StaticSink ss : ps.highPriorityForTIEOFF){
@@ -575,6 +591,10 @@ public class StaticSourceHandler{
 				if(dev.getFamilyType().equals(FamilyType.VIRTEX5)){
 					if(ss.pin.getInstance().getPrimitiveSite().getType().equals(PrimitiveType.DSP48E) && ss.pin.getName().contains("CEP")){
 						Node nn = new Node(inst.getTile(), we.getWireEnum("CTRL1"), null, 0);
+						addReservedNode(nn, matchingNet);
+					}
+					else if(ss.pin.getName().contains("ENBL")){
+						Node nn = new Node(inst.getTile(), we.getWireEnum("CTRL2"), null, 0);
 						addReservedNode(nn, matchingNet);
 					}
 				}
