@@ -252,7 +252,7 @@ public class StaticSourceHandler{
 		/*
 		 * Reserve OMUX wires for congested Virtex 4 switch boxes 
 		 */
-		if(dev.getPartName().startsWith("xc4v")){
+		if(dev.getFamilyType().equals(FamilyType.VIRTEX4)){
 			HashMap<Tile, ArrayList<Net>> switchMatrixSources = new HashMap<Tile, ArrayList<Net>>();
 			for(Tile t : sourceCount.keySet()){
 				ArrayList<Net> nets = sourceCount.get(t);
@@ -374,7 +374,7 @@ public class StaticSourceHandler{
 		// 1. High priority TIEOFF sinks - Do the best you can to attach these sinks to the TIEOFF
 		// 2. Attempt TIEOFF sinks - Attempt to connect them to a TIEOFF, but not critical
 		// 3. SLICE Source - Instance a nearby slice to supply GND/VCC
-		if(router.design.getPartName().startsWith("xc4v")){
+		if(dev.getFamilyType().equals(FamilyType.VIRTEX4)){
 			Node bounce0 = new Node(); bounce0.wire = we.getWireEnum("BOUNCE0");
 			Node bounce1 = new Node(); bounce1.wire = we.getWireEnum("BOUNCE1");
 			Node bounce2 = new Node(); bounce2.wire = we.getWireEnum("BOUNCE2");
@@ -419,7 +419,7 @@ public class StaticSourceHandler{
 				}
 			}			
 		}
-		else if(router.design.getPartName().startsWith("xc5v")){
+		else if(dev.getFamilyType().equals(FamilyType.VIRTEX5)){
 			for(Net net : staticNetList){
 				for(Pin pin : net.getPins()){
 					// Switch matrix sink, where the route has to connect through
@@ -440,27 +440,44 @@ public class StaticSourceHandler{
 		// For every switch matrix tile we have found that requires static sink connections
 		for(Tile tile : tileMap.keySet()){
 			PinSorter ps = tileMap.get(tile);
-			tempNode.setTile(tile);
 			ArrayList<StaticSink> removeThese = new ArrayList<StaticSink>();
 			
 			// Virtex 5 has some special pins that we should reserve
-			if(dev.getPartName().startsWith("xc5v")){
+			if(dev.getFamilyType().equals(FamilyType.VIRTEX5)){
 				for(StaticSink ss : ps.highPriorityForTIEOFF){
+					tempNode.setTile(tile);
 					String[] fans = fanBounceMap.get(we.getWireName(ss.node.wire));
 					Node newNode = null;
 					for(String fan : fans){
 						tempNode.setWire(we.getWireEnum(fan));
+						
 						// Add this to reserved
 						if(!router.usedNodes.contains(tempNode)){
 							newNode = new Node(tile, we.getWireEnum(fan), null, 0);
 							String wireName = we.getWireName(newNode.wire);
+							
+							
 							if(wireName.equals("FAN0") && !we.getWireName(ss.node.wire).equals("FAN_B0")){
 								ss.node.tile = dev.getTile(ss.node.tile.getRow()-1, ss.node.tile.getColumn());
 								newNode.tile = ss.node.tile;
+								
+								// Special case when neighboring resources are used (hard macros)
+								tempNode.tile = ss.node.tile;
+								tempNode.wire = we.getWireEnum("FAN0");
+								if(router.usedNodes.contains(tempNode)){
+									newNode = null;
+								}
 							}
 							else if(wireName.equals("FAN7") && !we.getWireName(ss.node.wire).equals("FAN_B7")){
 								ss.node.tile = dev.getTile(ss.node.tile.getRow()+1, ss.node.tile.getColumn());
 								newNode.tile = ss.node.tile;
+								
+								// Special case when neighboring resources are used (hard macros)
+								tempNode.tile = ss.node.tile;
+								tempNode.wire = we.getWireEnum("FAN7");
+								if(router.usedNodes.contains(tempNode)){
+									newNode = null;
+								}
 							}
 							break;
 						}
