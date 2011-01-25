@@ -445,12 +445,13 @@ public class StaticSourceHandler{
 			// Virtex 5 has some special pins that we should reserve
 			if(dev.getFamilyType().equals(FamilyType.VIRTEX5)){
 				for(StaticSink ss : ps.highPriorityForTIEOFF){
-					tempNode.setTile(tile);
+
 					String[] fans = fanBounceMap.get(we.getWireName(ss.node.wire));
 					Node newNode = null;
+
 					for(String fan : fans){
+						tempNode.setTile(tile);
 						tempNode.setWire(we.getWireEnum(fan));
-						
 						// Add this to reserved
 						if(!router.usedNodes.contains(tempNode)){
 							newNode = new Node(tile, we.getWireEnum(fan), null, 0);
@@ -458,24 +459,26 @@ public class StaticSourceHandler{
 							
 							
 							if(wireName.equals("FAN0") && !we.getWireName(ss.node.wire).equals("FAN_B0")){
-								ss.node.tile = dev.getTile(ss.node.tile.getRow()-1, ss.node.tile.getColumn());
+								//ss.node.tile = dev.getTile(ss.node.tile.getRow()-1, ss.node.tile.getColumn());
+								ss.node.tile = getNeighboringSwitchBox(1, ss.node.tile);
 								newNode.tile = ss.node.tile;
 								
 								// Special case when neighboring resources are used (hard macros)
 								tempNode.tile = ss.node.tile;
 								tempNode.wire = we.getWireEnum("FAN0");
-								if(router.usedNodes.contains(tempNode)){
+								if(tempNode.tile == null || router.usedNodes.contains(tempNode)){
 									newNode = null;
 								}
 							}
 							else if(wireName.equals("FAN7") && !we.getWireName(ss.node.wire).equals("FAN_B7")){
-								ss.node.tile = dev.getTile(ss.node.tile.getRow()+1, ss.node.tile.getColumn());
+								//ss.node.tile = dev.getTile(ss.node.tile.getRow()+1, ss.node.tile.getColumn());
+								ss.node.tile = getNeighboringSwitchBox(-1, ss.node.tile);
 								newNode.tile = ss.node.tile;
 								
 								// Special case when neighboring resources are used (hard macros)
 								tempNode.tile = ss.node.tile;
 								tempNode.wire = we.getWireEnum("FAN7");
-								if(router.usedNodes.contains(tempNode)){
+								if(tempNode.tile == null || router.usedNodes.contains(tempNode)){
 									newNode = null;
 								}
 							}
@@ -632,6 +635,11 @@ public class StaticSourceHandler{
 		tmpList.addAll(finalStaticNets);
 		tmpList.addAll(netList);
 		router.netList = tmpList;
+	}
+	
+	private Tile getNeighboringSwitchBox(int yOffset, Tile currTile){
+		String newTileName = "INT_X" + currTile.getTileXCoordinate() + "Y" + (currTile.getTileYCoordinate()+yOffset);
+		return dev.getTile(newTileName);
 	}
 	
 	/**
