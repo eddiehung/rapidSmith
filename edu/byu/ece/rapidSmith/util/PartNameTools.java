@@ -26,10 +26,17 @@ import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class PartNameTools {
-
+/**
+ * This class is to aid manipulating and converting Xilinx part names
+ * and the FamilyType enum.  It has facilities to convert part names
+ * to its corresponding family type as well as many other methods.
+ * @author Chris Lavin
+ * Created on: Jan 27, 2011
+ */
+public class PartNameTools{
+	/** A static regular expression to aid in parsing part names */
 	private static Pattern partNamePattern = Pattern.compile("([a-z]+)|([0-9]+)|([a-z]*)|([0-9]*)|([a-z]*)");
-	
+	/** Stores a set of FamilyTypes which require ISE 10.1.03 or older to function. */
 	private static HashSet<FamilyType> legacyTypes;
 	
 	static{
@@ -44,7 +51,7 @@ public class PartNameTools {
 	
 	/**
 	 * This method determines which family types require the older version
-	 * of the Xilinx tools (10.1.3 or older).  
+	 * of the Xilinx tools (10.1.03 or older).  
 	 * @param familyType The family type to check.
 	 * @return True if this part requires older tools (10.1.03) or older, false otherwise.
 	 */
