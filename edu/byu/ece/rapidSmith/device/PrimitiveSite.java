@@ -118,13 +118,24 @@ public class PrimitiveSite implements Serializable{
 	}
 	
 	/**
-	 * Gets the external wire enumeration of the name of the wire corresponding to the internal wire
-	 * name.
+	 * Gets the external wire enumeration of the name of the wire corresponding
+	 * to the internal wire name.
 	 * @param internalName The internal wire name in the primitive.
-	 * @return The corresponding external wire enum (Integer) name of the internal wire name. 
+	 * @return The corresponding external wire enum (Integer) of the internal 
+	 * wire name. 
 	 */
-	public Integer getExternalPinName(String internalName){
+	public Integer getExternalPinWireEnum(String internalName){
 		return this.pins.get(internalName);
+	}
+	
+	/**
+	 * Gets and returns the external pin name of the given internal pin name.
+	 * @param internalName Name of the internal pin on this primitive site.
+	 * @param we The corresponding wire enumerator for this device family.
+	 * @return The external pin name of the given internalName pin.
+	 */
+	public String getExternalPinName(String internalName, WireEnumerator we){
+		return we.getWireName(getExternalPinWireEnum(internalName));
 	}
 	
 	/**
@@ -134,6 +145,7 @@ public class PrimitiveSite implements Serializable{
 	public void setType(PrimitiveType type){
 		this.type = type;
 	}
+	
 	/**
 	 * Gets and returns the native type of primitive of this primitive site.
 	 * @return the type
