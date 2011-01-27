@@ -5,7 +5,10 @@ edu.byu.ece.rapidSmith.device
 edu.byu.ece.rapidSmith.device.browser
 edu.byu.ece.rapidSmith.device.helper
 edu.byu.ece.rapidSmith.examples
+edu.byu.ece.rapidSmith.gui
 edu.byu.ece.rapidSmith.placer
 edu.byu.ece.rapidSmith.primitiveDefs
 edu.byu.ece.rapidSmith.router
+edu.byu.ece.rapidSmith.tests
+edu.byu.ece.rapidSmith.timing
 edu.byu.ece.rapidSmith.util

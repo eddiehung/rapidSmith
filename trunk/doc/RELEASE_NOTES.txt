@@ -3,7 +3,13 @@ Release Notes for BYU RapidSmith Tools
  This is a major update for RapidSmith.  The device files need to be rebuilt
  in this version, this is due to adding support for several Xilinx legacy
  devices (spartan2, spartan2e, spartan3, spartan3a, spartan 3adsp, spartan3e,
- virtex, virtexe, virtex2, and virtex2p).
+ virtex, virtexe, virtex2, and virtex2p).  It also includes a new enum type
+ called FamilyType with a helper class called PartNameTools to help convert
+ Xilinx partnames to and from the FamilyType. An experimental timing report
+ (TWR) parser has been added.  The Design Explorer can load timing reports
+ using the new TWR parser and has been updated to show more information
+ about Nets.  Several bug fixes in the StaticSourceHandler when routing
+ Virtex 5 devices are included.  New packages: gui, tests and timing.
  
  - Version 0.2.2 (29 NOV 2010) -
  Added several features including a hard macro generator, a design explorer,
