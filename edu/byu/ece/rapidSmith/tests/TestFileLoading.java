@@ -155,12 +155,23 @@ public class TestFileLoading{
 			fileSize = new File(FileTools.getPrimitiveDefsFileName(familyType)).length();
 		}
 		
-		System.out.printf(" %-12s %-16s   %6dKB       %4dMB     %6.3fs%s",
-				familyType==null ? PartNameTools.getExactFamilyNameFromPart(args[1]) : familyType.toString(),
-				args[1], 
-				fileSize/1024, 
-				total_usage/(1024*1024),
-				((stop-start)/1000000000.0),
-				System.getProperty("line.separator"));
+		if(args[0].equals("-d")){
+			System.out.printf(" %-12s %-16s   %6dKB       %4dMB     %6.3fs\n",
+					familyType==null ? PartNameTools.getExactFamilyNameFromPart(args[1]) : familyType.toString().toUpperCase(),
+					args[1], 
+					fileSize/1024, 
+					total_usage/(1024*1024),
+					((stop-start)/1000000000.0));
+			
+		}
+		else{
+			System.out.printf(" %-12s %-16s   %6dKB       %4.1fMB     %6.3fs\n",
+					familyType==null ? PartNameTools.getExactFamilyNameFromPart(args[1]) : familyType.toString().toUpperCase(),
+					" ", 
+					fileSize/1024, 
+					total_usage/(1024.0*1024.0),
+					((stop-start)/1000000000.0));
+			
+		}
 	}
 }
