@@ -3,7 +3,7 @@
 ==============================================================================
    BYU RapidSmith Tools
 
-   Copyright (c) 2010 Brigham Young University
+   Copyright (c) 2010-2011 Brigham Young University
    
    BYU RapidSmith Tools is free software: you may redistribute it
    and/or modify it under the terms of the GNU General Public License

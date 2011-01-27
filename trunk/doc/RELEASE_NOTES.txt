@@ -1,4 +1,10 @@
 Release Notes for BYU RapidSmith Tools
+ - Version 0.3.0 (79 JAN 2011) -
+ This is a major update for RapidSmith.  The device files need to be rebuilt
+ in this version, this is due to adding support for several Xilinx legacy
+ devices (spartan2, spartan2e, spartan3, spartan3a, spartan 3adsp, spartan3e,
+ virtex, virtexe, virtex2, and virtex2p).
+ 
  - Version 0.2.2 (29 NOV 2010) -
  Added several features including a hard macro generator, a design explorer,
  a device browser, and basic support for Spartan 6 devices.  Fixed a few bugs
