@@ -229,7 +229,7 @@ public class PrimitiveSite implements Serializable{
 		for (FamilyType specificFamilyType : FamilyType.values()){
 			compatibleSites = new HashMap<PrimitiveType, PrimitiveType[]>();
 			switch (PartNameTools.getBaseTypeFromFamilyType(specificFamilyType)){
-				/*case SPARTAN2:
+				case SPARTAN2:
 					compatibleSites.put(PrimitiveType.IOB,
 							new PrimitiveType[]{PrimitiveType.PCIIOB});
 					break;
@@ -242,7 +242,7 @@ public class PrimitiveSite implements Serializable{
 							new PrimitiveType[]{PrimitiveType.DIFFM, PrimitiveType.DIFFS});
 					compatibleSites.put(PrimitiveType.SLICEL,
 							new PrimitiveType[]{PrimitiveType.SLICEM});
-					break;*/
+					break;
 				case SPARTAN3A:
 					compatibleSites.put(PrimitiveType.DIFFM,
 							new PrimitiveType[]{PrimitiveType.DIFFMLR, PrimitiveType.DIFFMTB});
@@ -323,7 +323,7 @@ public class PrimitiveSite implements Serializable{
 					compatibleSites.put(PrimitiveType.SLICEX,
 							new PrimitiveType[]{PrimitiveType.SLICEL, PrimitiveType.SLICEM});
 					break;
-				/*case VIRTEX:
+				case VIRTEX:
 					compatibleSites.put(PrimitiveType.IOB,
 							new PrimitiveType[]{PrimitiveType.PCIIOB});
 					break;
@@ -334,7 +334,7 @@ public class PrimitiveSite implements Serializable{
 				case VIRTEX2P:
 					compatibleSites.put(PrimitiveType.IOB,
 							new PrimitiveType[]{PrimitiveType.DIFFM, PrimitiveType.DIFFS});
-					break;*/
+					break;
 				case VIRTEX4:
 					compatibleSites.put(PrimitiveType.BUFG,
 							new PrimitiveType[]{PrimitiveType.BUFGCTRL});
@@ -403,10 +403,10 @@ public class PrimitiveSite implements Serializable{
 					compatibleSites.put(PrimitiveType.SLICEL,
 							new PrimitiveType[]{PrimitiveType.SLICEM});		
 					break;
-				/*case VIRTEXE:
+				case VIRTEXE:
 					compatibleSites.put(PrimitiveType.IOB,
 							new PrimitiveType[]{PrimitiveType.DLLIOB, PrimitiveType.PCIIOB});
-					break;*/
+					break;
 				case ARTIX7:
 					break;
 				case KINTEX7:
