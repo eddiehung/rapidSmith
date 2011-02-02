@@ -277,6 +277,19 @@ public class PartNameTools{
 		return null;
 	}
 	
+	/**
+	 * This method will take a string of a family name and return a family type.
+	 * @param name The given family name.
+	 * @return The family type or null if the string name is an invalid family name.
+	 */
+	public static FamilyType getFamilyTypeFromFamilyName(String name) {
+		try{
+			return FamilyType.valueOf(name.toUpperCase().trim());
+		}
+		catch(IllegalArgumentException e) {
+			return null;
+		}
+	}
 	
 	/**
 	 * This method will take a familyType and return the base familyType 
