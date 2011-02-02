@@ -946,6 +946,28 @@ public class FileTools {
 	}
 	
 	/**
+	 * Checks for all device files present in the current RapidSmith family path and returns
+	 * a list of strings of those part names available to be used by the tool within the specified family.
+	 * @param type The specified family type.
+	 * @return A list of available Xilinx parts for the given family type 
+	 */
+	public static ArrayList<String> getAvailableParts(FamilyType type){
+		ArrayList<String> allParts = new ArrayList<String>();
+		String pattern = "_db.dat";
+		File dir = new File(getRapidSmithPath() + File.separator + "devices" + File.separator + type.toString().toLowerCase());
+		if(!dir.exists()){
+			MessageGenerator.briefErrorAndExit("ERROR: No part files exist.  Please run " + 
+					Installer.class.getCanonicalName() +" to create part files.");
+		}
+		for(String part : dir.list()){
+			if(part.endsWith(pattern)){
+				allParts.add(part.replace(pattern, ""));
+			}
+		}
+		return allParts;
+	}
+	
+	/**
 	 * This method returns an ArrayList of family types currently supported
 	 * @return ArrayList of all family types installed
 	 */
