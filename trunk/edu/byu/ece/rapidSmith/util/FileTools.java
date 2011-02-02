@@ -946,6 +946,25 @@ public class FileTools {
 	}
 	
 	/**
+	 * This method returns an ArrayList of family types currently supported
+	 * @return ArrayList of all family types installed
+	 */
+	public static ArrayList<FamilyType> getAvailableFamilies() {
+		ArrayList<FamilyType> allFamilies = new ArrayList<FamilyType>();
+		File dir = new File(getRapidSmithPath() + File.separator + "devices");
+		if(!dir.exists()){
+			MessageGenerator.briefErrorAndExit("ERROR: No part files exist.  Please run " + 
+					Installer.class.getCanonicalName() +" to create part files.");
+		}
+		for(String partFamily : dir.list()){
+			FamilyType type = PartNameTools.getFamilyTypeFromFamilyName(partFamily);
+			if (type != null) allFamilies.add(type);
+		}
+		
+		return allFamilies;
+	}
+	
+	/**
 	 * Looks at the current device file for the part name specified and retrieves
 	 * its current device version.
 	 * @param partName The part name of the file to check.
