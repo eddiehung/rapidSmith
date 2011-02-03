@@ -43,6 +43,10 @@ public class PrimitiveSite implements Serializable{
 	protected Tile tile;
 	/** Keeps track of all the in/out pins in the primitive with their wire enumeration value */
 	protected HashMap<String,Integer> pins;
+	/** The X coordinate of the instance (ex: SLICE_X#Y5) */
+	protected int instanceX;
+	/** The Y coordinate of the instance (ex: SLICE_X5Y#) */
+	protected int instanceY;
 	/** Keeps track of extra site types on which primitive types can be placed */
 	@SuppressWarnings("unchecked")
 	public static HashMap<PrimitiveType, PrimitiveType[]>[] compatibleTypesArray = new HashMap[FamilyType.values().length];
@@ -54,6 +58,8 @@ public class PrimitiveSite implements Serializable{
 		name = null;
 		tile = null;
 		pins = new HashMap<String,Integer>();
+		instanceX = -1;
+		instanceY = -1;
 	}
 	
 	/**
@@ -69,6 +75,21 @@ public class PrimitiveSite implements Serializable{
 	 * @param name the name to set.
 	 */
 	public void setName(String name){
+		// Populate the X and Y coordinates based on name
+		if(name.contains("_X")){
+			int i = name.length();
+			int end = i;
+			
+			// Find Primitive Y coordinate (if exists)
+			while(i > 0 && name.charAt(i-1) != 'Y'){i--;}
+			instanceY = i==0 ? -1 : Integer.parseInt(name.substring(i,end));
+			end = i - 1;
+			
+			// Find Primitive X coordinate (if exists)
+			while(i > 0 && name.charAt(i-1) != 'X'){i--;}
+			instanceX = i==0 ? -1 : Integer.parseInt(name.substring(i,end));			
+		}
+		
 		this.name = name;
 	}
 	
@@ -154,6 +175,26 @@ public class PrimitiveSite implements Serializable{
 		return type;
 	}
 
+	/**
+	 * Gets and returns the integer X value of the instance location 
+	 * (ex: SLICE_X5Y10, it will return 5).
+	 * @return The X integer value of the site name or -1 if this instance is
+	 * not placed or does not have X/Y coordinates in the site name.
+	 */
+	public int getInstanceX(){
+		return instanceX;
+	}
+
+	/**
+	 * Gets and returns the integer Y value of the instance location 
+	 * (ex: SLICE_X5Y10, it will return 10).
+	 * @return The Y integer value of the site name or -1 if this instance is
+	 * not placed or does not have X/Y coordinates in the site name.
+	 */
+	public int getInstanceY(){
+		return instanceY;
+	}
+	
 	/**
 	 * This method will check if the PrimitiveType otherType can be placed
 	 * at this primitive site.  Most often only if they are

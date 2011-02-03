@@ -60,10 +60,6 @@ public class Instance implements Serializable{
 	private Module moduleTemplate;
 	/** The instance in the module template corresponding to this instance */
 	private Instance moduleTemplateInstance;
-	/** The X coordinate of the instance (ex: SLICE_X#Y5) */
-	private int instanceX;
-	/** The Y coordinate of the instance (ex: SLICE_X5Y#) */
-	private int instanceY;
 	
 	/**
 	 * Creates a new Instance, everything is empty, false or -1
@@ -168,10 +164,40 @@ public class Instance implements Serializable{
 	
 	/**
 	 * Gets the name of the instance of the module this Instance is a member of.
-	 * @return The name of the instance of the module.
+	 * @return The name of the instance of the module or null if none exists.
 	 */
 	public String getModuleInstanceName(){
 		return moduleInstance != null ? moduleInstance.getName() : null;
+	}
+	
+	/**
+	 * Gets the module instance this Instance is a member of.
+	 * @return The module instance or null if none exists
+	 */
+	public ModuleInstance getModuleInstance(){
+		return moduleInstance;
+	}
+	
+	/**
+	 * A method to determine if this instance corresponds to the anchor 
+	 * instance in a module instance, or is the anchor for a module.
+	 * @return True if this instance is the anchor in a module or module 
+	 * instance, false otherwise.
+	 */
+	public boolean isAnchor(){
+		// If this is an instance part of a module instance
+		if(moduleTemplateInstance != null){
+			if(moduleTemplateInstance.equals(moduleTemplate.getAnchor())){
+				return true;
+			}
+		}
+		// else if this is an instance part of a module (module template)
+		else if(moduleTemplate != null){
+			if(moduleTemplate.getAnchor().equals(this)){
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -365,25 +391,10 @@ public class Instance implements Serializable{
 	 */
 	private void setPrimitiveSite(PrimitiveSite site){
 		if(site == null){
-			instanceX = -1;
-			instanceY = -1;
 			this.site = site;
 			if(design != null) design.setPrimitiveSiteUsed(site, this);
 			return;
 		}
-		String name = site.getName();
-		// Populate the X and Y coordinates based on name
-		int i = name.length();
-		int end = i;
-		
-		// Find Primitive Y coordinate (if exists)
-		while(i > 0 && name.charAt(i-1) != 'Y'){i--;}
-		instanceY = i==0 ? -1 : Integer.parseInt(name.substring(i,end));
-		end = i - 1;
-		
-		// Find Primitive X coordinate (if exists)
-		while(i > 0 && name.charAt(i-1) != 'X'){i--;}
-		instanceX = i==0 ? -1 : Integer.parseInt(name.substring(i,end));
 		
 		this.site = site;
 	}
@@ -407,19 +418,21 @@ public class Instance implements Serializable{
 	/**
 	 * Gets and returns the integer X value of the instance location 
 	 * (ex: SLICE_X5Y10, it will return 5).
-	 * @return The X integer value of the site name.
+	 * @return The X integer value of the site name or -1 if this instance is
+	 * not placed or does not have X/Y coordinates in the site name.
 	 */
 	public int getInstanceX(){
-		return instanceX;
+		return site == null ? -1 : site.getInstanceX();
 	}
 
 	/**
 	 * Gets and returns the integer Y value of the instance location 
 	 * (ex: SLICE_X5Y10, it will return 10).
-	 * @return The Y integer value of the site name.
+	 * @return The Y integer value of the site name or -1 if this instance is
+	 * not placed or does not have X/Y coordinates in the site name.
 	 */
 	public int getInstanceY(){
-		return instanceY;
+		return site == null ? -1 : site.getInstanceY();
 	}
 
 	/**
