@@ -217,6 +217,7 @@ public class Instance implements Serializable{
 	 * false otherwise.
 	 */
 	public boolean isMemberOfSameModuleInstance(Instance inst){
+		if(this.moduleInstance==null || inst.moduleInstance == null) return false;
 		return this.moduleInstance.equals(inst.moduleInstance);
 	}
 	

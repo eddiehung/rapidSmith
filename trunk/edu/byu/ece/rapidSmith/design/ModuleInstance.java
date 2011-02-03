@@ -171,6 +171,29 @@ public class ModuleInstance{
 	}
 	
 	/**
+	 * Does a brute force search to find all valid locations of where this module
+	 * instance can be placed.  It returns the module instance to its original
+	 * location.
+	 * @return A list of valid anchor sites for the module instance to be placed.
+	 */
+	public ArrayList<PrimitiveSite> getAllValidPlacements(){
+		ArrayList<PrimitiveSite> validSites = new ArrayList<PrimitiveSite>();
+		PrimitiveSite originalSite = getAnchor().getPrimitiveSite();
+		Design design = getDesign();
+		PrimitiveSite[] sites = design.getDevice().getAllCompatibleSites(getAnchor().getType());
+		for(PrimitiveSite newAnchorSite : sites){
+			if(place(newAnchorSite, design.getDevice())){
+				validSites.add(newAnchorSite);
+			}
+		}
+		
+		// Put hard macro back
+		if(originalSite != null) place(originalSite, design.getDevice());
+		
+		return validSites;
+	}
+	
+	/**
 	 * This method will calculate and return the corresponding tile of a module instance
 	 * for a new anchor location.
 	 * @param templateTile The tile in the module which acts as a template.
