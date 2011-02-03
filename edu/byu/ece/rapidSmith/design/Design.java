@@ -1369,6 +1369,8 @@ public class Design implements Serializable{
 		dspTypes.add(PrimitiveType.DSP48A1);
 		dspTypes.add(PrimitiveType.DSP48E);
 		dspTypes.add(PrimitiveType.DSP48E1);
+		dspTypes.add(PrimitiveType.MULT18X18);
+		dspTypes.add(PrimitiveType.MULT18X18SIO);
 		
 		bramTypes = new HashSet<PrimitiveType>();
 		bramTypes.add(PrimitiveType.BLOCKRAM);
