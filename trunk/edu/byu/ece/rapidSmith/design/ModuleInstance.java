@@ -239,7 +239,7 @@ public class ModuleInstance{
 		if(!newAnchorSite.equals(newValidSite)){
 			//MessageGenerator.briefError("New anchor site (" + newAnchorSite.getName() +
 			//		") is incorrect.  Should be " + newValidSite.getName());
-			this.unplace();
+			//this.unplace();
 			return false;
 		}
 		
