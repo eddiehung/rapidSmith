@@ -184,6 +184,7 @@ public class ModuleInstance{
 		for(PrimitiveSite newAnchorSite : sites){
 			if(place(newAnchorSite, design.getDevice())){
 				validSites.add(newAnchorSite);
+				unplace();
 			}
 		}
 		
