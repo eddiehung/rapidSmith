@@ -85,6 +85,16 @@ or more recent versions are available at:
 
    http://qt.gitorious.org/qt-jambi
 
+RapidSmith also includes the JOpt Simple option parser which is released under
+the open source MIT License which can be found in this directory in the file
+MIT_LICENSE.TXT.  A copy of this license can also be found at:
+
+   http://www.opensource.org/licenses/mit-license.php
+   
+A copy of the source for JOpt Simple can also be downloaded at:
+
+   http://jopt-simple.sourceforge.net/download.html 
+
 The user is responsible for providing copies of these licenses and making 
 available the source code of these projects when redistributing these 
-jars with RapidSmith.
+jars.
