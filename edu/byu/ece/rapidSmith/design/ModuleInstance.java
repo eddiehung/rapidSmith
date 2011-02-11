@@ -49,7 +49,7 @@ public class ModuleInstance{
 	private ArrayList<Instance> instances;
 	/** A list of all nets internal to this module instance */
 	private ArrayList<Net> nets;
-
+	
 	/**
 	 * Constructor initializing instance module name
 	 * @param name Name of the module instance
@@ -63,6 +63,21 @@ public class ModuleInstance{
 		nets = new ArrayList<Net>();
 	}
 
+	/**
+	 * This will initialize this module instance to the same attributes
+	 * as the module instance passed in.  This is primarily used for classes
+	 * which extend ModuleInstance.
+	 * @param moduleInstance The module instance to mimic.
+	 */
+	public ModuleInstance(ModuleInstance moduleInstance){
+		this.name = moduleInstance.name;
+		this.setDesign(moduleInstance.design);
+		this.module = moduleInstance.module;
+		this.setAnchor(moduleInstance.anchor);
+		instances =  moduleInstance.instances;
+		nets = moduleInstance.nets;	
+	}
+	
 	/**
 	 * Adds the instance inst to the instances list that are members of the
 	 * module instance.
@@ -193,32 +208,7 @@ public class ModuleInstance{
 		
 		return validSites;
 	}
-	
-	/**
-	 * This method will calculate and return the corresponding tile of a module instance
-	 * for a new anchor location.
-	 * @param templateTile The tile in the module which acts as a template.
-	 * @param newAnchorTile This is the tile of the new anchor instance of the module instance.
-	 * @param dev The device which corresponds to this module instance.
-	 * @return The new tile of the module instance which corresponds to the templateTile, or null
-	 * if none exists.
-	 */
-	public Tile getCorrespondingTile(Tile templateTile, Tile newAnchorTile, Device dev){
-		//If this function does not work, uncomment and use this code instead
-		/*
-		int xOffset = templateTile.getColumn() - module.getAnchor().getTile().getColumn();
-		int yOffset = templateTile.getRow() - module.getAnchor().getTile().getRow();
-		Tile newTile = dev.getTile(newAnchorTile.getRow() + yOffset, newAnchorTile.getColumn() + xOffset);
-		return newTile;
-		*/
-		int tileXOffset = templateTile.getTileXCoordinate() - module.getAnchor().getTile().getTileXCoordinate();
-		int tileYOffset = templateTile.getTileYCoordinate() - module.getAnchor().getTile().getTileYCoordinate();
-		int newTileX = newAnchorTile.getTileXCoordinate() + tileXOffset;
-		int newTileY = newAnchorTile.getTileYCoordinate() + tileYOffset;
-		String oldName = templateTile.getName();
-		String newName = oldName.substring(0, oldName.lastIndexOf('X')+1) + newTileX + "Y" + newTileY;
-		return dev.getTile(newName);
-	}
+
 	
 	/**
 	 * Places the module instance anchor at the newAnchorSite as well as all other 
@@ -253,7 +243,7 @@ public class ModuleInstance{
 		//=======================================================//
 		for(Instance inst : instances){
 			PrimitiveSite templateSite = inst.getModuleTemplateInstance().getPrimitiveSite();
-			Tile newTile = getCorrespondingTile(templateSite.getTile(), newAnchorSite.getTile(), dev);
+			Tile newTile = module.getCorrespondingTile(templateSite.getTile(), newAnchorSite.getTile(), dev);
 			PrimitiveSite newSite = Device.getCorrespondingPrimitiveSite(templateSite, newTile);
 
 			if(newSite == null){
@@ -287,7 +277,7 @@ public class ModuleInstance{
 			Net templateNet = net.getModuleTemplateNet();
 			for(PIP pip : templateNet.getPIPs()){
 				Tile templatePipTile = pip.getTile();
-				Tile newPipTile = getCorrespondingTile(templatePipTile, newAnchorSite.getTile(), dev);				
+				Tile newPipTile = module.getCorrespondingTile(templatePipTile, newAnchorSite.getTile(), dev);				
 				PIP newPip = new PIP(newPipTile, pip.getStartWire(), pip.getEndWire());
 				net.addPIP(newPip);
 			}
@@ -309,6 +299,19 @@ public class ModuleInstance{
 		}
 	}
 
+	/**
+	 * This method will calculate and return the corresponding tile of a module instance.
+	 * for a new anchor location.
+	 * @param templateTile The tile in the module which acts as a template.
+	 * @param newAnchorTile This is the tile of the new anchor instance of the module instance.
+	 * @param dev The device which corresponds to this module instance.
+	 * @return The new tile of the module instance which corresponds to the templateTile, or null
+	 * if none exists.
+	 */
+	public Tile getCorrespondingTile(Tile templateTile, Tile newAnchorTile, Device dev){
+		return module.getCorrespondingTile(templateTile, newAnchorTile, dev);
+	}
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */

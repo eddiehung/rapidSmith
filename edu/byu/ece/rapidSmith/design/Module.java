@@ -35,6 +35,7 @@ import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;
 
 import edu.byu.ece.rapidSmith.device.Device;
+import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.PrimitiveType;
 import edu.byu.ece.rapidSmith.device.Tile;
 import edu.byu.ece.rapidSmith.device.helper.HashPool;
@@ -727,6 +728,81 @@ public class Module implements Serializable{
 		} catch(IOException e){
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Does a brute force search to find all valid locations of where this module
+	 * can be placed.
+	 * @return A list of valid anchor sites for the module to be placed.
+	 */
+	public ArrayList<PrimitiveSite> getAllValidPlacements(Device dev){
+		ArrayList<PrimitiveSite> validSites = new ArrayList<PrimitiveSite>();
+		
+		PrimitiveSite[] sites = dev.getAllCompatibleSites(getAnchor().getType());
+		for(PrimitiveSite newAnchorSite : sites){
+			if(isValidPlacement(newAnchorSite, dev)){
+				validSites.add(newAnchorSite);
+			}
+		}
+				
+		return validSites;
+	}
+	
+	public boolean isValidPlacement(PrimitiveSite proposedAnchorSite, Device dev){
+		// Check if parameters are null
+		if(proposedAnchorSite == null || dev == null){
+			return false;
+		}
+
+		// Do some error checking on the newAnchorSite
+		PrimitiveSite p = anchor.getPrimitiveSite();
+		Tile t = proposedAnchorSite.getTile();
+		PrimitiveSite newValidSite = Device.getCorrespondingPrimitiveSite(p, t);
+		if(!proposedAnchorSite.equals(newValidSite)){
+			return false;
+		}
+		
+		//=======================================================//
+		/* Check instances at proposed location                  */
+		//=======================================================//
+		for(Instance inst : getInstances()){
+			PrimitiveSite templateSite = inst.getPrimitiveSite();
+			Tile newTile = getCorrespondingTile(templateSite.getTile(), proposedAnchorSite.getTile(), dev);
+			if(Device.getCorrespondingPrimitiveSite(templateSite, newTile) == null){
+				return false;
+			}
+		}
+		
+		//=======================================================//
+		/* Check nets at proposed location                       */
+		//=======================================================//
+		for(Net net : getNets()){
+			for(PIP pip : net.getPIPs()){
+				if(getCorrespondingTile(pip.getTile(), proposedAnchorSite.getTile(), dev) == null){
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * This method will calculate and return the corresponding tile of a module
+	 * for a new anchor location.
+	 * @param templateTile The tile in the module which acts as a template.
+	 * @param newAnchorTile This is the tile of the new anchor instance of the module.
+	 * @param dev The device which corresponds to this module.
+	 * @return The new tile of the module instance which corresponds to the templateTile, or null
+	 * if none exists.
+	 */
+	public Tile getCorrespondingTile(Tile templateTile, Tile newAnchorTile, Device dev){
+		int tileXOffset = templateTile.getTileXCoordinate() - anchor.getTile().getTileXCoordinate();
+		int tileYOffset = templateTile.getTileYCoordinate() - anchor.getTile().getTileYCoordinate();
+		int newTileX = newAnchorTile.getTileXCoordinate() + tileXOffset;
+		int newTileY = newAnchorTile.getTileYCoordinate() + tileYOffset;
+		String oldName = templateTile.getName();
+		String newName = oldName.substring(0, oldName.lastIndexOf('X')+1) + newTileX + "Y" + newTileY;
+		return dev.getTile(newName);
 	}
 	
 	/**
