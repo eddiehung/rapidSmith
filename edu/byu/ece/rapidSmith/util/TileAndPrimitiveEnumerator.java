@@ -202,7 +202,7 @@ public class TileAndPrimitiveEnumerator{
 	 */
 	private void addHeaderToFile(BufferedWriter bw) throws IOException{
 		bw.write("/*" + nl);
-		bw.write(" * Copyright (c) 2010 Brigham Young University" + nl);
+		bw.write(" * Copyright (c) 2010-2011 Brigham Young University" + nl);
 		bw.write(" * " + nl);
 		bw.write(" * This file is part of the BYU RapidSmith Tools." + nl);
 		bw.write(" * " + nl);
