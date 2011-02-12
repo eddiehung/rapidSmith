@@ -46,15 +46,6 @@ import com.caucho.hessian.io.Deflation;
 import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;
 
-import edu.byu.ece.rapidSmith.design.Attribute;
-import edu.byu.ece.rapidSmith.design.Instance;
-import edu.byu.ece.rapidSmith.design.Module;
-import edu.byu.ece.rapidSmith.design.ModuleInstance;
-import edu.byu.ece.rapidSmith.design.Net;
-import edu.byu.ece.rapidSmith.design.NetType;
-import edu.byu.ece.rapidSmith.design.PIP;
-import edu.byu.ece.rapidSmith.design.Pin;
-import edu.byu.ece.rapidSmith.design.Port;
 import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.PrimitivePinMap;
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
