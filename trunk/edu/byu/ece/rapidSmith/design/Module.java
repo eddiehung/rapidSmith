@@ -83,8 +83,9 @@ public class Module implements Serializable{
 	 * settings and adds this module to the module list.  
 	 * @return A complete hard macro design with this module as the hard macro.
 	 */
-	public Design createDesignFromModule(){
+	public Design createDesignFromModule(String partName){
 		Design design = new Design();
+		design.setPartName(partName);
 		design.setName(Design.hardMacroDesignName);
 		design.setIsHardMacro(true);
 		design.addModule(this);
@@ -768,6 +769,9 @@ public class Module implements Serializable{
 		for(Instance inst : getInstances()){
 			PrimitiveSite templateSite = inst.getPrimitiveSite();
 			Tile newTile = getCorrespondingTile(templateSite.getTile(), proposedAnchorSite.getTile(), dev);
+			if(newTile == null){
+				return false;
+			}
 			if(Device.getCorrespondingPrimitiveSite(templateSite, newTile) == null){
 				return false;
 			}
