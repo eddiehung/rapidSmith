@@ -38,6 +38,7 @@ import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.PrimitiveType;
 import edu.byu.ece.rapidSmith.device.Tile;
+import edu.byu.ece.rapidSmith.device.TileType;
 import edu.byu.ece.rapidSmith.device.helper.HashPool;
 import edu.byu.ece.rapidSmith.util.FileTools;
 import edu.byu.ece.rapidSmith.util.MessageGenerator;
@@ -806,7 +807,15 @@ public class Module implements Serializable{
 		int newTileY = newAnchorTile.getTileYCoordinate() + tileYOffset;
 		String oldName = templateTile.getName();
 		String newName = oldName.substring(0, oldName.lastIndexOf('X')+1) + newTileX + "Y" + newTileY;
-		return dev.getTile(newName);
+		Tile correspondingTile = dev.getTile(newName); 
+		if(correspondingTile == null){
+			if(templateTile.getType().equals(TileType.CLBLL)){
+				correspondingTile = dev.getTile("CLBLM_X" + newTileX + "Y" + newTileY);
+			}else if(templateTile.getType().equals(TileType.CLBLM)){
+				correspondingTile = dev.getTile("CLBLL_X" + newTileX + "Y" + newTileY);
+			}
+		}
+		return correspondingTile;
 	}
 	
 	/**
