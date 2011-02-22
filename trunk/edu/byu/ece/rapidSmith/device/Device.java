@@ -284,7 +284,6 @@ public class Device implements Serializable{
 			return null;
 		}
 		PrimitiveSite newSite = newSiteTile.getPrimitiveSites()[idx];
-		System.out.println("newSite=" + newSite.getType() + " current=" + current.getType() + " isCompat=" + newSite.isCompatiblePrimitiveType(current));
 		if(!newSite.isCompatiblePrimitiveType(current)){
 			return null;
 		}
