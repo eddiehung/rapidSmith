@@ -111,8 +111,8 @@ public class Design implements Serializable{
 	 * Loads the corresponding Device and WireEnumerator based on partName.
 	 */
 	public void loadDeviceAndWireEnumerator(){
-		dev = FileTools.loadDevice(partName);
 		we = FileTools.loadWireEnumerator(partName);
+		dev = FileTools.loadDevice(partName);
 	}
 	
 	/**
