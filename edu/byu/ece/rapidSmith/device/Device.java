@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Brigham Young University
+ * Copyright (c) 2010-2011 Brigham Young University
  * 
  * This file is part of the BYU RapidSmith Tools.
  * 
@@ -21,7 +21,6 @@
 package edu.byu.ece.rapidSmith.device;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -88,12 +87,10 @@ public class Device implements Serializable{
 	protected HashMap<Wire,PIPRouteThrough> routeThroughMap;
 	/** A Map between a tile name (string) and its actual reference */
 	protected HashMap<String,Tile> tileMap;
-	
+
 	//========================================================================//
 	// Objects that are Populated After Parsing
 	//========================================================================//
-	/** Loaded only for Virtex5 parts to patch a hole in RAMB pin mappings */
-	private V5RAMBPatch v5Patch;
 	/** Created on demand when user calls getPrimitiveSiteIndex(), where the ArrayList index is the ordinal of the PrimitiveType */
 	private ArrayList<PrimitiveSite[]> primitiveSiteIndex;
 	/** Created on demand when user calls getCompatibleSites(), where the ArrayList index is the ordinal of the PrimitiveType */
@@ -195,8 +192,11 @@ public class Device implements Serializable{
 		if (extPin != null) {
 			return extPin;
 		}
-		if(v5Patch != null){
-			return v5Patch.getExternalPin(pin);
+		
+		// Check the Pin Mapping patch for proper external pin name mapping
+		String extName = PinMappingPatch.getPinMapping(pin.getInstance().getType(), pin.getName());
+		if(extName != null){
+			return WireEnumerator.getInstance(getFamilyType()).getWireEnum(extName);
 		}
 		return null;
 	}
@@ -1047,7 +1047,6 @@ public class Device implements Serializable{
 	 * @param fileName The name of the compact device file
 	 * @return True if operation was successful, false otherwise.
 	 */
-	@SuppressWarnings("unchecked")
 	public boolean readDeviceFromCompactFile(String fileName){
 		try {
 			Hessian2Input his = FileTools.getInputStream(fileName);
@@ -1239,14 +1238,6 @@ public class Device implements Serializable{
 		} 
 		catch (IOException e){
 			return false;
-		}
-		if(partName.startsWith("xc5v")){
-			v5Patch = new V5RAMBPatch();
-			String v5PatchfileName = V5RAMBPatch.getV5RAMBPatchFileName();
-			if(new File(v5PatchfileName).exists()){
-				v5Patch.rambPinMappings = (HashMap<PrimitiveType, HashMap<String, Integer>>) 
-				FileTools.loadFromCompressedFile(v5PatchfileName);				
-			}
 		}
 		
 		return true;

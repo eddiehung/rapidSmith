@@ -340,8 +340,7 @@ public class WireEnumerator implements Serializable {
 			
 			hos.close();
 		} catch (IOException e){
-			System.out.println("Error writing to file: " + fileName);
-			System.exit(1);
+			MessageGenerator.briefErrorAndExit("Error writing to file: " + fileName);
 		}
 		
 		return true;
@@ -404,12 +403,10 @@ public class WireEnumerator implements Serializable {
 			}		
 
 			his.close();
-		} catch (FileNotFoundException e) {
-			System.out.println("Error: could not find file: " + fileName);
-			System.exit(1);
-		} catch (IOException e) {
-			System.out.println("Error reading in compactEnum file.");
-			System.exit(1);
+		} catch (FileNotFoundException e){
+			MessageGenerator.briefErrorAndExit("Error: could not find file: " + fileName);
+		} catch (IOException e){
+			MessageGenerator.briefErrorAndExit("Error reading in compactEnum file.");
 		}
 		return true;
 	}
@@ -499,9 +496,8 @@ public class WireEnumerator implements Serializable {
 			
 			bw.write("wires=" + wireArray.length + " pips=" + pipWireNames.size());
 			bw.close();			
-		} catch (IOException e) {
-			System.out.println("Error: could not write out debug file: " + fileName);
-			System.exit(1);
+		} catch (IOException e){
+			MessageGenerator.briefErrorAndExit("Error: could not write out debug file: " + fileName);
 		}
 	}
 	
