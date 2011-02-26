@@ -1,3 +1,9 @@
+edu.byu.ece.rapidSmith.bitstreamTools.bitstream
+edu.byu.ece.rapidSmith.bitstreamTools.bitstream.test
+edu.byu.ece.rapidSmith.bitstreamTools.configuration
+edu.byu.ece.rapidSmith.bitstreamTools.configurationSpecification
+edu.byu.ece.rapidSmith.bitstreamTools.examples
+edu.byu.ece.rapidSmith.bitstreamTools.examples.support
 edu.byu.ece.rapidSmith.design
 edu.byu.ece.rapidSmith.design.explorer
 edu.byu.ece.rapidSmith.design.parser

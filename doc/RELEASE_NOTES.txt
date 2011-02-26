@@ -1,21 +1,28 @@
 Release Notes for BYU RapidSmith Tools
- - Version 0.3.0 (79 JAN 2011) -
- This is a major update for RapidSmith.  The device files need to be rebuilt
- in this version, this is due to adding support for several Xilinx legacy
- devices (spartan2, spartan2e, spartan3, spartan3a, spartan 3adsp, spartan3e,
- virtex, virtexe, virtex2, and virtex2p).  It also includes a new enum type
- called FamilyType with a helper class called PartNameTools to help convert
- Xilinx partnames to and from the FamilyType. An experimental timing report
- (TWR) parser has been added.  The Design Explorer can load timing reports
- using the new TWR parser and has been updated to show more information
- about Nets.  Several bug fixes in the StaticSourceHandler when routing
- Virtex 5 devices are included.  New packages: gui, tests and timing.
+ - Version 0.4.0 (26 FEB 2011) -
+This release of RapidSmith contains a major update in that it supports 
+parsing bitstream packets and frames for Virtex 4, Virtex 5 and Virtex 6 
+architectures. It removed the old Virtex 5 patch for BRAMs and has a complete
+integrated solution for primitive site pin mappings for all devices supported.
+It includes several bug fixes and new methods for PartNameTools.  
+ModuleInstance contains several placement bug fixes.
+ - Version 0.3.0 (29 JAN 2011) -
+This is a major update for RapidSmith.  The device files need to be rebuilt
+in this version, this is due to adding support for several Xilinx legacy
+devices (spartan2, spartan2e, spartan3, spartan3a, spartan 3adsp, spartan3e,
+virtex, virtexe, virtex2, and virtex2p).  It also includes a new enum type
+called FamilyType with a helper class called PartNameTools to help convert
+Xilinx partnames to and from the FamilyType. An experimental timing report
+(TWR) parser has been added.  The Design Explorer can load timing reports
+using the new TWR parser and has been updated to show more information
+about Nets.  Several bug fixes in the StaticSourceHandler when routing
+Virtex 5 devices are included.  New packages: gui, tests and timing.
  
  - Version 0.2.2 (29 NOV 2010) -
- Added several features including a hard macro generator, a design explorer,
- a device browser, and basic support for Spartan 6 devices.  Fixed a few bugs
- in the basic router.  Added a class to merge static nets.  Added better 
- support/documentation for Mac OS X users.
+Added several features including a hard macro generator, a design explorer,
+a device browser, and basic support for Spartan 6 devices.  Fixed a few bugs
+in the basic router.  Added a class to merge static nets.  Added better 
+support/documentation for Mac OS X users.
 
  - Version 0.2.1 (21 OCT 2010) -
 This version has a few big bug fixes to it.  First, the XDL design parser
