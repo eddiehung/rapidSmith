@@ -43,7 +43,6 @@ public class XilinxV6DeviceClassGenerator extends XilinxDeviceClassGenerator {
      * Construct a new class generator and collect all of the data needed
      * to write Java source code for a part library. Data is collected
      * using the Xilinx partgen, xdl, and bitgen tools.
-     * @param architecture
      */
     public XilinxV6DeviceClassGenerator(){
         super("virtex6", V56ConfigurationSpecification.V56_ROW_MASK, V56ConfigurationSpecification.V56_ROW_BIT_POS, V56ConfigurationSpecification.V56_TOP_BOTTOM_MASK, V56ConfigurationSpecification.V56_TOP_BOTTOM_BIT_POS);

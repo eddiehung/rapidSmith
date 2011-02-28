@@ -235,9 +235,9 @@ public class Packet extends ConfigurationData {
     /**
      * Create a zero-word type 1 packet
      * 
-     * @param opcode
-     * @param registerType
-     * @return
+     * @param opcode The opcode to use in the packet header.
+     * @param registerType The register to use in the packet header.
+     * @return The newly created packet.
      */
     public static Packet buildZeroWordPacket(PacketOpcode opcode, RegisterType registerType) {
         int header = 0;

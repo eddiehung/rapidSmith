@@ -145,8 +145,8 @@ public class DeviceLookup {
      * and return the appropriate XilinxConfigurationSpecification. <code>null</code> is
      * returned if a matching part cannot be found.
      * 
-     * @param partName
-     * @return
+     * @param partName Name of the device.
+     * @return The corresponding spec or null if none exists.
      */
     public static XilinxConfigurationSpecification lookupPartV4V5V6(String partName) {
     	if (partName == null)
@@ -159,9 +159,7 @@ public class DeviceLookup {
      * Given a package device name, return the corresponding {@link XilinxConfigurationSpecification}.
      * This will call getRootDeviceName to strip the package and then call
      * lookupPartV4V5V6.
-     * 
-     * @param packageName
-     * @return
+     * @return the corresponding XilinxConfigurationSpecification or null if none exists.
      */
     public static XilinxConfigurationSpecification lookupPartV4V5V6withPackageName(String packageName) {
     	String rootName = getRootDeviceName(packageName);
@@ -176,8 +174,8 @@ public class DeviceLookup {
      * The resulting device name WILL have the "XC" prefix whether or not the argument
      * does.
      * 
-     * @param partName
-     * @return
+     * @param partName Name of the device
+     * @return Root name of the device or null if it could not be determined.
      */
     public static String getRootDeviceName(String partName) {
         DeviceLookup lookup = sharedInstance();
@@ -190,8 +188,8 @@ public class DeviceLookup {
      * method will work whether or not the argument includes the "XC" at the beginning
      * of the part name (the names from the bitstream header do NOT include the "XC").
      * 
-     * @param partName
-     * @return
+     * @param partName Name of the device
+     * @return the package string from the part name.
      */
     public static String getPackageName(String partName) {
         DeviceLookup lookup = sharedInstance();
@@ -231,8 +229,8 @@ public class DeviceLookup {
      * The resulting device name WILL have the "XC" prefix whether or not the argument
      * does.
      * 
-     * @param partName
-     * @return
+     * @param partName Name of the device.
+     * @return The root name of the device, or null if it could not be determined.
      */
 	protected String getRootDeviceNameProtected(String partName) {
 	    if (Character.isDigit(partName.charAt(0))) {
@@ -270,8 +268,8 @@ public class DeviceLookup {
      * and return the appropriate XilinxConfigurationSpecification. <code>null</code> is
      * returned if a matching part cannot be found.
      * 
-     * @param partName
-     * @return
+     * @param partName Name of the device
+     * @return Corresponding spec or null if none exists.
      */
 	protected XilinxConfigurationSpecification lookupPartV4V5V6Protected(String partName) {
 		for (PartLibrary lib : _libraries) {

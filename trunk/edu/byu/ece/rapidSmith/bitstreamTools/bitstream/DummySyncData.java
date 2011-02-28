@@ -66,9 +66,9 @@ public class DummySyncData extends ConfigurationData {
      * null is returned. The startIndex is assumed to be the beginning of the dummy
      * data and the dummy/sync data ends after the sync word is found.
      * 
-     * @param data
-     * @param startIndex
-     * @return
+     * @param data The data to search through.
+     * @param startIndex The starting index in the data given.
+     * @return The dummy sync data if found or null otherwise.
      */
     public static DummySyncData findDummySyncData(List<Byte> data, int startIndex) {
     	int numMatched = 0;

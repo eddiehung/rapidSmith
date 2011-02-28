@@ -192,8 +192,8 @@ public class PacketUtils {
 	 * followed by a type 2 packet will be created. If there are too many words for a
 	 * type 2 packet, an exception will be thrown.
 	 * 
-	 * @param data
-	 * @return
+	 * @param data The data to write into the packets.
+	 * @return The resulting packet list.
 	 * @throws BitstreamException
 	 */
 	public static PacketList WRITE_PACKETS(RegisterType register, List<Integer> data) throws BitstreamException {

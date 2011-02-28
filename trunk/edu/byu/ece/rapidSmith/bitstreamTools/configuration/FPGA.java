@@ -168,7 +168,6 @@ public class FPGA {
 	 * Allows for multiple frame writes to different addresses.
 	 * This function works similar to SetFrame, although frameBuffer is never changed or written to.  As 
 	 * with SetFrame, if the write is successful, the FAR is incremented.
-	 * @return true if the frame write succeeded, false otherwise.
 	 */
 	public void MFWRCommand(){
 		writeFDRIToCurrentFrame();

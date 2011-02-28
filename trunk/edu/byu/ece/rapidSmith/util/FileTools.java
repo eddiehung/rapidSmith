@@ -886,7 +886,7 @@ public class FileTools {
 	/**
 	 * Loads the appropriate WireEnumerator file based on the part name.  Accounts for 
 	 * speed grade in file name.
-	 * @param partName Name of the part or device to load the information for.
+	 * @param familyType Family of the device to load the information for.
 	 * @return The WireEnumerator or null if there was an error.
 	 */
 	public static WireEnumerator loadWireEnumerator(FamilyType familyType){
