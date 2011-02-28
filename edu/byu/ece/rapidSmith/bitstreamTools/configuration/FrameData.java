@@ -41,7 +41,7 @@ public class FrameData {
 	/**
 	 * The frame is initialized to zero with size number of 32-bit words.  All frames in a given device 
 	 * should be the same size.
-	 * @param wordsPerFrame The size of the frame in 32-bit words. 
+	 * @param size The size of the frame in 32-bit words. 
 	 */
 	public FrameData(int size) {
 		_words = new int[size];
@@ -157,7 +157,6 @@ public class FrameData {
 
 	/**
 	 * Inverts the data words stored in the frame.
-	 * @return true always (** This should be a void function **)
 	 */
 	public void NOTData() {
 		for(int i = 0; i < size(); i++) {
@@ -168,7 +167,7 @@ public class FrameData {
 
 	/** 
 	 * Returns the word at the specified index of the frame.
-	 * @param The index of the desired word.
+	 * @param index Index of the desired word.
 	 * @return The word at the specified index of the frame.  
 	 */
 	public int getFrameWord(int index) {
@@ -220,7 +219,7 @@ public class FrameData {
 
 	/** 
 	 * Returns the word at the specified index of the frame.
-	 * @param The index of the desired word.
+	 * @param index Index of the desired word.
 	 * @return The word at the specified index of the frame.  
 	 */
 	public int get(int index) {	

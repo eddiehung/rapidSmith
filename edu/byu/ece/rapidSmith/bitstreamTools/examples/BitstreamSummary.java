@@ -44,7 +44,7 @@ public class BitstreamSummary {
 	/**
 	 * Prints the contents of a bitstream as an XML file.
 	 * 
-	 * @param bitstream name
+	 * @param args bitstream name
 	 */
 	public static void main(String[] args) {
 

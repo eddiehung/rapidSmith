@@ -337,9 +337,6 @@ public class BitstreamOptionParser extends OptionParser {
 		System.exit(1);
 	}
 	
-	/**
-	 * @SuppressWarnings("all")
-	 */
 	public static void printExecutableHeaderMessage(@SuppressWarnings("rawtypes") Class class1) {
 		printExecutableHeaderMessage(class1.getName());
 	}
