@@ -262,7 +262,7 @@ public class Device implements Serializable{
 	 * @param newSiteTile The tile of the new proposed site.
 	 * @return The corresponding site in tile newSite, or null if no corresponding site exists.
 	 */
-	public static PrimitiveSite getCorrespondingPrimitiveSite(PrimitiveSite current, Tile newSiteTile){
+	public static PrimitiveSite getCorrespondingPrimitiveSite(PrimitiveSite current, PrimitiveType type, Tile newSiteTile){
 		if(newSiteTile == null){
 			//MessageGenerator.briefError("ERROR: Bad input to Device.getCorrespondingPrimitiveSite(), newSiteTile==null");
 			return null;
@@ -284,7 +284,7 @@ public class Device implements Serializable{
 			return null;
 		}
 		PrimitiveSite newSite = newSiteTile.getPrimitiveSites()[idx];
-		if(!newSite.isCompatiblePrimitiveType(current)){
+		if(!newSite.isCompatiblePrimitiveType(type)){
 			return null;
 		}
 		return newSite;

@@ -111,7 +111,6 @@ public class DesignParser{
 	Pin currPin = null;
 	String currModuleAnchorName = null;
 	String currModuleInstanceName = null;
-	Utils util = Utils.getInstance();
 	Device dev = null;
 	WireEnumerator we = null;
 	HashMap<String, Pin> modPinMap = null;
@@ -324,7 +323,7 @@ public class DesignParser{
 				state = ParserState.INSTANCE_TYPE;
 				break;
 			case INSTANCE_TYPE:
-				  PrimitiveType t = util.createPrimitiveType(token);
+				  PrimitiveType t = Utils.createPrimitiveType(token);
 				  if(t == null){
 				    MessageGenerator.briefErrorAndExit("Failed parsing Instance type: \"" + token + "\"");
 				  }

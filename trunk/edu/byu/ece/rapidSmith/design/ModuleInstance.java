@@ -226,7 +226,7 @@ public class ModuleInstance{
 		// Do some error checking on the newAnchorSite
 		PrimitiveSite p = module.getAnchor().getPrimitiveSite();
 		Tile t = newAnchorSite.getTile();
-		PrimitiveSite newValidSite = Device.getCorrespondingPrimitiveSite(p, t);
+		PrimitiveSite newValidSite = Device.getCorrespondingPrimitiveSite(p, module.getAnchor().getType(), t);
 		if(!newAnchorSite.equals(newValidSite)){
 			//MessageGenerator.briefError("New anchor site (" + newAnchorSite.getName() +
 			//		") is incorrect.  Should be " + newValidSite.getName());
@@ -244,7 +244,7 @@ public class ModuleInstance{
 		for(Instance inst : instances){
 			PrimitiveSite templateSite = inst.getModuleTemplateInstance().getPrimitiveSite();
 			Tile newTile = module.getCorrespondingTile(templateSite.getTile(), newAnchorSite.getTile(), dev);
-			PrimitiveSite newSite = Device.getCorrespondingPrimitiveSite(templateSite, newTile);
+			PrimitiveSite newSite = Device.getCorrespondingPrimitiveSite(templateSite, inst.getType(), newTile);
 
 			if(newSite == null){
 				//MessageGenerator.briefError("ERROR: No matching primitive site found." +

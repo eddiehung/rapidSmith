@@ -70,6 +70,10 @@ public class RunXilinxTools {
 		String commandParameters = briefFile ? "" : "-pips -all_conns "; 
 		String command = "xdl -report " + commandParameters + PartNameTools.removeSpeedGrade(partName) + " " + xdlrcFileName;
 		
+		if(PartNameTools.isFamilyTypeLegacy(PartNameTools.getFamilyTypeFromPart(partName))){
+			command = "C:\\Xilinx\\10.1\\ISE\\bin\\nt\\" + command;
+		}
+		
 		// Check to see if the file already exists
 		if(new File(xdlrcFileName).exists()){
 			// It already exists

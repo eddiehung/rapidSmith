@@ -51,8 +51,6 @@ public class XDLRCParser{
 	private Device dev;
 	/** The corresponding wire enumerator for this device */
 	private WireEnumerator we;
-	/** The Utility to convert Strings to types */
-	private Utils utils;
 	/** The list of extracted primitive definitions */
 	private PrimitiveDefList defs;
 	/** The current tile that is being parsed */
@@ -73,7 +71,6 @@ public class XDLRCParser{
 	 */
 	public XDLRCParser(){
 		dev = new Device();
-		utils = Utils.getInstance();
 		pool = new StringPool();
 	}
 	
@@ -131,7 +128,7 @@ public class XDLRCParser{
 		PrimitiveSite currPrimitiveSite = new PrimitiveSite();
 		currPrimitiveSite.setTile(currTile);
 		currPrimitiveSite.setName(parts[2]);
-		currPrimitiveSite.setType(utils.createPrimitiveType(parts[3]));
+		currPrimitiveSite.setType(Utils.createPrimitiveType(parts[3]));
 		dev.primitiveSites.put(parts[2], currPrimitiveSite);
 		int pinWireCount = Integer.parseInt(parts[5]);
 		for(int i = 0; i < pinWireCount; i++){
@@ -154,7 +151,7 @@ public class XDLRCParser{
 	 */
 	private void parsePrimitiveDef(){
 		PrimitiveDef def = new PrimitiveDef();
-		def.setType(utils.createPrimitiveType(parts[2]));
+		def.setType(Utils.createPrimitiveType(parts[2]));
 		int pinCount = Integer.parseInt(parts[3]);
 		int elementCount = Integer.parseInt(parts[4]);
 		ArrayList<PrimitiveDefPin> pins = new ArrayList<PrimitiveDefPin>(pinCount);
@@ -235,7 +232,7 @@ public class XDLRCParser{
 				else{ // This is a route-through PIP
 					endWire = parts[5];
 					currWire = dev.wirePool.add(new Wire(we.getWireEnum(endWire), 0, 0, true));
-					PrimitiveType type = utils.createPrimitiveType(parts[7].substring(0, parts[7].length()-2));  
+					PrimitiveType type = Utils.createPrimitiveType(parts[7].substring(0, parts[7].length()-2));  
 					
 					String[] tokens = parts[6].split("-");
 					int wire0 = we.getWireEnum(tokens[1]);
@@ -261,7 +258,7 @@ public class XDLRCParser{
 				int col = Integer.parseInt(parts[3]);
 				currTile = dev.getTile(row, col);
 				currTile.setName(parts[4]);
-				currTile.setType(utils.createTileType(parts[5]));
+				currTile.setType(Utils.createTileType(parts[5]));
 				
 			  	int total = (dev.getRows()*dev.getColumns())/100;
 			  	if(!(currTile.getRow() == 0 && currTile.getColumn() == 0)){
