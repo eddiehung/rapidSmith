@@ -78,6 +78,10 @@ public class DeviceFilesCreator{
 		
 		ArrayList<String> partNames = new ArrayList<String>();
 		switch(familyType){
+			case KINTEX7:
+				partNames.add("xc7k30tfbg484");
+				partNames.add("xc7k160tfbg676");
+				break;
 			case SPARTAN2:
 				partNames.add("xc2s100tq144");
 				break;
@@ -129,12 +133,14 @@ public class DeviceFilesCreator{
 				partNames.add("xc6vhx255tff1155");
 				partNames.add("xc6vcx75tff484");			
 				break;
+			case VIRTEX7:
+				partNames.add("xc7v450tffg1157");
+				partNames.add("xc7vx485tffg1157");
+				partNames.add("xc7v1500tfhg1157");
 			case VIRTEXE:
 				partNames.add("xcv2600efg1156");
 				break;
 			case ARTIX7:
-			case KINTEX7:
-			case VIRTEX7:
 			default:
 				MessageGenerator.briefErrorAndExit("Sorry, the device family "+ familyType +
 				" is currently not supported.");

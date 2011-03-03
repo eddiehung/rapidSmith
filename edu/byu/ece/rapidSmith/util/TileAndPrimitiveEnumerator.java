@@ -44,12 +44,12 @@ public class TileAndPrimitiveEnumerator{
 	/** Keeps all the unique instance names/types in a sorted set */
 	private SortedSet<String> primitiveSet;
 	/** Stores the names of the FPGA family names (Virtex4, Virtex5, ...)*/
-	private static final FamilyType[] families = {FamilyType.SPARTAN2, 
+	private static final FamilyType[] families = {FamilyType.KINTEX7, FamilyType.SPARTAN2, 
 		FamilyType.SPARTAN2E, FamilyType.SPARTAN3, FamilyType.SPARTAN3A,
 		FamilyType.SPARTAN3ADSP, FamilyType.SPARTAN3E, FamilyType.SPARTAN6,
 		FamilyType.VIRTEX, FamilyType.VIRTEX2, FamilyType.VIRTEX2P, 
 		FamilyType.VIRTEX4, FamilyType.VIRTEX5, FamilyType.VIRTEX6, 
-		FamilyType.VIRTEXE};
+		FamilyType.VIRTEX7, FamilyType.VIRTEXE};
 	/** All of the part names to check */ 
 	public ArrayList<String> partNames;
 	/** List of all xdlrc file names generated */
@@ -85,6 +85,8 @@ public class TileAndPrimitiveEnumerator{
 			case ARTIX7: 
 				break;
 			case KINTEX7: 
+				partNames.add("xc7k30tfbg484");
+				partNames.add("xc7k160tfbg676");
 				break;
 			case SPARTAN2:
 				partNames.add("xc2s15cs144");
@@ -144,6 +146,9 @@ public class TileAndPrimitiveEnumerator{
 				partNames.add("xc6vcx130tff484");
 				break;
 			case VIRTEX7: 
+				partNames.add("xc7v450tffg1157"); 
+				partNames.add("xc7vx485tffg1157");
+				partNames.add("xc7v1500tfhg1157");
 				break;
 			case VIRTEXE:
 				partNames.add("xcv50ecs144");

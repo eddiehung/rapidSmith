@@ -90,7 +90,7 @@ public class PatchGenerator {
 					checkDir(primitiveDir);
 					for(String primitiveName : primitiveDir.list()){
 						String fileName = primitiveDir.getAbsoluteFile() + File.separator + primitiveName;
-						PrimitiveType type = Utils.getInstance().createPrimitiveType(primitiveName.replace(".txt", ""));
+						PrimitiveType type = Utils.createPrimitiveType(primitiveName.replace(".txt", ""));
 						bw.write("\t\tmap = new HashMap<String, String>();" + nl);
 						bw.write("\t\tpatch.put(PrimitiveType."+type+", map);" + nl);
 						ArrayList<String> lines = FileTools.getLinesFromTextFile(fileName);

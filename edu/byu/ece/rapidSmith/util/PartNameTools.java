@@ -303,6 +303,7 @@ public class PartNameTools{
 	public static FamilyType getBaseTypeFromFamilyType(FamilyType type){
 		switch(type){
 			case ARTIX7: return FamilyType.ARTIX7;
+			case ARTIX7L: return FamilyType.ARTIX7;
 			case ASPARTAN2E: return FamilyType.SPARTAN2E;
 			case ASPARTAN3: return FamilyType.SPARTAN3;
 			case ASPARTAN3A: return FamilyType.SPARTAN3A;
@@ -310,6 +311,7 @@ public class PartNameTools{
 			case ASPARTAN3E: return FamilyType.SPARTAN3E;
 			case ASPARTAN6: return FamilyType.SPARTAN6;
 			case KINTEX7: return FamilyType.KINTEX7;
+			case KINTEX7L: return FamilyType.KINTEX7;
 			case QARTIX7: return FamilyType.ARTIX7;
 			case QKINTEX7: return FamilyType.KINTEX7;
 			case QRVIRTEX: return FamilyType.VIRTEX;
@@ -344,6 +346,7 @@ public class PartNameTools{
 			case VIRTEX6: return FamilyType.VIRTEX6;
 			case VIRTEX6L: return FamilyType.VIRTEX6;
 			case VIRTEX7: return FamilyType.VIRTEX7;
+			case VIRTEX7L: return FamilyType.VIRTEX7;
 			case VIRTEXE: return FamilyType.VIRTEXE;
 			default: return null;
 		}
@@ -441,12 +444,16 @@ public class PartNameTools{
 	 */
 	public static String getFormalFamilyNameFromType(FamilyType type){
 		switch(type){
+			case ARTIX7: return "Artix7";
+			case ARTIX7L: return "Artix7 Lower Power";
 			case ASPARTAN2E: return "Automotive Spartan2E";
 			case ASPARTAN3: return "Automotive Spartan3";
 			case ASPARTAN3A: return "Automotive Spartan3A";
 			case ASPARTAN3ADSP: return "Automotive Spartan-3A DSP";
 			case ASPARTAN3E: return "Automotive Spartan3E";
 			case ASPARTAN6: return "Automotive Spartan6";
+			case KINTEX7: return "Kintex7";
+			case KINTEX7L: return "Kintex7 Lower Power";
 			case QSPARTAN6: return "Defense-Grade Spartan-6Q";
 			case QSPARTAN6L: return "Defense-Grade Spartan-6Q Lower Power";
 			case QVIRTEX4: return "Defense-Grade Virtex-4Q";
@@ -474,6 +481,8 @@ public class PartNameTools{
 			case VIRTEX5: return "Virtex5";
 			case VIRTEX6: return "Virtex6";
 			case VIRTEX6L: return "Virtex6 Lower Power";
+			case VIRTEX7: return "Virtex7";
+			case VIRTEX7L: return "Virtex7 Lower Power";
 			case VIRTEXE: return "VirtexE";
 			default: return null;
 		}

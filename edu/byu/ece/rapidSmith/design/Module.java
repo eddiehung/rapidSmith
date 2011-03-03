@@ -759,7 +759,7 @@ public class Module implements Serializable{
 		// Do some error checking on the newAnchorSite
 		PrimitiveSite p = anchor.getPrimitiveSite();
 		Tile t = proposedAnchorSite.getTile();
-		PrimitiveSite newValidSite = Device.getCorrespondingPrimitiveSite(p, t);
+		PrimitiveSite newValidSite = Device.getCorrespondingPrimitiveSite(p, anchor.getType(), t);
 		if(!proposedAnchorSite.equals(newValidSite)){
 			return false;
 		}
@@ -773,7 +773,7 @@ public class Module implements Serializable{
 			if(newTile == null){
 				return false;
 			}
-			if(Device.getCorrespondingPrimitiveSite(templateSite, newTile) == null){
+			if(Device.getCorrespondingPrimitiveSite(templateSite, inst.getType(), newTile) == null){
 				return false;
 			}
 		}
