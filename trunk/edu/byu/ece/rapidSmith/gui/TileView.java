@@ -18,7 +18,7 @@
  * get a copy of the license at <http://www.gnu.org/licenses/>.
  * 
  */
-package edu.byu.ece.rapidSmith.device.browser;
+package edu.byu.ece.rapidSmith.gui;
 
 import com.trolltech.qt.core.QPoint;
 import com.trolltech.qt.core.QPointF;
