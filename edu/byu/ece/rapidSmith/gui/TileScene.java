@@ -57,29 +57,29 @@ public class TileScene extends QGraphicsScene{
 	/** The actual square used to highlight a tile */
 	public QGraphicsRectItem highlit;
 	/** Pen used to draw tile cursor */
-	QPen cursorPen = new QPen(QColor.yellow, 2);
+	public QPen cursorPen = new QPen(QColor.yellow, 2);
 	/** The current X location of the mouse */
-	int currX;
+	public int currX;
 	/** The current Y location of the mouse */
-	int currY;
+	public int currY;
 	/** The previous X location of the mouse */
-	int prevX;
+	public int prevX;
 	/** The previous Y location of the mouse */
-	int prevY;
+	public int prevY;
 	/** The rendered size of each XDL Tile */
 	public int tileSize = 20;
 	/** Number of tile columns being referenced on the device */
-	int cols;
+	public int cols;
 	/** Number of tile rows being referenced on the device */
-	int rows;
+	public int rows;
 	/** When hiding tiles, this contains the grid of drawn tiles */
-	Tile[][] drawnTiles;
+	public Tile[][] drawnTiles;
 	/** Gets the X coordinate of the tile in the drawnTiles grid */
-	HashMap<Tile,Integer> tileXMap;
+	public HashMap<Tile,Integer> tileXMap;
 	/** Gets the Y coordinate of the tile in the drawnTiles grid */
-	HashMap<Tile,Integer> tileYMap;
+	public HashMap<Tile,Integer> tileYMap;
 	/** Width of the lines drawn in between tiles when columns/rows are hidden */
-	double lineWidth = 1;
+	public double lineWidth = 1;
 	/** The device corresponding to this scene */
 	public Device device;
 	/** The signal which updates the status bar */

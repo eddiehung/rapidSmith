@@ -138,8 +138,8 @@ public class DeviceBrowser extends QMainWindow{
 		statusBar.addWidget(statusLabel);
 		setStatusBar(statusBar);
 		
-		// Set the opening default window size to 800x600 pixels
-		resize(800, 600);
+		// Set the opening default window size to 1024x768 pixels
+		resize(1024, 768);
 	}
 
 	/**

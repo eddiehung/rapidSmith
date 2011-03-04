@@ -177,8 +177,8 @@ public class DesignExplorer extends QMainWindow{
 		if(currOpenFileName == null){
         	openDesign();
         }
-		
-        resize(800, 600);
+		// Set the opening default window size to 1024x768 pixels
+		resize(1024, 768);
 	}
 
 	/**
