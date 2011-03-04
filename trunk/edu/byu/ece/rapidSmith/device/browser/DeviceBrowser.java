@@ -58,7 +58,7 @@ import edu.byu.ece.rapidSmith.util.MessageGenerator;
  */
 public class DeviceBrowser extends QMainWindow{
 	/** The Qt View for the browser */
-	private DeviceBrowserView view;
+	private TileView view;
 	/** The Qt Scene for the browser */
 	private DeviceBrowserScene scene;
 	/** The label for the status bar at the bottom */
@@ -78,6 +78,9 @@ public class DeviceBrowser extends QMainWindow{
 	/** This is the current tile that has been selected */
 	private Tile currTile = null;
 	
+	protected boolean hideTiles = true;
+	
+	protected boolean drawPrimitives = true; 
 	/**
 	 * Main method setting up the Qt environment for the program to run.
 	 * @param args
@@ -119,12 +122,12 @@ public class DeviceBrowser extends QMainWindow{
 		we = FileTools.loadWireEnumerator(currPart);
 		
 		// Setup the scene and view for the GUI
-		scene = new DeviceBrowserScene(device, we);
-		view = new DeviceBrowserView(scene);
+		scene = new DeviceBrowserScene(device, we, hideTiles, drawPrimitives);
+		view = new TileView(scene);
 		setCentralWidget(view);
 
 		// Setup some signals for when the user interacts with the view
-		scene.updateStatus.connect(this, "updateStatus()");
+		scene.updateStatus.connect(this, "updateStatus(String, Tile)");
 		scene.updateTile.connect(this, "updateTile()");
 		
 		// Initialize the status bar at the bottom
@@ -154,9 +157,10 @@ public class DeviceBrowser extends QMainWindow{
 		
 		// Create the primitive site list window
 		primitiveList = new QTreeWidget();
-		primitiveList.setColumnCount(1);
+		primitiveList.setColumnCount(2);
 		ArrayList<String> headerList = new ArrayList<String>();
 		headerList.add("Site");
+		headerList.add("Type");
 		primitiveList.setHeaderLabels(headerList);
 		primitiveList.setSortingEnabled(true);
 		
@@ -210,18 +214,13 @@ public class DeviceBrowser extends QMainWindow{
 	 * selected tile.
 	 */
 	protected void updatePrimitiveList(){
-		int x = (int) scene.getCurrX();
-		int y = (int) scene.getCurrY();
-		if (x >= 0 && x < device.getColumns() && y >= 0 && y < device.getRows()){
-			Tile tile = device.getTile(y, x);
-			currTile = tile;
-			primitiveList.clear();
-			if(tile == null || tile.getPrimitiveSites() == null) return;
-			for(PrimitiveSite ps : tile.getPrimitiveSites()){
-				QTreeWidgetItem treeItem = new QTreeWidgetItem();
-				treeItem.setText(0, ps.getName());
-				primitiveList.insertTopLevelItem(0, treeItem);
-			}
+		primitiveList.clear();
+		if(currTile == null || currTile.getPrimitiveSites() == null) return;
+		for(PrimitiveSite ps : currTile.getPrimitiveSites()){
+			QTreeWidgetItem treeItem = new QTreeWidgetItem();
+			treeItem.setText(0, ps.getName());
+			treeItem.setText(1, ps.getType().toString());
+			primitiveList.insertTopLevelItem(0, treeItem);
 		}
 	}
 
@@ -230,21 +229,16 @@ public class DeviceBrowser extends QMainWindow{
 	 * selected tile.
 	 */
 	protected void updateWireList(){
-		int x = (int) scene.getCurrX();
-		int y = (int) scene.getCurrY();
-		if (x >= 0 && x < device.getColumns() && y >= 0 && y < device.getRows()){
-			Tile tile = device.getTile(y, x);		
-			wireList.clear();
-			if(tile == null || tile.getWires() == null) return;
-			for(Integer wire : tile.getWires().keySet()) {
-				QTreeWidgetItem treeItem = new QTreeWidgetItem();
-				treeItem.setText(0, we.getWireName(wire));
-				Wire[] connections = tile.getWireConnections(wire);
-				treeItem.setText(1, String.format("%3d", connections == null ? 0 : connections.length));
-				wireList.insertTopLevelItem(0, treeItem);
-			}
-			wireList.sortByColumn(0, SortOrder.AscendingOrder);
+		wireList.clear();
+		if(currTile == null || currTile.getWires() == null) return;
+		for(Integer wire : currTile.getWires().keySet()) {
+			QTreeWidgetItem treeItem = new QTreeWidgetItem();
+			treeItem.setText(0, we.getWireName(wire));
+			Wire[] connections = currTile.getWireConnections(wire);
+			treeItem.setText(1, String.format("%3d", connections == null ? 0 : connections.length));
+			wireList.insertTopLevelItem(0, treeItem);
 		}
+		wireList.sortByColumn(0, SortOrder.AscendingOrder);
 	}
 
 	/**
@@ -260,35 +254,19 @@ public class DeviceBrowser extends QMainWindow{
 			currPart = (String) data;			
 			device = FileTools.loadDevice(currPart);
 			we = FileTools.loadWireEnumerator(currPart);
-			scene.setDevice(device, we);
+			scene.setDevice(device);
+			scene.setWireEnumerator(we);
+			scene.initializeScene(hideTiles, drawPrimitives);
 			statusLabel.setText("Loaded: "+currPart.toUpperCase());
 		}
-	}
-	
-	/**
-	 * Loads a device based on the given part name.
-	 * @param partName Name of the device to load.
-	 */
-	protected void showPart(String partName){
-		if(currPart.equals(partName))
-			return;
-		currPart = partName;			
-		device = FileTools.loadDevice(currPart);
-		we = FileTools.loadWireEnumerator(currPart);
-		scene.setDevice(device, we);
-		statusLabel.setText("Loaded: "+currPart.toUpperCase());
 	}
 	
 	/**
 	 * This method updates the status bar each time the mouse moves from a 
 	 * different tile.
 	 */
-	protected void updateStatus(){
-		int x = (int) scene.getCurrX();
-		int y = (int) scene.getCurrY();
-		if (x >= 0 && x < device.getColumns() && y >= 0 && y < device.getRows()){
-			Tile tile = device.getTile(y, x);
-			statusLabel.setText("Part: "+currPart.toUpperCase() +"  Tile: "+ tile.getName() +" ("+x+","+y+")" + " Type: " + tile.getType());
-		}
+	protected void updateStatus(String text, Tile tile){
+		statusLabel.setText(text);
+		currTile = tile;
 	}
 }

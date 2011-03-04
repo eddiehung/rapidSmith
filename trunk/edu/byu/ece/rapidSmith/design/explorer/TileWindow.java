@@ -27,7 +27,7 @@ import com.trolltech.qt.gui.QWidget;
 
 import edu.byu.ece.rapidSmith.design.Design;
 import edu.byu.ece.rapidSmith.device.Tile;
-import edu.byu.ece.rapidSmith.device.browser.DeviceBrowserView;
+import edu.byu.ece.rapidSmith.device.browser.TileView;
 import edu.byu.ece.rapidSmith.gui.TileScene;
 
 /**
@@ -37,7 +37,7 @@ import edu.byu.ece.rapidSmith.gui.TileScene;
  */
 public class TileWindow extends QWidget{
 	/** Associated view with this window */
-	protected DeviceBrowserView view;
+	protected TileView view;
 	/** Associated scene with this window */
 	protected TileScene scene;
 	/** The current design */
@@ -52,7 +52,7 @@ public class TileWindow extends QWidget{
 	public TileWindow(QWidget parent){
 		super(parent);
 		scene = new TileScene();
-		view = new DeviceBrowserView(scene);
+		view = new TileView(scene);
 		layout = new QGridLayout();
 		layout.addWidget(view);
 		this.setLayout(layout);
@@ -64,8 +64,8 @@ public class TileWindow extends QWidget{
 	 */
 	public void setDesign(Design design){
 		this.design = design;
-		scene.setCurrDesign(this.design);
-		scene.init();
+		scene.setDesign(this.design);
+		scene.initializeScene(true, true);
 	}
 	
 	/**

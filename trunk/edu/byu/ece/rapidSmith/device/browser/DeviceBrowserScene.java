@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Brigham Young University
+ * Copyright (c) 2010-2011 Brigham Young University
  * 
  * This file is part of the BYU RapidSmith Tools.
  * 
@@ -23,140 +23,36 @@ package edu.byu.ece.rapidSmith.device.browser;
 
 import java.util.ArrayList;
 
-import com.trolltech.qt.core.QPointF;
-import com.trolltech.qt.core.QRectF;
-import com.trolltech.qt.core.QSize;
-import com.trolltech.qt.core.Qt.PenStyle;
-import com.trolltech.qt.gui.QBrush;
-import com.trolltech.qt.gui.QColor;
 import com.trolltech.qt.gui.QGraphicsLineItem;
-import com.trolltech.qt.gui.QGraphicsPixmapItem;
-import com.trolltech.qt.gui.QGraphicsRectItem;
-import com.trolltech.qt.gui.QGraphicsScene;
 import com.trolltech.qt.gui.QGraphicsSceneMouseEvent;
-import com.trolltech.qt.gui.QImage;
-import com.trolltech.qt.gui.QPainter;
 import com.trolltech.qt.gui.QPen;
-import com.trolltech.qt.gui.QPixmap;
-import com.trolltech.qt.gui.QImage.Format;
 
 import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.Tile;
 import edu.byu.ece.rapidSmith.device.Wire;
 import edu.byu.ece.rapidSmith.device.WireEnumerator;
-import edu.byu.ece.rapidSmith.gui.TileColors;
+import edu.byu.ece.rapidSmith.gui.TileScene;
 
 /**
  * This class was written specifically for the DeviceBrowser class.  It
  * provides the scene content of the 2D tile array.
  */
-public class DeviceBrowserScene extends QGraphicsScene {
-	double currX, currY, prevX, prevY;
-	int tileSize, numCols, numRows;
-	double lineWidth;
-	Device device;
-	WireEnumerator we;
-	public Signal0 updateStatus = new Signal0();
+public class DeviceBrowserScene extends TileScene{
+	private WireEnumerator we;
 	public Signal0 updateTile = new Signal0();
-	private QGraphicsRectItem highlit;
-	private QImage qImage;
-	private QPainter painter;
 	private QPen wirePen;
 	private ArrayList<QGraphicsLineItem> currLines;
 	
-	public DeviceBrowserScene(Device device, WireEnumerator we){
-		this.device = device;
-		this.we = we;
-		currLines = new ArrayList<QGraphicsLineItem>();
-		this.highlit = null;
-		this.prevX = 0;
-		this.prevY = 0;
-		this.tileSize = 20;
-		this.lineWidth = 1;
-		if (device != null) {
-			this.numRows = device.getRows();
-			this.numCols = device.getColumns();
-		} else {
-			this.numRows = 8;
-			this.numCols = 8;
-		}
-		setSceneRect(new QRectF(0, 0, (numCols + 1) * (tileSize + 1),
-				(numRows + 1) * (tileSize + 1)));
-		drawTileBackground();
-	}
-
-	public void setDevice(Device newDevice, WireEnumerator newWireEnumerator){
-		this.device = newDevice;
-		this.we = newWireEnumerator;
-		this.highlit = null;
-		this.prevX = 0;
-		this.prevY = 0;
-		if (device != null) {
-			this.numRows = device.getRows();
-			this.numCols = device.getColumns();
-		} else {
-			this.numRows = 8;
-			this.numCols = 8;
-		}
-		this.clear();
-		setSceneRect(new QRectF(0, 0, (numCols + 1) * (tileSize + 1),
-				(numRows + 1) * (tileSize + 1)));
-		drawTileBackground();
-	}
-
-	private void drawTileBackground(){
-		setBackgroundBrush(new QBrush(QColor.black));
-		//Create transparent QPixmap that accepts hovers 
-		//  so that moveMouseEvent is triggered
-		QPixmap qpm = new QPixmap(new QSize((numCols + 1) * (tileSize + 1),
-				(numRows + 1) * (tileSize + 1)));
-		qpm.fill(new QColor(255, 255,255, 0));
-		QGraphicsPixmapItem background = addPixmap(qpm);
-		background.setAcceptsHoverEvents(true);
-		background.setZValue(-1);
-		// Draw colored tiles onto QImage		
-		qImage = new QImage(new QSize((numCols + 1) * (tileSize + 1),
-				(numRows + 1) * (tileSize + 1)), Format.Format_RGB16);
-		painter = new QPainter(qImage);
-		wirePen = new QPen(QColor.yellow, 0.25, PenStyle.SolidLine);
-		painter.setPen(new QPen(QColor.black, lineWidth));
-		// Draw lines between tiles
-		for (int i = 0; i <= numCols; i++){
-			painter.drawLine((i) * tileSize, tileSize, (i) * tileSize,
-					(numRows) * tileSize);
-		}
-
-		for (int j = 0; j <= numRows; j++){
-			painter.drawLine(tileSize, (j) * tileSize, (numCols) * tileSize,
-					(j) * tileSize);
-		}
-
-		for (int i = 0; i < numRows; i++){
-			for (int j = 0; j < numCols; j++){
-				Tile tile = device.getTile(i, j);
-				String name = tile.getName();
-				int hash = name.hashCode();
-				int idx = name.indexOf("_");
-				if (idx != -1) {
-					hash = name.substring(0, idx).hashCode();
-				}
-				
-				QColor color = TileColors.getSuggestedTileColor(tile);
-				if(color == null){
-					color = QColor.fromRgb(hash);
-				}
-
-				painter.fillRect(j * tileSize, i * tileSize, tileSize - 2, tileSize - 2, new QBrush(color));
-			}
-		}
-
-		painter.end();
-		
+	public DeviceBrowserScene(Device device, WireEnumerator we, boolean hideTiles, boolean drawPrimitives){
+		super(device, hideTiles, drawPrimitives);
 	}
 	
-	public void drawBackground(QPainter painter, QRectF rect){
-		super.drawBackground(painter, rect);
-		painter.drawImage(0, 0, qImage);
+	public WireEnumerator getWireEnumerator(){
+		return we;
+	}
+
+	public void setWireEnumerator(WireEnumerator we){
+		this.we = we;
 	}
 
 	public void drawWire(Tile src, Tile dst){
@@ -202,47 +98,10 @@ public class DeviceBrowserScene extends QGraphicsScene {
 			drawWire(tile, wire, w.getTile(device, tile), w.getWire());
 		}
 	}
-	
-	
-	@Override
-	public void mouseMoveEvent(QGraphicsSceneMouseEvent event){
-		QPointF mousePos = event.scenePos();
-		currX = Math.floor((mousePos.x()) / tileSize);
-		currY = Math.floor((mousePos.y()) / tileSize);
-		if (currX >= 0 && currY >= 0 && currX < numCols && currY < numRows
-				&& (currX != prevX || currY != prevY)) {
-			this.updateStatus.emit();
-			updateCursor();
-			prevX = currX;
-			prevY = currY;
-		}
-		
-		super.mouseMoveEvent(event);
-	}
 
 	@Override
 	public void mouseDoubleClickEvent(QGraphicsSceneMouseEvent event){
 		this.updateTile.emit();
 		super.mouseDoubleClickEvent(event);
 	}
-	
-	private void updateCursor(){
-		if (highlit == null) {
-			QPen cursorPen = new QPen(QColor.yellow, 1);
-			highlit = addRect(currX * tileSize, currY * tileSize, tileSize - 2,
-					tileSize - 2, cursorPen);
-		} else {
-			highlit.moveBy((currX - prevX) * tileSize, (currY - prevY)
-					* tileSize);
-		}
-	}
-
-	public double getCurrX(){
-		return currX;
-	}
-
-	public double getCurrY(){
-		return currY;
-	}
-
 }
