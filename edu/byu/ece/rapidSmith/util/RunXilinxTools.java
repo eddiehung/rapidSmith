@@ -198,7 +198,7 @@ public class RunXilinxTools {
 				}
 				
 				if(p.waitFor() != 0){
-					MessageGenerator.briefError("Part name generation failed: pargen failed to execute " +
+					MessageGenerator.briefError("Part name generation failed: partgen failed to execute " +
 							"correctly.  Check spelling and make sure the families: " + 
 							MessageGenerator.createStringFromArray(familyNames) + 
 							System.getProperty("line.separator")+"are installed.");
@@ -213,7 +213,7 @@ public class RunXilinxTools {
 		}
 		catch (InterruptedException e){
 			e.printStackTrace();
-			MessageGenerator.briefError("Part name generation failed: interruption during pargen.");
+			MessageGenerator.briefError("Part name generation failed: interruption during partgen.");
 			return null;
 		}
 		return partNames;

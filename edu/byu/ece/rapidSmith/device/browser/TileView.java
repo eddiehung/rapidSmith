@@ -36,7 +36,7 @@ import com.trolltech.qt.gui.QWheelEvent;
  * This class is written specifically for the DeviceBrowser class and provides
  * the Qt View.  It controls much of the interaction from the user.
  */
-public class DeviceBrowserView extends QGraphicsView{
+public class TileView extends QGraphicsView{
 	/** Current center of this view */
 	QPointF currCenter;
 	/** Stores the last pan of the view */
@@ -54,7 +54,7 @@ public class DeviceBrowserView extends QGraphicsView{
 	 * Constructor
 	 * @param scene The DeviceBrowser scene
 	 */
-	public DeviceBrowserView(QGraphicsScene scene){
+	public TileView(QGraphicsScene scene){
 		super(scene);
 	}
 

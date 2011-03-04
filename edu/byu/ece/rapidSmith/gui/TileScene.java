@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Brigham Young University
+ * Copyright (c) 2010-2011 Brigham Young University
  * 
  * This file is part of the BYU RapidSmith Tools.
  * 
@@ -20,13 +20,14 @@
  */
 package edu.byu.ece.rapidSmith.gui;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.TreeSet;
 
 import com.trolltech.qt.core.QPointF;
 import com.trolltech.qt.core.QRectF;
 import com.trolltech.qt.core.QSize;
+import com.trolltech.qt.core.QSizeF;
 import com.trolltech.qt.core.Qt;
 import com.trolltech.qt.core.Qt.PenStyle;
 import com.trolltech.qt.gui.QBrush;
@@ -45,6 +46,7 @@ import edu.byu.ece.rapidSmith.design.Design;
 import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.Tile;
 import edu.byu.ece.rapidSmith.device.TileType;
+import edu.byu.ece.rapidSmith.device.Utils;
 
 /**
  * This class is used for the design explorer although, it could 
@@ -52,104 +54,151 @@ import edu.byu.ece.rapidSmith.device.TileType;
  * @author Chris Lavin
  */
 public class TileScene extends QGraphicsScene{
-	
-	private QGraphicsRectItem highlit;
-	
+	/** The actual square used to highlight a tile */
+	public QGraphicsRectItem highlit;
+	/** Pen used to draw tile cursor */
 	QPen cursorPen = new QPen(QColor.yellow, 2);
-	
-	int currX, currY, prevX, prevY;
-	int tileSize, numCols, numRows;
+	/** The current X location of the mouse */
+	int currX;
+	/** The current Y location of the mouse */
+	int currY;
+	/** The previous X location of the mouse */
+	int prevX;
+	/** The previous Y location of the mouse */
+	int prevY;
+	/** The rendered size of each XDL Tile */
+	public int tileSize = 20;
+	/** Number of tile columns being referenced on the device */
+	int cols;
+	/** Number of tile rows being referenced on the device */
+	int rows;
+	/** When hiding tiles, this contains the grid of drawn tiles */
 	Tile[][] drawnTiles;
+	/** Gets the X coordinate of the tile in the drawnTiles grid */
 	HashMap<Tile,Integer> tileXMap;
+	/** Gets the Y coordinate of the tile in the drawnTiles grid */
 	HashMap<Tile,Integer> tileYMap;
-	double lineWidth;
-	Device device;
-	public Signal1<String> updateStatus = new Signal1<String>();
+	/** Width of the lines drawn in between tiles when columns/rows are hidden */
+	double lineWidth = 1;
+	/** The device corresponding to this scene */
+	public Device device;
+	/** The signal which updates the status bar */
+	public Signal2<String, Tile> updateStatus = new Signal2<String, Tile>();
+	/** The signal which is made when a mouse button is pressed */
 	public Signal0 mousePressed = new Signal0();
-	protected ArrayList<QPointF> movingPosList;
-	private Design currDesign;
+	/** The current design associated with this scene */
+	private Design design;
+	/** This is the actual image shown in the scene of the FPGA fabric */
 	private QImage qImage;
+	/** This is the set of column tile types which should not be drawn */
+	private HashSet<TileType> tileColumnTypesToHide;
+	/** This is the set of row tile types which should not be drawn */
+	private HashSet<TileType> tileRowTypesToHide;
+	/** Qt Size container for the scene */
+	private QSize sceneSize;
 	
+	/**
+	 * Empty constructor
+	 */
 	public TileScene(){
-		this(null);
+		setDesign(null);
+		initializeScene(true, true);
 	}
 	
-	public TileScene(Design design){
-		this.tileSize = 20;
-		this.lineWidth = 1;
-		this.currDesign = design;
-		init();
+	/**
+	 * Creates a new tile scene with a design. 
+	 * @param design The design and device to associate with this scene.
+	 * @param hideTiles A flag to hide/show certain tiles to make the fabric appear more homogeneous.
+	 * @param drawPrimitives A flag to draw boxes to represent primitives. 
+	 */
+	public TileScene(Design design, boolean hideTiles, boolean drawPrimitives){
+		setDesign(design);
+		initializeScene(hideTiles, drawPrimitives);
 	}
 	
-	public void init() {
+	/**
+	 * Creates a new tile scene with a device. 
+	 * @param device The device to associate with this scene.
+	 * @param hideTiles A flag to hide/show certain tiles to make the fabric appear more homogeneous.
+	 * @param drawPrimitives A flag to draw boxes to represent primitives. 
+	 */
+	public TileScene(Device device, boolean hideTiles, boolean drawPrimitives){
+		setDevice(device);
+		initializeScene(hideTiles, drawPrimitives);
+	}
+	
+	/**
+	 * Initializes the scene
+	 * @param hideTiles
+	 * @param drawPrimitives
+	 */
+	public void initializeScene(boolean hideTiles, boolean drawPrimitives){
 		this.clear();
-		System.gc();
 		prevX = 0;
 		prevY = 0;
-		movingPosList = new ArrayList<QPointF>();
-		this.device = (currDesign == null) ? null : currDesign.getDevice();
-		if (device != null) {
-			numRows = device.getRows();
-			numCols = device.getColumns();
-			setSceneRect(new QRectF(0, 0, (numCols + 1) * (tileSize + 1),
-					(numRows + 1) * (tileSize + 1)));
-			drawSliceBackground();
-		} else {
-			setSceneRect(new QRectF(0, 0, 1 * (tileSize + 1),
-					1 * (tileSize + 1)));
+		
+		// Used to avoid a bug in Qt
+		System.gc();
+
+		if(device != null){
+			tileColumnTypesToHide = new HashSet<TileType>();
+			tileRowTypesToHide = new HashSet<TileType>();
+
+			if(hideTiles){ 
+				populateTileTypesToHide();
+			}
+				
+			rows = device.getRows();
+			cols = device.getColumns();
+			sceneSize = new QSize((cols + 1) * (tileSize + 1), (rows + 1) * (tileSize + 1));
+			setSceneRect(new QRectF(new QPointF(0, 0), new QSizeF(sceneSize)));
+			drawFPGAFabric(drawPrimitives);
+		} 
+		else{
+			setSceneRect(new QRectF(0, 0, tileSize + 1, tileSize + 1));
 		}
 	}
 	
-	private void drawSliceBackground(){
+	private void drawFPGAFabric(boolean drawPrimitives){
 		setBackgroundBrush(new QBrush(QColor.black));
 		
 		//Create transparent QPixmap that accepts hovers 
 		//  so that moveMouseEvent is triggered
-		QPixmap qpm = new QPixmap(new QSize((numCols + 1) * (tileSize + 1),
-				(numRows + 1) * (tileSize + 1)));
-		qpm.fill(new QColor(255, 255,255, 0));
-		QGraphicsPixmapItem background = addPixmap(qpm);
+		QPixmap pixelMap = new QPixmap(sceneSize);
+		pixelMap.fill(QColor.transparent);
+		QGraphicsPixmapItem background = addPixmap(pixelMap);
 		background.setAcceptsHoverEvents(true);
 		background.setZValue(-1);
 
 		// Draw colored tiles onto QPixMap
-		qImage = new QImage(new QSize((numCols + 1) * (tileSize + 1),
-				(numRows + 1) * (tileSize + 1)), Format.Format_RGB16);
+		qImage = new QImage(sceneSize, Format.Format_RGB16);
 		QPainter painter = new QPainter(qImage);
 		
+		// Determine which columns and rows to not draw
 		TreeSet<Integer> colsToSkip = new TreeSet<Integer>();
 		TreeSet<Integer> rowsToSkip = new TreeSet<Integer>();
-		for (int y = 0; y < numRows; y++) {
-			for (int x = 0; x < numCols; x++) {
-				Tile tile = device.getTile(y, x);
-				if(y > 0 && y < numRows-2){
-					Tile nextRowTile = device.getTile(y+1,x);
-					if(nextRowTile.getTileYCoordinate() == tile.getTileYCoordinate()){
-						rowsToSkip.add(y);
-						break;
-					}
+		for(Tile[] tileRow : device.getTiles()){
+			for(Tile tile : tileRow){
+				TileType type = tile.getType();
+				if(tileColumnTypesToHide.contains(type)){
+					colsToSkip.add(tile.getColumn());
 				}
-				if(x > 2 && x < numCols-1){
-					Tile prevColTile = device.getTile(y,x-2);
-					if(prevColTile.getTileXCoordinate() == tile.getTileXCoordinate()){
-						colsToSkip.add(x);
-						continue;
-					}
+				if(tileRowTypesToHide.contains(type)){
+					rowsToSkip.add(tile.getRow());
 				}
 			}
 		}
-		int i=0;
-		int j=0;
-		drawnTiles = new Tile[numRows-rowsToSkip.size()][numCols-colsToSkip.size()];
+		
+		// Create new tile layout without hidden tiles
+		int i=0,j=0;
+		drawnTiles = new Tile[rows-rowsToSkip.size()][cols-colsToSkip.size()];
 		tileXMap = new HashMap<Tile, Integer>();
 		tileYMap = new HashMap<Tile, Integer>();
-		for (int y = 0; y < numRows; y++) {
-			if(rowsToSkip.contains(y))
-				continue;
-			for (int x = 0; x < numCols; x++) {
-				if(colsToSkip.contains(x))
-					continue;
-				Tile tile = device.getTile(y, x);
+		for(int row = 0; row < rows; row++) {
+			if(rowsToSkip.contains(row)) continue;
+			for (int col = 0; col < cols; col++) {
+				if(colsToSkip.contains(col)) continue;
+				Tile tile = device.getTile(row, col);
 				drawnTiles[i][j] = tile;
 				tileXMap.put(tile, j);
 				tileYMap.put(tile, i);
@@ -158,99 +207,55 @@ public class TileScene extends QGraphicsScene{
 			i++;
 			j=0;
 		}
-		numRows = numRows-rowsToSkip.size();
-		numCols = numCols-colsToSkip.size();
-		QPen cfgLine = new QPen(QColor.lightGray, 2, PenStyle.DashLine);
-		painter.setPen(cfgLine);
-		int cnt = 0;
+		rows = rows-rowsToSkip.size();
+		cols = cols-colsToSkip.size();
+		
+		//Draw dashed lines where rows/columns have been removed
+		QPen missingTileLinePen = new QPen(QColor.lightGray, 2, PenStyle.DashLine);
+		painter.setPen(missingTileLinePen);
+		i = 0;
 		for(int col : colsToSkip){
-			int realCol = col - cnt;
-			painter.drawLine(tileSize*realCol-1, 0, tileSize*realCol-1, numRows*tileSize-3);
-			cnt++;
+			int realCol = col - i;
+			painter.drawLine(tileSize*realCol-1, 0, tileSize*realCol-1, rows*tileSize-3);
+			i++;
 		}
-		cnt=0;
+		i=0;
 		for(int row : rowsToSkip){
-			int realRow = row - cnt;
-			painter.drawLine(0,tileSize*realRow-1, numCols*tileSize-3,tileSize*realRow-1);
-			cnt++;
+			int realRow = row - i;
+			painter.drawLine(0,tileSize*realRow-1, cols*tileSize-3,tileSize*realRow-1);
+			i++;
 		}
 		
-		for (int y = 0; y < numRows; y++) {
-			for (int x = 0; x < numCols; x++) {
+		// Draw the tile layout
+		for(int y = 0; y < rows; y++){
+			for(int x = 0; x < cols; x++){
 				Tile tile = drawnTiles[y][x];
-				String name = tile.getName();
 				TileType tileType = tile.getType();
-				int hash = name.hashCode();
-				int idx = name.indexOf("_");
-				if (idx != -1) {
-					hash = name.substring(0, idx).hashCode();
-				}
-				QColor color = QColor.fromRgb(hash);
 
-				if (name.startsWith("DSP")) {
-					color = QColor.darkCyan;
-				} else if (name.startsWith("BRAM")) {
-					color = QColor.darkMagenta;
-				} else if (name.startsWith("INT")) {
-					color = QColor.darkYellow;
-				} 
-
+				// Set pen color based on current tile
+				QColor color = TileColors.getSuggestedTileColor(tile);
+				painter.setPen(color);
+				
 				int offset = (int) Math.ceil((lineWidth / 2.0));
 				int rectX = x * tileSize;
 				int rectY = y * tileSize;
 				int rectSide = tileSize - 2 * offset;
 
-				if (tileType.equals(TileType.CLB)) {
-					painter.setPen(color);
-					painter.drawRect(rectX, rectY, rectSide / 2 - 1,
-							rectSide / 2 - 1);
-					painter.drawRect(rectX + rectSide / 2,
-							rectY + rectSide / 2, rectSide / 2 - 1,
-							rectSide / 2 - 1);
-					painter.drawRect(rectX, rectY + rectSide / 2,
-							rectSide / 2 - 1, rectSide / 2 - 1);
-					painter.drawRect(rectX + rectSide / 2, rectY,
-							rectSide / 2 - 1, rectSide / 2 - 1);
-				}else if (tileType.equals(TileType.CLBLL) || tileType.equals(TileType.CLBLM)) {
-					painter.setPen(QColor.fromRgb("CLB".hashCode()));
-					painter.drawRect(rectX, rectY + rectSide / 2,
-							rectSide / 2 - 1, rectSide / 2 - 1);
-					painter.drawRect(rectX + rectSide / 2, rectY,
-							rectSide / 2 - 1, rectSide / 2 - 1);
-				} else if (name.startsWith("INT")) {
-					painter.setPen(color);
-					painter.drawRect(rectX + rectSide / 6, rectY,
-							4 * rectSide / 6 - 1, rectSide - 1);
-				} else if (name.startsWith("EMPTY_DSP")
-						|| name.startsWith("EMPTY_BRAM")) {
-					// do nothing
-				} else if (name.startsWith("DSP")) {
-					painter.setPen(color);
-					painter.drawRect(rectX, rectY - 3 * tileSize, rectSide - 1,
-							4 * rectSide + 3 * 2 * offset - 1);
-					painter.setPen(color.darker());
-					painter
-							.drawRect(rectX + 2, rectY - 3 * tileSize + 2,
-									rectSide - 1 - 4, 2 * rectSide + 2 * offset
-											- 1 - 2);
-					painter
-							.drawRect(rectX + 2, rectY - tileSize,
-									rectSide - 1 - 4, 2 * rectSide + 2 * offset
-											- 1 - 2);
-				} else if (name.startsWith("BRAM")) {
-					painter.setPen(color);
-					painter.drawRect(rectX, rectY - 3 * tileSize, rectSide - 1,
-							4 * rectSide + 3 * 2 * offset - 1);
-					painter.setPen(color.darker());
-					painter.drawRect(rectX + 2, rectY - 3 * tileSize + 2,
-							rectSide / 2 - 4, 4 * (rectSide + offset) - 3);
-					painter.drawRect(rectX + rectSide / 2 + 1, rectY - 3
-							* tileSize + 2, rectSide / 2 - 4,
-							4 * (rectSide + offset) - 3);
-
-				} else {
-					painter.fillRect(x * tileSize, y * tileSize, tileSize - 2
-							* offset, tileSize - 2 * offset, new QBrush(color));
+				if(drawPrimitives){
+					if(Utils.isCLB(tileType)){
+						drawCLB(painter, rectX, rectY, rectSide);
+					}else if(Utils.isSwitchBox(tileType)){
+						drawSwitchBox(painter, rectX, rectY, rectSide);
+					}else if(Utils.isBRAM(tileType)){
+						drawBRAM(painter, rectX, rectY, rectSide, offset, color);
+					}else if(Utils.isDSP(tileType)){
+						drawDSP(painter, rectX, rectY, rectSide, offset, color);
+					}else{ // Just fill the tile in with a color
+						colorTile(painter, x, y, offset, color);
+					}					
+				}
+				else{
+					colorTile(painter, x, y, offset, color);
 				}
 			}
 		}
@@ -263,17 +268,30 @@ public class TileScene extends QGraphicsScene{
 		painter.drawImage(0, 0, qImage);
 	}
 
+	/**
+	 * Gets the tile based on the x and y coordinates given (typically from mouse input)
+	 * @param x The x location on the screen.
+	 * @param y The y location on the screen.
+	 * @return The tile at the x,y location or null if none exist.
+	 */
+	public Tile getTile(double x, double y){
+		currX = (int) Math.floor(x / tileSize);
+		currY = (int) Math.floor(y / tileSize);
+		if (currX >= 0 && currY >= 0 && currX < cols && currY < rows && (currX != prevX || currY != prevY)){
+			return drawnTiles[currY][currX];
+		}
+		return null;
+	}
+	
 	@Override
 	public void mouseMoveEvent(QGraphicsSceneMouseEvent event) {
 		QPointF mousePos = event.scenePos();
 		if (device != null) {
-			currX = (int) Math.floor((mousePos.x()) / tileSize);
-			currY = (int) Math.floor((mousePos.y()) / tileSize);
-			if (currX >= 0 && currY >= 0 && currX < numCols && currY < numRows
-					&& (currX != prevX || currY != prevY)) {
-				String tileName = device.getPartName() + " | " +  drawnTiles[currY][currX].getName() +
-				" | " + drawnTiles[currY][currX].getType() + " (" + currX + "," + currY + ")";
-				this.updateStatus.emit(tileName);
+			Tile tile = getTile(mousePos.x(), mousePos.y());
+			if(tile != null){
+				String tileName = device.getPartName() + " | " +  tile.getName() +
+				" | " + tile.getType() + " (" + currX + "," + currY + ")";
+				this.updateStatus.emit(tileName, tile);
 				prevX = currX;
 				prevY = currY;
 			}
@@ -288,7 +306,7 @@ public class TileScene extends QGraphicsScene{
 			currX = (int) Math.floor((mousePos.x()) / tileSize);
 			currY = (int) Math.floor((mousePos.y()) / tileSize);
 
-			if (currX >= 0 && currY >= 0 && currX < numCols && currY < numRows){
+			if (currX >= 0 && currY >= 0 && currX < cols && currY < rows){
 				updateCursor();
 			}			
 		}
@@ -308,6 +326,10 @@ public class TileScene extends QGraphicsScene{
 		this.currY = currY;
 	}
 	
+	/*
+	 * Getters and Setters
+	 */
+	
 	public int getDrawnTileX(Tile tile){
 		Integer tmp = tileXMap.get(tile);
 		if(tmp == null)
@@ -323,12 +345,23 @@ public class TileScene extends QGraphicsScene{
 	}
 	
 
-	public Design getCurrDesign(){
-		return currDesign;
+	public Design getDesign(){
+		return design;
 	}
 
-	public void setCurrDesign(Design currDesign){
-		this.currDesign = currDesign;
+	public void setDesign(Design design){
+		this.design = design;
+		if(this.design != null){
+			setDevice(design.getDevice());
+		}
+	}
+	
+	public Device getDevice(){
+		return device;
+	}
+	
+	public void setDevice(Device device){
+		this.device = device;
 	}
 
 	public double getCurrX(){
@@ -341,5 +374,145 @@ public class TileScene extends QGraphicsScene{
 	
 	public int getTileSize(){
 		return tileSize;
+	}
+	
+	/*
+	 * Helper Drawing Methods
+	 */
+	
+	private void drawCLB(QPainter painter, int rectX, int rectY, int rectSide){
+		painter.drawRect(rectX, rectY + rectSide / 2, rectSide / 2 - 1, rectSide / 2 - 1);
+		painter.drawRect(rectX + rectSide / 2, rectY, rectSide / 2 - 1, rectSide / 2 - 1);					
+		switch(device.getFamilyType()){
+			case SPARTAN3:
+			case SPARTAN3A:
+			case SPARTAN3ADSP:
+			case SPARTAN3E:
+			case VIRTEX2:
+			case VIRTEX2P:
+			case VIRTEX4:
+				painter.drawRect(rectX, rectY, rectSide / 2 - 1, rectSide / 2 - 1);
+				painter.drawRect(rectX + rectSide / 2, rectY + rectSide / 2, rectSide / 2 - 1, rectSide / 2 - 1);
+				break;
+		}
+	}
+	
+	private void drawBRAM(QPainter painter, int rectX, int rectY, int rectSide, int offset, QColor color){
+		switch(device.getFamilyType()){
+			case SPARTAN6:
+				painter.drawRect(rectX, rectY - 3 * tileSize, rectSide - 1, 4 * rectSide + 3 * 2 * offset - 1);
+				painter.setPen(color.darker());
+				painter.drawRect(rectX + 2, rectY - 3 * tileSize + 2, rectSide - 1 - 4, 2 * rectSide + 2 * offset - 1 - 2);
+				painter.drawRect(rectX + 2, rectY - tileSize, rectSide - 1 - 4, 2 * rectSide + 2 * offset - 1 - 2);
+				break;
+			case VIRTEX5:
+				painter.drawRect(rectX, rectY - 4 * tileSize, rectSide - 1, 5 * rectSide + 3 * 2 * offset - 1);
+				painter.setPen(color.darker());
+				painter.drawRect(rectX+2, rectY-4 * tileSize + 2, rectSide - 5, 5 * rectSide + 3 * 2 * offset - 5);
+				break;
+			case KINTEX7:
+			case VIRTEX6:
+			case VIRTEX7:
+				painter.drawRect(rectX, rectY - 4 * tileSize, rectSide - 1, 5 * rectSide + 3 * 2 * offset - 1);
+				painter.setPen(color.darker());
+				painter.drawRect(rectX+2, rectY-4 * tileSize + 2, rectSide - 5, ((int)(2.5 * rectSide)) + 3 * 2 * offset - 5);
+				painter.drawRect(rectX+2, (rectY-2 * tileSize) + 7, rectSide - 5, ((int)(2.5 * rectSide)) + 3 * 2 * offset - 5);
+				break;
+			case VIRTEXE:
+			case SPARTAN2:
+			case SPARTAN2E:
+			case SPARTAN3:
+			case SPARTAN3A:
+			case SPARTAN3ADSP:
+			case SPARTAN3E:
+			case VIRTEX:
+			case VIRTEX2:
+			case VIRTEX2P:
+			case VIRTEX4:
+				painter.drawRect(rectX, rectY - 3 * tileSize, rectSide - 1, 4 * rectSide + 3 * 2 * offset - 1);
+				painter.setPen(color.darker());
+				painter.drawRect(rectX + 2, rectY - 3 * tileSize + 2, rectSide / 2 - 4, 4 * (rectSide + offset) - 3);
+				painter.drawRect(rectX + rectSide / 2 + 1, rectY - 3 * tileSize + 2, rectSide / 2 - 4, 4 * (rectSide + offset) - 3);
+				break;
+		}
+	}
+	
+	private void drawDSP(QPainter painter, int rectX, int rectY, int rectSide, int offset, QColor color){
+		switch(device.getFamilyType()){
+			case SPARTAN6:
+				painter.drawRect(rectX, rectY - 3 * tileSize, rectSide - 1, 4 * rectSide + 3 * 2 * offset - 1);
+				painter.setPen(color.darker());
+				painter.drawRect(rectX+2, rectY-3 * tileSize + 2, rectSide - 5, 4 * rectSide + 3 * 2 * offset - 5);
+				break;
+			case VIRTEX5:
+			case KINTEX7:
+			case VIRTEX6:
+			case VIRTEX7:
+				painter.drawRect(rectX, rectY - 4 * tileSize, rectSide - 1, 5 * rectSide + 3 * 2 * offset - 1);
+				painter.setPen(color.darker());
+				painter.drawRect(rectX+2, rectY-4 * tileSize + 2, rectSide - 5, ((int)(2.5 * rectSide)) + 3 * 2 * offset - 5);
+				painter.drawRect(rectX+2, (rectY-2 * tileSize) + 7, rectSide - 5, ((int)(2.5 * rectSide)) + 3 * 2 * offset - 5);
+				break;
+			case VIRTEXE:
+			case SPARTAN2:
+			case SPARTAN2E:
+			case SPARTAN3:
+			case SPARTAN3A:
+			case SPARTAN3ADSP:
+			case SPARTAN3E:
+			case VIRTEX:
+			case VIRTEX2:
+			case VIRTEX2P:
+			case VIRTEX4:
+				painter.drawRect(rectX, rectY - 3 * tileSize, rectSide - 1, 4 * rectSide + 3 * 2 * offset - 1);
+				painter.setPen(color.darker());
+				painter.drawRect(rectX + 2, rectY - 3 * tileSize + 2, rectSide - 1 - 4, 2 * rectSide + 2 * offset - 1 - 2);
+				painter.drawRect(rectX + 2, rectY - tileSize, rectSide - 1 - 4, 2 * rectSide + 2 * offset - 1 - 2);
+				break;
+		}
+
+	}
+	
+	private void drawSwitchBox(QPainter painter, int rectX, int rectY, int rectSide){
+		painter.drawRect(rectX + rectSide / 6, rectY, 4 * rectSide / 6 - 1, rectSide - 1);
+	}
+	
+	private void colorTile(QPainter painter, int x, int y, int offset, QColor color){
+		painter.fillRect(x * tileSize, y * tileSize,
+				tileSize - 2 * offset, tileSize - 2 * offset, new QBrush(color));
+	}
+	
+	private void populateTileTypesToHide(){
+		switch(device.getFamilyType()){
+		case VIRTEX4:
+			tileColumnTypesToHide.add(TileType.CLB_BUFFER);
+			tileColumnTypesToHide.add(TileType.CLK_HROW);
+			tileColumnTypesToHide.add(TileType.CFG_VBRK_FRAME);
+			tileRowTypesToHide.add(TileType.HCLK); 
+			tileRowTypesToHide.add(TileType.BRKH);
+			break;
+		case VIRTEX5:
+			tileColumnTypesToHide.add(TileType.CFG_VBRK);
+			tileColumnTypesToHide.add(TileType.CLKV);
+			tileColumnTypesToHide.add(TileType.INT_BUFS_L);
+			tileColumnTypesToHide.add(TileType.INT_BUFS_R);
+			tileColumnTypesToHide.add(TileType.INT_BUFS_R_MON);
+			tileColumnTypesToHide.add(TileType.INT_INTERFACE);
+			tileColumnTypesToHide.add(TileType.IOI);
+			tileRowTypesToHide.add(TileType.HCLK); 
+			tileRowTypesToHide.add(TileType.BRKH);
+		case VIRTEX6:
+			tileRowTypesToHide.add(TileType.HCLK); 
+			tileRowTypesToHide.add(TileType.BRKH);
+			tileColumnTypesToHide.add(TileType.INT_INTERFACE);
+			tileColumnTypesToHide.add(TileType.VBRK);
+			break;
+		case SPARTAN6:
+			tileColumnTypesToHide.add(TileType.INT_INTERFACE);
+			tileColumnTypesToHide.add(TileType.VBRK);
+			tileRowTypesToHide.add(TileType.HCLK_CLB_XL_CLE); 
+			tileRowTypesToHide.add(TileType.REGH_CLEXL_CLE);
+			break;
+		}		
 	}
 }
