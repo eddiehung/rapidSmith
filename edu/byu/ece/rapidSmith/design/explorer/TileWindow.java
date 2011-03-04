@@ -28,6 +28,7 @@ import com.trolltech.qt.gui.QWidget;
 import edu.byu.ece.rapidSmith.design.Design;
 import edu.byu.ece.rapidSmith.device.Tile;
 import edu.byu.ece.rapidSmith.device.browser.DeviceBrowserView;
+import edu.byu.ece.rapidSmith.gui.TileScene;
 
 /**
  * This class is used for the tile window tab of the design explorer.

@@ -18,7 +18,7 @@
  * get a copy of the license at <http://www.gnu.org/licenses/>.
  * 
  */
-package edu.byu.ece.rapidSmith.design.explorer;
+package edu.byu.ece.rapidSmith.gui;
 
 import java.util.ArrayList;
 import java.util.HashMap;
