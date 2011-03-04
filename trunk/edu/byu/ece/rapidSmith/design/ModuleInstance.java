@@ -26,6 +26,7 @@ import java.util.HashMap;
 import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.Tile;
+import edu.byu.ece.rapidSmith.device.TileType;
 
 /**
  * There is no direct representation of a module instance in XDL. Each member of
@@ -272,6 +273,8 @@ public class ModuleInstance{
 		//=======================================================//
 		/* Place net at new location                             */
 		//=======================================================//
+		int mCout = design.getWireEnumerator().getWireEnum("M_COUT");
+		int llCout = design.getWireEnumerator().getWireEnum("LL_COUT");
 		for(Net net : nets){
 			net.getPIPs().clear();
 			Net templateNet = net.getModuleTemplateNet();
@@ -280,6 +283,9 @@ public class ModuleInstance{
 				Tile newPipTile = module.getCorrespondingTile(templatePipTile, newAnchorSite.getTile(), dev);				
 				PIP newPip = new PIP(newPipTile, pip.getStartWire(), pip.getEndWire());
 				net.addPIP(newPip);
+				if(newPip.getStartWire() == mCout && newPipTile.getType().equals(TileType.CLBLL)){
+					newPip.setStartWire(llCout);
+				}
 			}
 		}
 		return true;
