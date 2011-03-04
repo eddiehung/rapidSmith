@@ -96,7 +96,8 @@ public class TileScene extends QGraphicsScene{
 	private HashSet<TileType> tileRowTypesToHide;
 	/** Qt Size container for the scene */
 	private QSize sceneSize;
-	
+	/**  */
+	public HashSet<GuiModuleInstance>[][] tileOccupantCount;
 	/**
 	 * Empty constructor
 	 */
