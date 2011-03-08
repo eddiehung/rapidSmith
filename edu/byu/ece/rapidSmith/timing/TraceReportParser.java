@@ -26,6 +26,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import edu.byu.ece.rapidSmith.design.Design;
 import edu.byu.ece.rapidSmith.design.Instance;
@@ -201,7 +202,7 @@ public class TraceReportParser{
 			if(parts.length > 2){
 				if(parts[2].equals("net")){
 					currElement = new RoutingPathElement();
-					currElement.setType(DelayType.NET);
+					currElement.setType("net");
 					int offset = 0;
 					if(parts[4].equals("e")){
 						offset = 1;
@@ -225,13 +226,16 @@ public class TraceReportParser{
 				}
 				else{
 					currElement = new LogicPathElement();
-					DelayType type = DelayType.valueOf(parts[2].toUpperCase());
-					if(type == null){
-						MessageGenerator.briefErrorAndExit("This type \"" + parts[2] +
-								"\" is not a listed enum DelayType.");
+					if(parts.length < 5){
+						String[] newParts = new String[5];
+						newParts[1] = parts[1].substring(0, 21);
+						newParts[2] = parts[1].substring(21);
+						newParts[3] = parts[2];
+						newParts[4] = parts[3];
+						parts = newParts;
 					}
-					currElement.setType(type);
-					
+					currElement.setType(parts[2]);
+					//System.out.println("line="+line+", parts=" + parts.length);
 					Instance instance = design.getInstance(parts[4]);
 					((LogicPathElement)currElement).setInstance(instance);
 					if(instance == null){
@@ -242,7 +246,7 @@ public class TraceReportParser{
 					if(p == null){
 						System.out.println("Problem Getting Pin: " + parts[1]);
 						System.out.println("Line: " + line);
-						System.exit(1);
+						//System.exit(1);
 					}
 					currElement.setPin(p);
 					currElement.setDelay(Float.parseFloat(parts[3]));

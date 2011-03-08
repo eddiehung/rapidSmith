@@ -23,6 +23,8 @@ package edu.byu.ece.rapidSmith.device.browser;
 
 import java.util.ArrayList;
 
+import com.trolltech.qt.core.Qt.PenStyle;
+import com.trolltech.qt.gui.QColor;
 import com.trolltech.qt.gui.QGraphicsLineItem;
 import com.trolltech.qt.gui.QGraphicsSceneMouseEvent;
 import com.trolltech.qt.gui.QPen;
@@ -39,12 +41,15 @@ import edu.byu.ece.rapidSmith.gui.TileScene;
  */
 public class DeviceBrowserScene extends TileScene{
 	private WireEnumerator we;
-	public Signal0 updateTile = new Signal0();
+	public Signal1<Tile> updateTile = new Signal1<Tile>();
 	private QPen wirePen;
 	private ArrayList<QGraphicsLineItem> currLines;
 	
 	public DeviceBrowserScene(Device device, WireEnumerator we, boolean hideTiles, boolean drawPrimitives){
 		super(device, hideTiles, drawPrimitives);
+		setWireEnumerator(we);
+		currLines = new ArrayList<QGraphicsLineItem>();
+		wirePen = new QPen(QColor.yellow, 0.25, PenStyle.SolidLine);
 	}
 	
 	public WireEnumerator getWireEnumerator(){
@@ -75,12 +80,10 @@ public class DeviceBrowserScene extends TileScene{
 	
 	public void drawWire(Tile src, int wireSrc, Tile dst, int wireDst){
 		double enumSize = we.getWires().length;
-		
-		double x1 = (double) src.getColumn()*tileSize  + (wireSrc%tileSize);
-		double y1 = (double) src.getRow()*tileSize  + (wireSrc*tileSize)/enumSize;
-		double x2 = (double) dst.getColumn()*tileSize  + (wireDst%tileSize);
-		double y2 = (double) dst.getRow()*tileSize  + (wireDst*tileSize)/enumSize;
-		
+		double x1 = (double) tileXMap.get(src)*tileSize  + (wireSrc%tileSize);
+		double y1 = (double) tileYMap.get(src)*tileSize  + (wireSrc*tileSize)/enumSize;
+		double x2 = (double) tileXMap.get(dst)*tileSize  + (wireDst%tileSize);
+		double y2 = (double) tileYMap.get(dst)*tileSize  + (wireDst*tileSize)/enumSize;
 		WireConnectionLine line = new WireConnectionLine(x1,y1,x2,y2, this, dst, wireDst);
 		line.setToolTip(src.getName() + " " + we.getWireName(wireSrc) + " -> " +
 				dst.getName() + " " + we.getWireName(wireDst));
@@ -101,7 +104,7 @@ public class DeviceBrowserScene extends TileScene{
 
 	@Override
 	public void mouseDoubleClickEvent(QGraphicsSceneMouseEvent event){
-		this.updateTile.emit();
+		this.updateTile.emit(getTile(event));
 		super.mouseDoubleClickEvent(event);
 	}
 }

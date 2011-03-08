@@ -26,7 +26,7 @@ public abstract class PathElement {
 	/** Delay of the path element */
 	private float delay;
 	/** Type of the delay element */
-	private DelayType type;
+	private String type;
 	/** Primitive Site and Pin where the path elements resides */
 	private Pin pin;
 	
@@ -45,13 +45,13 @@ public abstract class PathElement {
 	/**
 	 * @return the type
 	 */
-	public DelayType getType() {
+	public String getType() {
 		return type;
 	}
 	/**
 	 * @param type the type to set
 	 */
-	public void setType(DelayType type) {
+	public void setType(String type) {
 		this.type = type;
 	}
 	/**

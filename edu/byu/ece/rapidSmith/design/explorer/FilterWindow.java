@@ -471,11 +471,11 @@ public class FilterWindow extends QWidget{
 			case DELAYS:
 				if(index.model().objectName().equals("Max")){
 					if(index.column() == 0){
-						Tile t = explorer.device.getPrimitiveSite(data.substring(0, data.indexOf('.')-1)).getTile();
+						Tile t = explorer.device.getPrimitiveSite(data.substring(0, data.indexOf('.'))).getTile();
 						switchToTileTab(t.getName());
 					}
 					else if(index.column() == 3){
-						if(((String)index.model().data(index.row(), 1)).startsWith("NET")){
+						if(((String)index.model().data(index.row(), 1)).startsWith("net")){
 							switchToNetTab(data);
 						}
 						else{
@@ -492,7 +492,7 @@ public class FilterWindow extends QWidget{
 						if(pe.getClass().equals(LogicPathElement.class)){
 							LogicPathElement lpe = (LogicPathElement) pe;
 							ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
-							items.add(createNewHyperlinkItem(lpe.getInstance().getPrimitiveSiteName() + "." + lpe.getPin().getName()));
+							items.add(createNewHyperlinkItem(lpe.getInstance().getPrimitiveSiteName() + "." + (lpe.getPin()==null ? "<null>":lpe.getPin().getName())));
 							items.add(new QStandardItem(lpe.getType().toString()));
 							items.add(new QStandardItem(String.format("%5.3f", lpe.getDelay())));
 							items.add(createNewHyperlinkItem(lpe.getInstance().getName()));
@@ -513,7 +513,7 @@ public class FilterWindow extends QWidget{
 			case OFFSETS:
 				if(index.model().objectName().equals("Max")){
 					if(index.column() == 0){
-						Tile t = explorer.device.getPrimitiveSite(data.substring(0, data.indexOf('.')-1)).getTile();
+						Tile t = explorer.device.getPrimitiveSite(data.substring(0, data.indexOf('.'))).getTile();
 						switchToTileTab(t.getName());
 					}
 					else if(index.column() == 3){
@@ -527,7 +527,7 @@ public class FilterWindow extends QWidget{
 				}
 				else if(index.model().objectName().equals("Min")){
 					if(index.column() == 0){
-						Tile t = explorer.device.getPrimitiveSite(data.substring(0, data.indexOf('.')-1)).getTile();
+						Tile t = explorer.device.getPrimitiveSite(data.substring(0, data.indexOf('.'))).getTile();
 						switchToTileTab(t.getName());
 					}
 					else if(index.column() == 3){
