@@ -164,6 +164,45 @@ public class FileTools {
 		return true;
 	}
 	
+	public static HashMap<String, ArrayList<String>> readStringMultiMap(Hessian2Input dis){
+		int count;
+		HashMap<String,ArrayList<String>> map = null;
+		try {
+			count = dis.readInt();
+			map = new HashMap<String, ArrayList<String>>(count);
+			for(int i = 0; i < count; i++){
+				String key = dis.readString();
+				int valueCount = dis.readInt();
+				ArrayList<String> value = new ArrayList<String>(valueCount);
+				for (int j = 0; j < valueCount; j++) {
+					value.add(dis.readString());
+				}
+				map.put(key, value);
+			}
+
+		} catch (IOException e) {
+			MessageGenerator.briefErrorAndExit("Error in readStringMultiMap()");
+		}
+		return map;
+	}
+	
+	public static boolean writeStringMultiMap(Hessian2Output dos, HashMap<String, ArrayList<String>> map){
+		try {
+			dos.writeInt(map.size());
+			for(String s : map.keySet()){
+				dos.writeString(s);
+				ArrayList<String> values = map.get(s);
+				dos.writeInt(values.size());
+				for(String str : values){
+					dos.writeString(str);
+				}
+			}
+		} catch (IOException e){
+			return false;
+		}
+		return true;
+	}
+	
 	public static boolean writeStringArray(Hessian2Output dos, String[] stringArray){
 		int size = 0;
 		for(String s : stringArray){
