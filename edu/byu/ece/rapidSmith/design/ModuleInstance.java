@@ -286,6 +286,9 @@ public class ModuleInstance{
 				if(newPip.getStartWire() == mCout && newPipTile.getType().equals(TileType.CLBLL)){
 					newPip.setStartWire(llCout);
 				}
+				else if(newPip.getStartWire() == llCout && newPipTile.getType().equals(TileType.CLBLM)){
+					newPip.setStartWire(mCout);
+				}
 			}
 		}
 		return true;
