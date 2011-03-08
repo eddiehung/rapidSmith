@@ -858,8 +858,7 @@ public class FileTools {
 	 * @return The full path to the wire enumerator file specified by partName.
 	 */
 	public static String getWireEnumeratorFileName(String partName){
-		return getPartFolderPath(partName) +
-				File.separator + wireEnumeratorFileName;
+		return getPartFolderPath(partName) + wireEnumeratorFileName;
 	}
 
 	/**
@@ -868,8 +867,7 @@ public class FileTools {
 	 * @return The full path to the wire enumerator file specified by familyType.
 	 */
 	public static String getWireEnumeratorFileName(FamilyType familyType){
-		return getPartFolderPath(familyType) +
-				File.separator + wireEnumeratorFileName;
+		return getPartFolderPath(familyType) + wireEnumeratorFileName;
 	}
 	
 	/**
@@ -893,7 +891,6 @@ public class FileTools {
 		familyType = PartNameTools.getBaseTypeFromFamilyType(familyType);
 		WireEnumerator we = WireEnumerator.getInstance(familyType);
 		String path = getWireEnumeratorFileName(familyType);
-		
 		if(we.getFamilyName() != null){
 			return we;
 		}
