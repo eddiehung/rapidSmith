@@ -66,8 +66,8 @@ public class Module implements Serializable{
 	private HashMap<String,Instance> instanceMap;
 	/** Nets of the module */
 	private HashMap<String,Net> netMap;
-	/** */
-	private HashMap<String, ArrayList<String>> externalPortMap;
+	/** This provides meta data for scenarios where inputs map directly to outputs in hard macros */
+	private HashMap<String, ArrayList<String>> externalPortMap = null;
 	
 	/**
 	 * Empty constructor, strings are null, everything else is initialized
@@ -528,6 +528,10 @@ public class Module implements Serializable{
 				//pointer back to this
 			}
 			
+			if(externalPortMap != null){
+				FileTools.writeStringMultiMap(hos, externalPortMap);
+			}
+			
 			hos.close();
 			fos.close();
 			
@@ -536,11 +540,6 @@ public class Module implements Serializable{
 		} catch(IOException e){
 			e.printStackTrace();
 		}
-		
-			
-		
-		
-		
 	}
 	
 	public boolean checkVersion(String fileName) throws IOException{
@@ -739,6 +738,10 @@ public class Module implements Serializable{
 				
 				// constructing HashMap
 				netMap.put(net.getName(), net);
+			}
+			
+			if(!his.isEnd()){
+				setExternalPortMap(FileTools.readStringMultiMap(his));
 			}
 			
 			his.close();
