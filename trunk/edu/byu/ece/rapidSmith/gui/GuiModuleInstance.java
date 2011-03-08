@@ -60,7 +60,7 @@ public class GuiModuleInstance extends QGraphicsPolygonItem {
 	private ArrayList<Integer> occupiedTilesY;
 	
 
-	public GuiModuleInstance(ModuleInstance modInst, TileScene scene){
+	public GuiModuleInstance(ModuleInstance modInst, TileScene scene, boolean movable){
 		this.moduleInstance = modInst;
 		this.scene = scene;
 		this.hmTiles = new ArrayList<HMTile>();
@@ -71,7 +71,7 @@ public class GuiModuleInstance extends QGraphicsPolygonItem {
 		this.occupiedTilesY = new ArrayList<Integer>();
 		init();
 
-		this.setFlag(GraphicsItemFlag.ItemIsMovable, true);
+		this.setFlag(GraphicsItemFlag.ItemIsMovable, movable);
 		this.setFlag(GraphicsItemFlag.ItemIsSelectable, true);
 		this.setFlag(GraphicsItemFlag.ItemSendsGeometryChanges, true);
 		this.moved.connect(this, "checkPlacement()");

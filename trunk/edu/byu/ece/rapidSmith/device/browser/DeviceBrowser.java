@@ -129,7 +129,7 @@ public class DeviceBrowser extends QMainWindow{
 
 		// Setup some signals for when the user interacts with the view
 		scene.updateStatus.connect(this, "updateStatus(String, Tile)");
-		scene.updateTile.connect(this, "updateTile()");
+		scene.updateTile.connect(this, "updateTile(Tile)");
 		
 		// Initialize the status bar at the bottom
 		statusLabel = new QLabel("Status Bar");
@@ -205,7 +205,8 @@ public class DeviceBrowser extends QMainWindow{
 	/**
 	 * This method gets called each time a user double clicks on a tile.
 	 */
-	protected void updateTile(){
+	protected void updateTile(Tile tile){
+		currTile = tile;
 		updatePrimitiveList();
 		updateWireList();
 	}
@@ -268,6 +269,7 @@ public class DeviceBrowser extends QMainWindow{
 	 */
 	protected void updateStatus(String text, Tile tile){
 		statusLabel.setText(text);
-		currTile = tile;
+		//currTile = tile;
+		//System.out.println("currTile=" + tile);
 	}
 }

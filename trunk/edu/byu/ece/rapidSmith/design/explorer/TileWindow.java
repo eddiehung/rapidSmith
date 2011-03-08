@@ -20,15 +20,25 @@
  */
 package edu.byu.ece.rapidSmith.design.explorer;
 
+import java.util.ArrayList;
+
 import com.trolltech.qt.core.QSize;
 import com.trolltech.qt.core.Qt.AspectRatioMode;
 import com.trolltech.qt.gui.QGridLayout;
 import com.trolltech.qt.gui.QWidget;
 
 import edu.byu.ece.rapidSmith.design.Design;
+import edu.byu.ece.rapidSmith.design.ModuleInstance;
+import edu.byu.ece.rapidSmith.design.Net;
+import edu.byu.ece.rapidSmith.design.PIP;
+import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.Tile;
+import edu.byu.ece.rapidSmith.gui.GuiModuleInstance;
 import edu.byu.ece.rapidSmith.gui.TileScene;
 import edu.byu.ece.rapidSmith.gui.TileView;
+import edu.byu.ece.rapidSmith.timing.LogicPathElement;
+import edu.byu.ece.rapidSmith.timing.PathDelay;
+import edu.byu.ece.rapidSmith.timing.PathElement;
 
 /**
  * This class is used for the tile window tab of the design explorer.
@@ -66,6 +76,11 @@ public class TileWindow extends QWidget{
 		this.design = design;
 		scene.setDesign(this.design);
 		scene.initializeScene(true, true);
+		
+		// Create hard macro blocks
+		for(ModuleInstance mi : design.getModuleInstances()){
+			scene.addItem(new GuiModuleInstance(mi, scene, false));
+		}
 	}
 	
 	/**
@@ -83,5 +98,35 @@ public class TileWindow extends QWidget{
 		view.zoomIn(); view.zoomIn();		
 		scene.updateCurrXY(scene.getDrawnTileX(t), scene.getDrawnTileY(t));
 		scene.updateCursor();
+	}
+	
+	public void drawCriticalPaths(ArrayList<PathDelay> pathDelays){
+		for(PathDelay pd : pathDelays){
+			for(PathElement pe : pd.getMaxDataPath()){
+				if(pe.getType().equals("net")){
+					if(pe.getClass().equals(LogicPathElement.class)){
+						LogicPathElement lpe = (LogicPathElement) pe;
+						Net net = design.getNet(lpe.getInstance().getName());
+						ArrayList<Connection> conns = getAllConnections(net);
+					}
+				}
+			}
+		}
+	}
+	
+	public ArrayList<Connection> getAllConnections(Net net){
+		ArrayList<Connection> conns = new ArrayList<Connection>();
+		int extSourcePin = design.getDevice().getPrimitiveExternalPin(net.getSource());
+		PIP src = null;
+		
+		for(PIP p : net.getPIPs()){
+			if(p.getStartWire() == extSourcePin){
+				src = p;
+			}
+			conns.add(new Connection(p));
+		}
+		
+		
+		return conns;
 	}
 }

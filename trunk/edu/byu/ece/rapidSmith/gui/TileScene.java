@@ -28,7 +28,6 @@ import com.trolltech.qt.core.QPointF;
 import com.trolltech.qt.core.QRectF;
 import com.trolltech.qt.core.QSize;
 import com.trolltech.qt.core.QSizeF;
-import com.trolltech.qt.core.Qt;
 import com.trolltech.qt.core.Qt.PenStyle;
 import com.trolltech.qt.gui.QBrush;
 import com.trolltech.qt.gui.QColor;
@@ -133,6 +132,7 @@ public class TileScene extends QGraphicsScene{
 	 * @param hideTiles
 	 * @param drawPrimitives
 	 */
+	@SuppressWarnings("unchecked")
 	public void initializeScene(boolean hideTiles, boolean drawPrimitives){
 		this.clear();
 		prevX = 0;
@@ -157,6 +157,14 @@ public class TileScene extends QGraphicsScene{
 		} 
 		else{
 			setSceneRect(new QRectF(0, 0, tileSize + 1, tileSize + 1));
+		}
+		//this array is used to determine how many hard macros are
+		// attempting to use each tile.
+		tileOccupantCount = new HashSet[rows][cols];
+		for(int y=0;y<rows;y++){
+			for(int x=0;x<cols;x++){
+				tileOccupantCount[y][x] = new HashSet<GuiModuleInstance>();
+			}
 		}
 	}
 	
@@ -278,10 +286,19 @@ public class TileScene extends QGraphicsScene{
 	public Tile getTile(double x, double y){
 		currX = (int) Math.floor(x / tileSize);
 		currY = (int) Math.floor(y / tileSize);
-		if (currX >= 0 && currY >= 0 && currX < cols && currY < rows && (currX != prevX || currY != prevY)){
+		if (currX >= 0 && currY >= 0 && currX < cols && currY < rows){// && (currX != prevX || currY != prevY)){
 			return drawnTiles[currY][currX];
 		}
 		return null;
+	}
+	
+	/**
+	 * Gets the tile based on the mouse position in the event.
+	 * @param event The recent mouse event
+	 * @return The tile under which the mouse event occurred.
+	 */
+	public Tile getTile(QGraphicsSceneMouseEvent event){
+		return getTile(event.scenePos().x(), event.scenePos().y());
 	}
 	
 	@Override
@@ -301,16 +318,15 @@ public class TileScene extends QGraphicsScene{
 	}
 	
 	@Override
-	public void mousePressEvent(QGraphicsSceneMouseEvent event){
-		if(event.button().equals(Qt.MouseButton.LeftButton)){
-			QPointF mousePos = event.scenePos();
-			currX = (int) Math.floor((mousePos.x()) / tileSize);
-			currY = (int) Math.floor((mousePos.y()) / tileSize);
+	public void mouseDoubleClickEvent(QGraphicsSceneMouseEvent event){
+		QPointF mousePos = event.scenePos();
+		currX = (int) Math.floor((mousePos.x()) / tileSize);
+		currY = (int) Math.floor((mousePos.y()) / tileSize);
 
-			if (currX >= 0 && currY >= 0 && currX < cols && currY < rows){
-				updateCursor();
-			}			
-		}
+		if (currX >= 0 && currY >= 0 && currX < cols && currY < rows){
+			updateCursor();
+		}			
+	
 		super.mousePressEvent(event);
 	}
 	
@@ -320,6 +336,7 @@ public class TileScene extends QGraphicsScene{
 		}
 		highlit = addRect(currX * tileSize, currY * tileSize, tileSize - 2,
 				tileSize - 2, cursorPen);
+		highlit.setZValue(10);
 	}
 	
 	public void updateCurrXY(int currX, int currY){
