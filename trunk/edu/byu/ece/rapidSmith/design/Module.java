@@ -66,6 +66,8 @@ public class Module implements Serializable{
 	private HashMap<String,Instance> instanceMap;
 	/** Nets of the module */
 	private HashMap<String,Net> netMap;
+	/** */
+	private HashMap<String, ArrayList<String>> externalPortMap;
 	
 	/**
 	 * Empty constructor, strings are null, everything else is initialized
@@ -267,6 +269,20 @@ public class Module implements Serializable{
 		this.instanceMap.put(inst.getName(), inst);
 	}
 	
+	/**
+	 * @param externalPortMap the externalPortMap to set
+	 */
+	public void setExternalPortMap(HashMap<String, ArrayList<String>> externalPortMap) {
+		this.externalPortMap = externalPortMap;
+	}
+
+	/**
+	 * @return the externalPortMap
+	 */
+	public HashMap<String, ArrayList<String>> getExternalPortMap() {
+		return externalPortMap;
+	}
+
 	/**
 	 * Sets the design in all the module's instances to null
 	 */
