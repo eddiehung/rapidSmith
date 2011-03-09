@@ -26,7 +26,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import edu.byu.ece.rapidSmith.design.Design;
 import edu.byu.ece.rapidSmith.design.Instance;
@@ -40,7 +39,7 @@ public class TraceReportParser{
 	public static final String OFFSET = "Offset:";
 	
 	private BufferedReader br;
-	private Design design;
+	private Design design = null;
 	
 	private String line;
 
@@ -68,9 +67,13 @@ public class TraceReportParser{
 	}
 	
 	public void parseTWR(String twrFileName, Design design){
+		this.design = design;
+		parseTWR(twrFileName);
+	}
+	
+	public void parseTWR(String twrFileName){
 		pathDelays = new ArrayList<PathDelay>();
 		pathOffsets = new ArrayList<PathOffset>();
-		this.design = design; 
 		
 		try{
 			br = new BufferedReader(new FileReader(twrFileName));
@@ -85,10 +88,10 @@ public class TraceReportParser{
 			}
 		}
 		catch(FileNotFoundException e){
-			MessageGenerator.briefErrorAndExit("ERROR: Could not find file: " + twrFileName);
+			MessageGenerator.briefErrorAndExit("TraceReportParser ERROR: Could not find file: " + twrFileName);
 		} 
 		catch(IOException e){
-			MessageGenerator.briefErrorAndExit("ERROR: Could not read from file: " + twrFileName);
+			MessageGenerator.briefErrorAndExit("TraceReportParser ERROR: Could not read from file: " + twrFileName);
 		}
 	}
 	
@@ -121,7 +124,7 @@ public class TraceReportParser{
 
 		// Destination Clock:    clk_net rising
 		parts = getNextLineTokens();
-		curr.setDestinationClock(design.getNet(parts[3]));
+		if(design != null) curr.setDestinationClock(design.getNet(parts[3]));
 
 		// Data Path Delay:      3.437ns (Levels of Logic = 2)
 		parts = getNextLineTokens();
@@ -170,11 +173,11 @@ public class TraceReportParser{
 		
 		// Source Clock:         clk_net rising
 		parts = getNextLineTokens();
-		curr.setSourceClock(design.getNet(parts[3]));
+		if(design != null) curr.setSourceClock(design.getNet(parts[3]));
 		
 		// Destination Clock:    clk_net rising
 		parts = getNextLineTokens();
-		curr.setDestinationClock(design.getNet(parts[3]));
+		if(design != null) curr.setDestinationClock(design.getNet(parts[3]));
 		
 		// Clock Uncertainty:    0.000ns
 		parts = getNextLineTokens();
@@ -209,20 +212,22 @@ public class TraceReportParser{
 					}
 					
 					currElement.setDelay(Float.parseFloat(parts[4+offset]));
-					
-					Net net = design.getNet(parts[5+offset]);
-					if(net == null){
-						MessageGenerator.briefErrorAndExit("This net \"" + parts[4+offset] +
-						"\" is null.");
-					}
-					((RoutingPathElement)currElement).setNet(net);
-					
-					for(Pin p : net.getPins()){
-						if(p.getName().equals(pinName)){
-							currElement.setPin(p);
-							break;
+					if(design != null){
+						Net net = design.getNet(parts[5+offset]);
+						if(net == null){
+							MessageGenerator.briefErrorAndExit("This net \"" + parts[4+offset] +
+							"\" is null.");
+						}
+						((RoutingPathElement)currElement).setNet(net);
+
+						for(Pin p : net.getPins()){
+							if(p.getName().equals(pinName)){
+								currElement.setPin(p);
+								break;
+							}
 						}
 					}
+					
 				}
 				else{
 					currElement = new LogicPathElement();
@@ -236,19 +241,21 @@ public class TraceReportParser{
 					}
 					currElement.setType(parts[2]);
 					//System.out.println("line="+line+", parts=" + parts.length);
-					Instance instance = design.getInstance(parts[4]);
-					((LogicPathElement)currElement).setInstance(instance);
-					if(instance == null){
-						MessageGenerator.briefErrorAndExit("This instance \"" + parts[4] +
-						"\" is null.");
+					if(design != null){
+						Instance instance = design.getInstance(parts[4]);
+						((LogicPathElement)currElement).setInstance(instance);
+						if(instance == null){
+							MessageGenerator.briefErrorAndExit("This instance \"" + parts[4] +
+							"\" is null.");
+						}
+						Pin p = instance.getPin(pinName);
+						if(p == null){
+							//System.out.println("Problem Getting Pin: " + parts[1]);
+							//System.out.println("Line: " + line);
+							//System.exit(1);
+						}
+						currElement.setPin(p);						
 					}
-					Pin p = instance.getPin(pinName);
-					if(p == null){
-						System.out.println("Problem Getting Pin: " + parts[1]);
-						System.out.println("Line: " + line);
-						//System.exit(1);
-					}
-					currElement.setPin(p);
 					currElement.setDelay(Float.parseFloat(parts[3]));
 				}
 				

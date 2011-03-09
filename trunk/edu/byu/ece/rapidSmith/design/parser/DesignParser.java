@@ -125,7 +125,8 @@ public class DesignParser{
 			reader = new BufferedInputStream(new FileInputStream(fileName));
 		}
 		catch(FileNotFoundException e){
-			MessageGenerator.briefErrorAndExit("ERROR: Could not find XDL file: " + fileName);
+			e.printStackTrace();
+			MessageGenerator.briefErrorAndExit("XDL Design Parser ERROR: Could not find XDL file: " + fileName);
 		}
 	}	
 	
@@ -325,7 +326,7 @@ public class DesignParser{
 			case INSTANCE_TYPE:
 				  PrimitiveType t = Utils.createPrimitiveType(token);
 				  if(t == null){
-				    MessageGenerator.briefErrorAndExit("Failed parsing Instance type: \"" + token + "\"");
+				    MessageGenerator.briefErrorAndExit("XDL Design Parser Error in file: "+ fileName +", Failed parsing Instance type: \"" + token + "\"");
 				  }
 				  currInstance.setType(t);
 				  state = ParserState.INSTANCE_PLACED;
@@ -338,7 +339,7 @@ public class DesignParser{
 			case INSTANCE_TILE:
 				Tile tile = dev.getTile(token);
 				if(tile == null){
-					MessageGenerator.briefErrorAndExit("Invalid tile " +
+					MessageGenerator.briefErrorAndExit("XDL Design Parser Error in file: "+ fileName +", Invalid tile " +
 							token + " on line " + lineNumber);
 				}
 				state = ParserState.INSTANCE_SITE;
@@ -346,7 +347,7 @@ public class DesignParser{
 			case INSTANCE_SITE:
 				PrimitiveSite site = dev.getPrimitiveSite(token);
 				if(site == null){
-					MessageGenerator.briefErrorAndExit("Invalid primitive site " +
+					MessageGenerator.briefErrorAndExit("XDL Design Parser Error in file: "+ fileName +", Invalid primitive site " +
 							token + " on line " + lineNumber);
 				}
 				currInstance.place(dev.getPrimitiveSite(token));
@@ -426,7 +427,7 @@ public class DesignParser{
 					currPin = new Pin();
 					currPin.setIsOutputPin(true);
 					if(currNet.getSource() != null){
-						MessageGenerator.briefErrorAndExit("ERROR: The net " +
+						MessageGenerator.briefErrorAndExit("XDL Design Parser Error in file: "+ fileName +", The net " +
 							currNet.getName() + " has two or more outpins (line " +
 							lineNumber + ")");
 					}
@@ -455,7 +456,7 @@ public class DesignParser{
 					currPin = new Pin();
 					currPin.setIsOutputPin(true);
 					if(currNet.getSource() != null){
-						MessageGenerator.briefErrorAndExit("ERROR: The net " +
+						MessageGenerator.briefErrorAndExit("XDL Design Parser Error in file: "+ fileName +", The net " +
 							currNet.getName() + " has two or more outpins (line " +
 							lineNumber + ")");
 					}
@@ -517,7 +518,7 @@ public class DesignParser{
 			case PIP_WIRE1:
 				int wire1 = we.getWireEnum(token);
 				if(wire1 == -1) {
-					MessageGenerator.briefErrorAndExit("ERROR: Invalid wire: " +
+					MessageGenerator.briefErrorAndExit("XDL Design Parser Error in file: "+ fileName +", Invalid wire: " +
 							token + " found on line " + lineNumber);
 				}
 				currPIP.setEndWire(wire1);
@@ -565,7 +566,7 @@ public class DesignParser{
 				break;
 			case END_MODULE_NAME:
 				if(!currModule.getName().equals(token)){
-					MessageGenerator.briefErrorAndExit("Parsing Error: Mismatched module names: " +
+					MessageGenerator.briefErrorAndExit("XDL Design Parser Error in file: "+ fileName +", Mismatched module names: " +
 						currModule.getName() + " and " + token + " at line: " + lineNumber);
 				}
 				state = ParserState.END_MODULE;
