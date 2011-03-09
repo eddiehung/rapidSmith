@@ -27,6 +27,7 @@ import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.Tile;
 import edu.byu.ece.rapidSmith.device.TileType;
+import edu.byu.ece.rapidSmith.util.MessageGenerator;
 
 /**
  * There is no direct representation of a module instance in XDL. Each member of
@@ -280,7 +281,12 @@ public class ModuleInstance{
 			Net templateNet = net.getModuleTemplateNet();
 			for(PIP pip : templateNet.getPIPs()){
 				Tile templatePipTile = pip.getTile();
-				Tile newPipTile = module.getCorrespondingTile(templatePipTile, newAnchorSite.getTile(), dev);				
+				Tile newPipTile = module.getCorrespondingTile(templatePipTile, newAnchorSite.getTile(), dev);
+				if(newPipTile == null){
+					unplace();
+					MessageGenerator.briefError("Warning: Unable to return module instance "+ name +" back to original placement.");
+					return false;
+				}
 				PIP newPip = new PIP(newPipTile, pip.getStartWire(), pip.getEndWire());
 				net.addPIP(newPip);
 				if(newPip.getStartWire() == mCout && newPipTile.getType().equals(TileType.CLBLL)){
