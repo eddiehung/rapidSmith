@@ -163,6 +163,28 @@ public class Instance implements Serializable{
 	}
 	
 	/**
+	 * Tests if the attribute with the physical name given has the value
+	 * given.
+	 * @param physicalName The attribute to test.
+	 * @param value The value to test.
+	 * @return True if the value of the attribute matches, false otherwise.
+	 */
+	public boolean testAttributeValue(String physicalName, String value){
+		Attribute attr = getAttribute(physicalName); 
+		return attr==null ? false : attr.getValue().equals(value);
+	}
+	
+	/**
+	 * Gets the value of the attribute with the associated physical name.
+	 * @param physicalName Physical name of the attribute to get the value from.
+	 * @return The value of the attribute or null if none exist.
+	 */
+	public String getAttributeValue(String physicalName){
+		Attribute attr = getAttribute(physicalName); 
+		return attr==null ? null : attr.getValue();
+	}
+	
+	/**
 	 * Gets the name of the instance of the module this Instance is a member of.
 	 * @return The name of the instance of the module or null if none exists.
 	 */
