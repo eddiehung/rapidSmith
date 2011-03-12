@@ -33,6 +33,11 @@ import java.util.ArrayList;
  */
 public class RunXilinxTools {
 
+	public static String getBinPathToLegacyXilinxTools(){
+		// TODO Make this work on more than just my machine
+		return "C:\\Xilinx\\10.1\\ISE\\bin\\nt\\";
+	}
+	
 	/**
 	 * Generates the brief version of the XDLRC file specified by partName.
 	 * @param partName The part name of the Xilinx device for which to generate the XDLRC file.
@@ -71,7 +76,7 @@ public class RunXilinxTools {
 		String command = "xdl -report " + commandParameters + PartNameTools.removeSpeedGrade(partName) + " " + xdlrcFileName;
 		
 		if(PartNameTools.isFamilyTypeLegacy(PartNameTools.getFamilyTypeFromPart(partName))){
-			command = "C:\\Xilinx\\10.1\\ISE\\bin\\nt\\" + command;
+			command = getBinPathToLegacyXilinxTools() + command;
 		}
 		
 		// Check to see if the file already exists
@@ -157,6 +162,8 @@ public class RunXilinxTools {
 	 * @return All installed part names for the specified families, or null if none were specified.
 	 */
 	public static ArrayList<String> getPartNames(String[] familyNames, boolean includeSpeedGrades){
+		String executableName = "partgen -arch ";
+		String pathToPartgen = "";
 		if(familyNames == null) return null;
 		String line;
 		String lastPartName = null;
@@ -167,8 +174,13 @@ public class RunXilinxTools {
 		ArrayList<String> speedGrades = new ArrayList<String>();
 		try{
 			for(int i=0; i < familyNames.length; i++){
-				// Run PartGen for each family
-				p = Runtime.getRuntime().exec("partgen -arch " + familyNames[i]);
+				// Run partgen for each family
+				if(PartNameTools.isFamilyTypeLegacy(FamilyType.valueOf(familyNames[i])))
+					pathToPartgen = getBinPathToLegacyXilinxTools();
+				else{
+					pathToPartgen = "";
+				}
+				p = Runtime.getRuntime().exec(pathToPartgen + executableName + familyNames[i]);
 				input = new BufferedReader(new InputStreamReader(p.getInputStream()));
 				tokens = null;
 				lastPartName = null;
