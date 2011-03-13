@@ -28,6 +28,7 @@ import com.trolltech.qt.gui.QGraphicsSceneMouseEvent;
 import com.trolltech.qt.gui.QPen;
 
 import edu.byu.ece.rapidSmith.device.Tile;
+import edu.byu.ece.rapidSmith.gui.TileScene;
 
 /**
  * This class is used with the DeviceBrowser to draw wire connections
@@ -41,7 +42,7 @@ public class WireConnectionLine extends QGraphicsLineItem{
 	/** Keeps a yellow pen for drawing the wire connections */
 	private static QPen unHighlighted = new QPen(QColor.yellow, 0.25, PenStyle.SolidLine);
 	/** The current DeviceBrowser scene */
-	private DeviceBrowserScene scene;
+	private TileScene scene;
 	/** The current tile */
 	private Tile tile;
 	/** The current wire */
@@ -58,7 +59,7 @@ public class WireConnectionLine extends QGraphicsLineItem{
 	 * @param wire The wire.
 	 */
 	public WireConnectionLine(double x1, double y1, double x2, double y2, 
-			DeviceBrowserScene scene, Tile tile, int wire){
+			TileScene scene, Tile tile, int wire){
 		super(x1, y1, x2, y2);
 		this.scene = scene;
 		this.tile = tile;
@@ -78,6 +79,22 @@ public class WireConnectionLine extends QGraphicsLineItem{
 	
 	@Override
 	public void mousePressEvent(QGraphicsSceneMouseEvent event){
-		scene.drawConnectingWires(tile, wire);
+		if(scene.getClass().equals(DeviceBrowserScene.class)){
+			((DeviceBrowserScene)scene).drawConnectingWires(tile, wire);			
+		}
+	}
+
+	/**
+	 * @return the scene
+	 */
+	public TileScene getScene() {
+		return scene;
+	}
+
+	/**
+	 * @param scene the scene to set
+	 */
+	public void setScene(TileScene scene) {
+		this.scene = scene;
 	}
 }

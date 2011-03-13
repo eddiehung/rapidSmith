@@ -23,7 +23,7 @@ package edu.byu.ece.rapidSmith.device.helper;
 import java.io.Serializable;
 import java.util.Arrays;
 
-import edu.byu.ece.rapidSmith.device.Wire;
+import edu.byu.ece.rapidSmith.device.WireConnection;
 
 /**
  * A helper class to help remove duplicate objects and reduce memory usage and file
@@ -34,13 +34,13 @@ public class WireArray implements Serializable {
 
 	private static final long serialVersionUID = 222495247665714923L;
 	/** An array of wires */
-	public Wire[] array;
+	public WireConnection[] array;
 
 	/**
 	 * Constructor
 	 * @param array The Array of wires that correspond to this object.
 	 */
-	public WireArray(Wire[] array){
+	public WireArray(WireConnection[] array){
 		this.array = array;
 	}
 	

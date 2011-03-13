@@ -42,7 +42,7 @@ import edu.byu.ece.rapidSmith.device.helper.TileSinks;
 import edu.byu.ece.rapidSmith.device.helper.TileSources;
 import edu.byu.ece.rapidSmith.device.helper.TileWires;
 import edu.byu.ece.rapidSmith.device.helper.WireArray;
-import edu.byu.ece.rapidSmith.device.helper.WireConnection;
+import edu.byu.ece.rapidSmith.device.helper.WireArrayConnection;
 import edu.byu.ece.rapidSmith.router.Node;
 import edu.byu.ece.rapidSmith.util.FamilyType;
 import edu.byu.ece.rapidSmith.util.FileTools;
@@ -84,7 +84,7 @@ public class Device implements Serializable{
 	/** Keeps track of all the primitive instances on the device */
 	protected HashMap<String,PrimitiveSite> primitiveSites;
 	/** Keeps track of which Wire objects have a corresponding PIPRouteThrough */
-	protected HashMap<Wire,PIPRouteThrough> routeThroughMap;
+	protected HashMap<WireConnection,PIPRouteThrough> routeThroughMap;
 	/** A Map between a tile name (string) and its actual reference */
 	protected HashMap<String,Tile> tileMap;
 
@@ -102,11 +102,11 @@ public class Device implements Serializable{
 	// Object Pools - To remove duplicate objects, null afterwards
 	//========================================================================//
 	/** Keeps track of each unique Wire object in the device */
-	protected HashPool<Wire> wirePool;
+	protected HashPool<WireConnection> wirePool;
 	/** Keeps track of each unique Wire[] object in the device */
 	protected HashPool<WireArray> wireArrayPool;
 	/** Keeps track of each unique WireConnection object in the device */
-	protected HashPool<WireConnection> wireConnectionPool;
+	protected HashPool<WireArrayConnection> wireConnectionPool;
 	/** Keeps track of all PIPRouteThrough objects */
 	protected HashPool<PIPRouteThrough> routeThroughPool;
 	/** Keeps Track of all unique Sinks that exist in Tiles */
@@ -125,14 +125,14 @@ public class Device implements Serializable{
 		// Class Members
 		partName = null;
 		primitiveSites = new HashMap<String,PrimitiveSite>();
-		routeThroughMap = new HashMap<Wire,PIPRouteThrough>();
+		routeThroughMap = new HashMap<WireConnection,PIPRouteThrough>();
 		switchMatrixTypes = null;
 		primitiveSiteIndex = null;
 		
 		// Object Pools
-		wirePool = new HashPool<Wire>();
+		wirePool = new HashPool<WireConnection>();
 		wireArrayPool = new HashPool<WireArray>();
-		wireConnectionPool = new HashPool<WireConnection>();
+		wireConnectionPool = new HashPool<WireArrayConnection>();
 		routeThroughPool = new HashPool<PIPRouteThrough>();
 		tileSinksPool = new HashPool<TileSinks>();
 		tileSourcesPool = new HashPool<TileSources>();
@@ -175,7 +175,7 @@ public class Device implements Serializable{
 	 * @param w The wire to test.
 	 * @return True if the wire is a routeThrough, false otherwise.
 	 */
-	public boolean isRouteThrough(Wire w){
+	public boolean isRouteThrough(WireConnection w){
 		return routeThroughMap.get(w) != null;
 	}
 	
@@ -202,11 +202,35 @@ public class Device implements Serializable{
 	}
 	
 	/**
+	 * This will creating a routing node from the pin given.
+	 * @param pin The pin to create the routing node from.
+	 * @return A new node populated with the pin's tile and wire. The parent 
+	 * field is null and level is zero.
+	 */
+	public Node getNodeFromPin(Pin pin){
+		Integer wire = getPrimitiveExternalPin(pin);
+		if(wire == null) return null;
+		return new Node(pin.getTile(), wire, null, 0);
+	}
+	
+	/**
+	 * This will creating a routing node from the pin given.
+	 * @param pin The pin to create the routing node from.
+	 * @return A new node populated with the pin's tile and wire. The parent 
+	 * field is null and level is zero.
+	 */
+	public Node getNodeFromPin(Pin pin, Node parent, int level){
+		Integer wire = getPrimitiveExternalPin(pin);
+		if(wire == null) return null;
+		return new Node(pin.getTile(), wire, parent, level);
+	}
+	
+	/**
 	 * Gets the PIPRouteThrough object for a wire.
 	 * @param w The wire which has a corresponding PIPRouteThrough
 	 * @return The PIPRouteThrough or null if it does not exist.
 	 */
-	public PIPRouteThrough getRouteThrough(Wire w){
+	public PIPRouteThrough getRouteThrough(WireConnection w){
 		return routeThroughMap.get(w);
 	}
 	
@@ -426,7 +450,7 @@ public class Device implements Serializable{
 	 * Gets and returns the PIP route through map for this device.
 	 * @return The mappings between wires and PIP route throughs.
 	 */
-	public HashMap<Wire, PIPRouteThrough> getRouteThroughMap(){
+	public HashMap<WireConnection, PIPRouteThrough> getRouteThroughMap(){
 		return routeThroughMap;
 	}
 
@@ -681,26 +705,26 @@ public class Device implements Serializable{
 								debug = false;
 							}
 							// There should only be one wire that leaves the tile
-							for (Wire w : tile.getWires().get(wire)) {
+							for (WireConnection w : tile.getWires().get(wire)) {
 								if(w.getColumnOffset() != 0 || w.getRowOffset() != 0){
 									
 									Stack<Tile> tileStack = new Stack<Tile>();
-									Stack<Wire> wireStack = new Stack<Wire>();
+									Stack<WireConnection> wireStack = new Stack<WireConnection>();
 									HashSet<Node> visited = new HashSet<Node>();
 									tileStack.push(tile);
-									wireStack.push(new Wire(wire,0,0,true));
+									wireStack.push(new WireConnection(wire,0,0,true));
 									if(debug) System.out.println("PUSH: " + tile + " " + we.getWireName(wire));
 									watchDog = 0;
 									while (!tileStack.isEmpty() && watchDog < 100) {
 										watchDog++;
 										Tile t1 = tileStack.pop();
-										Wire w1 = wireStack.pop();
+										WireConnection w1 = wireStack.pop();
 										if(debug) System.out.println("  POP: " + t1 + " " + we.getWireName(w1.getWire()));
-										Wire[] connections = t1.getWires().get(w1.getWire());
+										WireConnection[] connections = t1.getWires().get(w1.getWire());
 										if(connections == null || visited.contains(new Node(t1,w1.getWire(),null,0))){
 											continue;
 										}
-										for (Wire wire2 : connections) {
+										for (WireConnection wire2 : connections) {
 											if(setOfExternalPrimitivePins.contains(wire2.getWire())){
 												SinkPin found = wire2.getTile(this, t1).getSinks().get(wire2.getWire());
 												int xOffset = (tile.getColumn() - wire2.getTile(this, t1).getColumn());
@@ -798,8 +822,8 @@ public class Device implements Serializable{
 			for(int j=0; j < getColumns(); j++){
 				if(tiles[i][j].getWires() == null) continue;
 				for(Integer wire : tiles[i][j].getWires().keySet()){
-					WireConnection tmp = 
-						new WireConnection(wire,wireArrayPool.getEnumerationValue(new WireArray(tiles[i][j].getWires().get(wire))));
+					WireArrayConnection tmp = 
+						new WireArrayConnection(wire,wireArrayPool.getEnumerationValue(new WireArray(tiles[i][j].getWires().get(wire))));
 					wireConnectionPool.add(tmp);
 				}
 			}
@@ -885,7 +909,7 @@ public class Device implements Serializable{
 			/* - wirePool -                                          */
 			//=======================================================//
 			hos.writeInt(wirePool.getEnumerations().size());
-			for(Wire w : wirePool.getEnumerations()){
+			for(WireConnection w : wirePool.getEnumerations()){
 				int mask = w.isPIP() ? 0x80000000 : 0x0;
 				hos.writeInt(mask | (w.getWire()));				
 				hos.writeInt((w.getRowOffset() << 16) | (w.getColumnOffset() & 0xFFFF));
@@ -902,7 +926,7 @@ public class Device implements Serializable{
 					System.out.println("Bad Assumption");
 					System.exit(1);
 				}*/
-				for(Wire w : wireArray.array){
+				for(WireConnection w : wireArray.array){
 					hos.writeInt(wirePool.getEnumerationValue(w));
 				}
 			}
@@ -912,7 +936,7 @@ public class Device implements Serializable{
 			/* - wireConnectionPool -                                */
 			//=======================================================//
 			hos.writeInt(wireConnectionPool.getEnumerations().size());
-			for(WireConnection wc : wireConnectionPool.getEnumerations()){
+			for(WireArrayConnection wc : wireConnectionPool.getEnumerations()){
 				hos.writeInt(wc.wire);
 				hos.writeInt(wc.wireArrayEnum);
 			}
@@ -1021,7 +1045,7 @@ public class Device implements Serializable{
 			/* public HashMap<Wire,PIPRouteThrough> routeThroughMap; */
 			//=======================================================//
 			hos.writeInt(routeThroughMap.size());
-			for(Wire w : routeThroughMap.keySet()){
+			for(WireConnection w : routeThroughMap.keySet()){
 				PIPRouteThrough p = routeThroughMap.get(w);
 				hos.writeInt(p.getType().ordinal());
 				hos.writeInt(p.getInWire());
@@ -1079,21 +1103,21 @@ public class Device implements Serializable{
 			//=======================================================//
 			/* - wirePool -                                          */
 			//=======================================================//
-			Wire[] wires = new Wire[his.readInt()];
+			WireConnection[] wires = new WireConnection[his.readInt()];
 			for(int i=0; i < wires.length; i++){
 				int part1 = his.readInt();
 				int part2 = his.readInt();
-				wires[i] = new Wire(0x7FFFFFFF&part1,part2 >> 16,(part2 << 16) >> 16,(part1 & 0x80000000) == 0x80000000);
+				wires[i] = new WireConnection(0x7FFFFFFF&part1,part2 >> 16,(part2 << 16) >> 16,(part1 & 0x80000000) == 0x80000000);
 			}
 
 			//=======================================================//
 			/* - wireArrayPool -                                     */
 			//=======================================================//
 			size = his.readInt();
-			ArrayList<Wire[]> wireArrays = new ArrayList<Wire[]>(size); 
+			ArrayList<WireConnection[]> wireArrays = new ArrayList<WireConnection[]>(size); 
 			for(int i=0; i < size; i++){
 				int len = his.readInt();
-				Wire[] tmp = new Wire[len];
+				WireConnection[] tmp = new WireConnection[len];
 				for(int j=0; j < len; j++){
 					tmp[j] = wires[his.readInt()];
 				}
@@ -1104,9 +1128,9 @@ public class Device implements Serializable{
 			/* - wireConnectionPool -                                */
 			//=======================================================//
 			size = his.readInt();
-			ArrayList<WireConnection> wireConnections = new ArrayList<WireConnection>();
+			ArrayList<WireArrayConnection> wireConnections = new ArrayList<WireArrayConnection>();
 			for(int i=0; i < size; i++){
-				wireConnections.add(new WireConnection(his.readInt(),his.readInt()));
+				wireConnections.add(new WireArrayConnection(his.readInt(),his.readInt()));
 			}
 			
 			//=======================================================//
@@ -1136,7 +1160,7 @@ public class Device implements Serializable{
 			/* - tileWiresPool -                                     */
 			//=======================================================//
 			size = his.readInt();
-			ArrayList<HashMap<Integer,Wire[]>> wireMaps = new ArrayList<HashMap<Integer,Wire[]>>();
+			ArrayList<HashMap<Integer,WireConnection[]>> wireMaps = new ArrayList<HashMap<Integer,WireConnection[]>>();
 			wireMaps.ensureCapacity(size);
 			for(int i=0; i < size; i++){
 				wireMaps.add(FileTools.readWireHashMap(his,wireArrays,wireConnections));
@@ -1253,10 +1277,10 @@ public class Device implements Serializable{
 			BufferedWriter bw = new BufferedWriter(new FileWriter(fileName));
 			bw.write(this.partName + nl);
 			
-			Wire[] wires = new Wire[routeThroughMap.keySet().size()];
+			WireConnection[] wires = new WireConnection[routeThroughMap.keySet().size()];
 			wires = routeThroughMap.keySet().toArray(wires);
 			Arrays.sort(wires);
-			for(Wire w : wires){
+			for(WireConnection w : wires){
 				bw.write("RT: " + w.toString(we) + " " + getRouteThrough(w).toString(we) + nl);
 			}
 			
@@ -1308,16 +1332,16 @@ public class Device implements Serializable{
 					}
 					
 					// Wires
-					HashMap<Integer,Wire[]> tmp2 = t.getWires();
+					HashMap<Integer,WireConnection[]> tmp2 = t.getWires();
 					if(tmp2 != null){
 						Integer[] wireKeys = new Integer[tmp2.size()];
 						wireKeys = tmp2.keySet().toArray(wireKeys);
 						Arrays.sort(wireKeys);
 						for(Integer key : wireKeys){
 							bw.write("  Wire: " + we.getWireName(key) + nl);
-							Wire[] connections = tmp2.get(key);
+							WireConnection[] connections = tmp2.get(key);
 							Arrays.sort(connections);
-							for(Wire w : connections){
+							for(WireConnection w : connections){
 								bw.write("    -> " + w.toString(we) + nl);
 							}
 						}

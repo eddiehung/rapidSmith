@@ -256,12 +256,12 @@ public class DeviceFilesCreator{
 	 * @param toBeRemoved The wire to be removed.
 	 * @return A new array without the wire toBeRemoved.
 	 */
-	private static Wire[] removeWire(Wire[] currentArray, Wire toBeRemoved){
+	private static WireConnection[] removeWire(WireConnection[] currentArray, WireConnection toBeRemoved){
 		if(currentArray == null || currentArray.length == 0){
-			return new Wire[0];
+			return new WireConnection[0];
 		}
 		if(currentArray.length == 1 && currentArray[0].equals(toBeRemoved)){
-			return new Wire[0];
+			return new WireConnection[0];
 		}
 		int idx = -1;
 		for(int i = 0; i < currentArray.length; i++){
@@ -274,7 +274,7 @@ public class DeviceFilesCreator{
 			return currentArray;
 		}
 		
-		Wire[] newArray = new Wire[currentArray.length-1];
+		WireConnection[] newArray = new WireConnection[currentArray.length-1];
 		int i = 0;
 		for(int j = 0; j < currentArray.length; j++){
 			if(j != idx){
@@ -304,8 +304,8 @@ public class DeviceFilesCreator{
 				// Create a set of wires that can be driven by other wires within the tile
 				// We need this to do a fast look up later on
 				HashSet<Integer> wiresSourcedByTileWires = new HashSet<Integer>();
-				for(Wire[] wireArray : t.getWires().values()){
-					for(Wire w : wireArray){
+				for(WireConnection[] wireArray : t.getWires().values()){
+					for(WireConnection w : wireArray){
 						if(w.getColumnOffset() == 0 && w.getRowOffset() == 0){
 							wiresSourcedByTileWires.add(w.getWire());
 						}
@@ -313,14 +313,14 @@ public class DeviceFilesCreator{
 				}
 				
 				for(Integer wire : t.getWires().keySet()){
-					for(Wire w : t.getWires().get(wire)){
+					for(WireConnection w : t.getWires().get(wire)){
 						// Check if this wire has connections back to wire
 						Tile wireTile = w.getTile(dev, t);
-						Wire[] wireConns = wireTile.getWires().get(w.getWire());
+						WireConnection[] wireConns = wireTile.getWires().get(w.getWire());
 						if(wireConns == null) continue;
 						boolean backwardsConnection = false;
 						
-						for(Wire w2 : wireConns){
+						for(WireConnection w2 : wireConns){
 							Tile check = w2.getTile(dev, wireTile);
 							if(check.equals(t) && w2.getWire() == wire.intValue()){
 								backwardsConnection = !wiresSourcedByTileWires.contains(wire); 
@@ -344,7 +344,7 @@ public class DeviceFilesCreator{
 		// Remove all backward edges from device
 		for(Tile t : wiresToBeRemoved.keySet()){
 			for(Connection c : wiresToBeRemoved.get(t)){
-				Wire[] currentWires = t.getWires().get(c.getWire());
+				WireConnection[] currentWires = t.getWires().get(c.getWire());
 				currentWires = removeWire(currentWires, c.getDestinationWire());
 				t.getWires().put(c.getWire(), currentWires);
 			}
@@ -354,7 +354,7 @@ public class DeviceFilesCreator{
 		for(Tile[] tileArray : dev.tiles){
 			for(Tile t : tileArray){
 				if(t.getWires() == null) continue;
-				for(Wire[] wires : t.getWires().values()){
+				for(WireConnection[] wires : t.getWires().values()){
 					if(wires == null) continue;
 					for(int i = 0; i < wires.length; i++){
 						wires[i] = dev.wirePool.add(wires[i]);
@@ -369,7 +369,7 @@ public class DeviceFilesCreator{
 				dev.incrementalRemoveDuplicateTileResources(t, we);
 			}
 		}
-		for(Wire w : dev.routeThroughMap.keySet()){
+		for(WireConnection w : dev.routeThroughMap.keySet()){
 			PIPRouteThrough p = dev.routeThroughPool.add(dev.getRouteThrough(w));
 			dev.routeThroughMap.put(w, p);
 		}

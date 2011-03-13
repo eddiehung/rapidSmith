@@ -27,7 +27,7 @@ import edu.byu.ece.rapidSmith.design.Design;
 import edu.byu.ece.rapidSmith.design.Net;
 import edu.byu.ece.rapidSmith.design.PIP;
 import edu.byu.ece.rapidSmith.design.Pin;
-import edu.byu.ece.rapidSmith.device.Wire;
+import edu.byu.ece.rapidSmith.device.WireConnection;
 import edu.byu.ece.rapidSmith.device.WireDirection;
 import edu.byu.ece.rapidSmith.util.MessageGenerator;
 
@@ -115,7 +115,7 @@ public class BasicRouter extends AbstractRouter{
 			Node currNode = queue.remove();
 			nodesProcessed++;
 			
-			for(Wire w : currNode.getWires()){
+			for(WireConnection w : currNode.getWires()){
 				if(w.getWire() == this.currSink.wire && w.getTile(dev, currNode.tile).equals(currSink.tile)){
 					
 					// We've found the sink, lets retrace our steps
@@ -124,7 +124,7 @@ public class BasicRouter extends AbstractRouter{
 					// Add this connection as a PIP, and follow it back to the source
 					while(currPathNode.parent != null){
 						
-						for(Wire w1 : currPathNode.parent.tile.getWireConnections(currPathNode.parent.wire)){
+						for(WireConnection w1 : currPathNode.parent.tile.getWireConnections(currPathNode.parent.wire)){
 							if(w1.getWire() == currPathNode.wire){
 								if(w1.isPIP() && currPathNode.parent.tile.equals(currPathNode.tile)){
 									pipList.add(new PIP(currPathNode.tile, currPathNode.parent.wire, currPathNode.wire));

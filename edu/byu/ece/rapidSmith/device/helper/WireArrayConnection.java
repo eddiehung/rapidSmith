@@ -22,14 +22,14 @@ package edu.byu.ece.rapidSmith.device.helper;
 
 import java.io.Serializable;
 
-public class WireConnection implements Serializable {
+public class WireArrayConnection implements Serializable {
 	
 	private static final long serialVersionUID = 7838184542063263426L;
 	public int wire;
 	public int wireArrayEnum;
 	public int enumeration;
 	
-	public WireConnection(int w, int wae) {
+	public WireArrayConnection(int w, int wae) {
 		wire = w;
 		wireArrayEnum = wae;
 	}
@@ -57,7 +57,7 @@ public class WireConnection implements Serializable {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		WireConnection other = (WireConnection) obj;
+		WireArrayConnection other = (WireArrayConnection) obj;
 		if (wire != other.wire)
 			return false;
 		if (wireArrayEnum != other.wireArrayEnum)

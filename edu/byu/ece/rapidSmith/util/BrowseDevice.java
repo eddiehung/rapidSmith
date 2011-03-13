@@ -26,7 +26,7 @@ import java.io.InputStreamReader;
 import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.Tile;
-import edu.byu.ece.rapidSmith.device.Wire;
+import edu.byu.ece.rapidSmith.device.WireConnection;
 import edu.byu.ece.rapidSmith.device.WireEnumerator;
 
 /**
@@ -58,9 +58,9 @@ public class BrowseDevice{
 
 						System.out.println("Enter wire name: ");
 						String wire = br.readLine().trim();
-						Wire[] wires = t.getWireConnections(we.getWireEnum(wire));
+						WireConnection[] wires = t.getWireConnections(we.getWireEnum(wire));
 						if(wires != null){
-							for(Wire w : wires){
+							for(WireConnection w : wires){
 								System.out.println("  " + w.toString(we));
 							}
 						}
@@ -75,7 +75,7 @@ public class BrowseDevice{
 						break;
 					case 3:
 						System.out.println("PIPRouteThroughs");
-						for(Wire w : dev.getRouteThroughMap().keySet()){
+						for(WireConnection w : dev.getRouteThroughMap().keySet()){
 							System.out.println("  " + w.toString(we) + " " + dev.getRouteThroughMap().get(w).toString(we));
 						}
 						break;
@@ -96,7 +96,7 @@ public class BrowseDevice{
 								System.out.println("This wire has no connections, it may be a sink");
 								break;
 							}
-							Wire[] wireConnections = t.getWireConnections(we.getWireEnum(startWire));
+							WireConnection[] wireConnections = t.getWireConnections(we.getWireEnum(startWire));
 							System.out.println(t.getName() + " " + startWire + ":");
 							for (int i = 0; i < wireConnections.length; i++) {
 								System.out.println("  " + i + ". " + wireConnections[i].getTile(dev, t) +" " + we.getWireName(wireConnections[i].getWire()));
