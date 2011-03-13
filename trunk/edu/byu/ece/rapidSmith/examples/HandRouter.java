@@ -83,8 +83,8 @@ public class HandRouter{
 		ArrayList<PIP> pipList = new ArrayList<PIP>();
 
 		Node currNode = null;
-		Wire currWire;
-		Wire[] wiresList = null;
+		WireConnection currWire;
+		WireConnection[] wiresList = null;
 		ArrayList<Node> choices;
 		
 		// This keeps track of all the possible starting points (or sources) that

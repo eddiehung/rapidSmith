@@ -22,6 +22,8 @@ package edu.byu.ece.rapidSmith.device;
 
 import java.io.Serializable;
 
+import edu.byu.ece.rapidSmith.router.Node;
+
 /**		
  * A Wire is describes simply as an integer representing the wire and
  * a row/column tile offset from the source wire. It makes little sense
@@ -34,7 +36,7 @@ import java.io.Serializable;
  * @author Chris Lavin
  *
  */
-public class Wire implements Serializable, Comparable<Wire>{
+public class WireConnection implements Serializable, Comparable<WireConnection>{
 	/** Allows Serializable functionality  */
 	private static final long serialVersionUID = -2329077568909337716L;
 	/** The wire enumeration value of the wire to be connected to */
@@ -46,14 +48,14 @@ public class Wire implements Serializable, Comparable<Wire>{
 	/** Does the source wire connected to this wire make a PIP? */
 	private boolean isPIP;
 	
-	public Wire(){
+	public WireConnection(){
 		this.wire = -1;
 		this.rowOffset = 0;
 		this.columnOffset = 0;
 		this.setPIP(false);
 	}
 	
-	public Wire(int wire, int rowOffset, int columnOffset,boolean pip){
+	public WireConnection(int wire, int rowOffset, int columnOffset,boolean pip){
 		this.wire = wire;
 		this.rowOffset = rowOffset;
 		this.columnOffset = columnOffset;
@@ -71,6 +73,10 @@ public class Wire implements Serializable, Comparable<Wire>{
 	 */
 	public int getWire() {
 		return wire;
+	}
+	
+	public Node getNodeFromWire(Device dev, Node srcNode){
+		return new Node(getTile(dev, srcNode.getTile()), wire, srcNode, srcNode.getLevel()+1);
 	}
 	
 	/**
@@ -123,7 +129,7 @@ public class Wire implements Serializable, Comparable<Wire>{
 		return  ((this.rowOffset << 24) & 0xFF000000) | ((this.columnOffset << 16) & 0x00FF0000) |(this.wire);
 	}	
 	
-	public int compareTo(Wire w){
+	public int compareTo(WireConnection w){
 		return (this.columnOffset + this.rowOffset + this.wire) - (w.columnOffset + w.rowOffset + w.wire);
 	}
 
@@ -135,7 +141,7 @@ public class Wire implements Serializable, Comparable<Wire>{
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		Wire other = (Wire) obj;
+		WireConnection other = (WireConnection) obj;
 		if (columnOffset != other.columnOffset)
 			return false;
 		if (isPIP != other.isPIP)

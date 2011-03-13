@@ -39,7 +39,7 @@ import com.trolltech.qt.gui.QDockWidget.DockWidgetFeature;
 import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.Tile;
-import edu.byu.ece.rapidSmith.device.Wire;
+import edu.byu.ece.rapidSmith.device.WireConnection;
 import edu.byu.ece.rapidSmith.device.WireEnumerator;
 import edu.byu.ece.rapidSmith.gui.TileView;
 import edu.byu.ece.rapidSmith.gui.WidgetMaker;
@@ -197,7 +197,7 @@ public class DeviceBrowser extends QMainWindow{
 		int currWire = we.getWireEnum(index.data().toString());
 		if(currWire < 0) return;
 		if(currTile.getWireConnections(we.getWireEnum(index.data().toString())) == null) return;
-		for(Wire wire : currTile.getWireConnections(we.getWireEnum(index.data().toString()))){
+		for(WireConnection wire : currTile.getWireConnections(we.getWireEnum(index.data().toString()))){
 			scene.drawWire(currTile, currWire, wire.getTile(device, currTile), wire.getWire());
 		}
 	}
@@ -236,7 +236,7 @@ public class DeviceBrowser extends QMainWindow{
 		for(Integer wire : currTile.getWires().keySet()) {
 			QTreeWidgetItem treeItem = new QTreeWidgetItem();
 			treeItem.setText(0, we.getWireName(wire));
-			Wire[] connections = currTile.getWireConnections(wire);
+			WireConnection[] connections = currTile.getWireConnections(wire);
 			treeItem.setText(1, String.format("%3d", connections == null ? 0 : connections.length));
 			wireList.insertTopLevelItem(0, treeItem);
 		}

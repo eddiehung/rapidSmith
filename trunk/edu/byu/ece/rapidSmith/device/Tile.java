@@ -49,7 +49,7 @@ public class Tile implements Serializable{
 	/** This is a list of the sources within the tile (generally in the primitives) */
 	private int[] sources;
 	/** This variable holds all the wires and their connections within the tile */
-	private HashMap<Integer,Wire[]> wires;
+	private HashMap<Integer,WireConnection[]> wires;
 	/** An array of primitiveSites located within the tile (null if none) */
 	private PrimitiveSite[] primitiveSites;
 	/** Absolute tile row number - the index into the device Tiles[][] array */
@@ -70,7 +70,7 @@ public class Tile implements Serializable{
 	public Tile(){
 		sinks = null;
 		sources = null;
-		wires = new HashMap<Integer,Wire[]>();
+		wires = new HashMap<Integer,WireConnection[]>();
 		sinks = new HashMap<Integer, SinkPin>();
 		dev = null;
 	}
@@ -130,7 +130,7 @@ public class Tile implements Serializable{
 	 * Gets and returns the wires HashMap for this tile.
 	 * @return The wires HashMap for this tile.
 	 */
-	public HashMap<Integer, Wire[]> getWires(){
+	public HashMap<Integer, WireConnection[]> getWires(){
 		return wires;
 	}
 
@@ -140,7 +140,7 @@ public class Tile implements Serializable{
 	 * @param wire A wire in this tile to query its potential connections.
 	 * @return An array of wires which connect to the given wire.
 	 */
-	public Wire[] getWireConnections(int wire){
+	public WireConnection[] getWireConnections(int wire){
 		return wires.get(wire);
 	}
 	
@@ -149,7 +149,7 @@ public class Tile implements Serializable{
 	 * during normal usage.
 	 * @param wires The new wires to set for this tile.
 	 */
-	public void setWires(HashMap<Integer, Wire[]> wires){
+	public void setWires(HashMap<Integer, WireConnection[]> wires){
 		this.wires = wires;
 	}
 
@@ -206,15 +206,15 @@ public class Tile implements Serializable{
 	 * @param src The wire (or key) of the HashMap to add.
 	 * @param dest The actual wire to add to the value or Wire[] in the HashMap.
 	 */
-	public void addConnection(int src, Wire dest){
+	public void addConnection(int src, WireConnection dest){
 		// Add the wire if it doesn't already exist
 		if(this.wires.get(src) == null){
-			Wire[] tmp = {dest};
+			WireConnection[] tmp = {dest};
 			this.wires.put(src, tmp);
 		}
 		else{
-			Wire[] currentConnections = this.wires.get(src);
-			Wire[] tmp = new Wire[currentConnections.length+1];
+			WireConnection[] currentConnections = this.wires.get(src);
+			WireConnection[] tmp = new WireConnection[currentConnections.length+1];
 			int i;
 			for(i=0; i < currentConnections.length; i++){
 				tmp[i] = currentConnections[i];
@@ -348,7 +348,7 @@ public class Tile implements Serializable{
 	public ArrayList<PIP> getPIPs(){
 		ArrayList<PIP> pips = new ArrayList<PIP>();
 		for(Integer startWire : wires.keySet()){
-			for(Wire endWire : wires.get(startWire)){
+			for(WireConnection endWire : wires.get(startWire)){
 				if(endWire.isPIP()){
 					pips.add(new PIP(this, startWire, endWire.getWire()));
 				}

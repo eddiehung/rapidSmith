@@ -111,7 +111,7 @@ public class XDLRCParser{
 			if((keepCurrTileWire && we.isPIPWire(currWire)) || 
 					we.getWireType(currWire).equals(WireType.SITE_SINK)){
 				Tile t = dev.getTile(parts[2]);
-				Wire wire = dev.wirePool.add(new Wire(currWire,
+				WireConnection wire = dev.wirePool.add(new WireConnection(currWire,
 									currTile.getRow() - t.getRow(),
 									currTile.getColumn() - t.getColumn(),
 									false));
@@ -224,14 +224,14 @@ public class XDLRCParser{
 			/////////////////////////////////////////////////////////////////////
 			if(line.startsWith("\t\t(pip ")){
 				String endWire = null; 
-				Wire currWire = null;
+				WireConnection currWire = null;
 				if(parts[5].endsWith(")")){
 					endWire = parts[5].substring(0, parts[5].length()-1);
-					currWire = dev.wirePool.add(new Wire(we.getWireEnum(endWire), 0, 0, true));
+					currWire = dev.wirePool.add(new WireConnection(we.getWireEnum(endWire), 0, 0, true));
 				}
 				else{ // This is a route-through PIP
 					endWire = parts[5];
-					currWire = dev.wirePool.add(new Wire(we.getWireEnum(endWire), 0, 0, true));
+					currWire = dev.wirePool.add(new WireConnection(we.getWireEnum(endWire), 0, 0, true));
 					PrimitiveType type = Utils.createPrimitiveType(parts[7].substring(0, parts[7].length()-2));  
 					
 					String[] tokens = parts[6].split("-");

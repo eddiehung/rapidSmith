@@ -60,7 +60,7 @@ public class DesignExplorer extends QMainWindow{
 	/** Status Bar Label */
 	protected QLabel statusLabel;
 	/** Path to images in RapidSmith */
-	protected String rsrcPath = FileTools.getRapidSmithPath()+File.separator+"images";
+	protected static String rsrcPath = FileTools.getRapidSmithPath()+File.separator+"images";
 	/** Device of the current design that is open */
 	protected Device device;
 	/** The design that is current and active */
@@ -231,6 +231,8 @@ public class DesignExplorer extends QMainWindow{
 		offsetWindow = new FilterWindow(this, FilterType.OFFSETS);
 		tabs.addTab(delayWindow, PATH_DELAYS);
 		tabs.addTab(offsetWindow, PATH_OFFSETS);
+		
+		tileWindow.drawCriticalPaths(delays);
 	}
 	
 	/**

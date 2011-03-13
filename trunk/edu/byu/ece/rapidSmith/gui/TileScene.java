@@ -178,11 +178,11 @@ public class TileScene extends QGraphicsScene{
 		QGraphicsPixmapItem background = addPixmap(pixelMap);
 		background.setAcceptsHoverEvents(true);
 		background.setZValue(-1);
-
+		
 		// Draw colored tiles onto QPixMap
 		qImage = new QImage(sceneSize, Format.Format_RGB16);
 		QPainter painter = new QPainter(qImage);
-		
+
 		// Determine which columns and rows to not draw
 		TreeSet<Integer> colsToSkip = new TreeSet<Integer>();
 		TreeSet<Integer> rowsToSkip = new TreeSet<Integer>();

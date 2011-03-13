@@ -34,7 +34,7 @@ import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.PrimitiveType;
 import edu.byu.ece.rapidSmith.device.Tile;
-import edu.byu.ece.rapidSmith.device.Wire;
+import edu.byu.ece.rapidSmith.device.WireConnection;
 import edu.byu.ece.rapidSmith.device.WireDirection;
 import edu.byu.ece.rapidSmith.device.WireEnumerator;
 import edu.byu.ece.rapidSmith.device.WireType;
@@ -137,9 +137,9 @@ public class StaticSourceHandler{
 		
 		Node curr = new Node(source.getTile(), dev.getPrimitiveExternalPin(source), null, 0);
 		while(!we.getWireDirection(curr.getWire()).equals(WireDirection.CLK) && !we.getWireType(curr.getWire()).equals(WireType.INT_SOURCE)){
-			Wire[] wires = curr.getWires();
+			WireConnection[] wires = curr.getWires();
 			if(wires == null) return null;
-			Wire w = wires[0];
+			WireConnection w = wires[0];
 			if(we.getWireName(w.getWire()).contains("COUT") && wires.length > 1 ){
 				
 				w = wires[1];

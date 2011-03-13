@@ -22,6 +22,7 @@ package edu.byu.ece.rapidSmith.design.explorer;
 
 import edu.byu.ece.rapidSmith.design.PIP;
 import edu.byu.ece.rapidSmith.device.Tile;
+import edu.byu.ece.rapidSmith.device.WireEnumerator;
 
 public class Connection {
 	
@@ -102,6 +103,11 @@ public class Connection {
 	public void setEndWire(int endWire) {
 		this.endWire = endWire;
 	}
+
+	public String toString(WireEnumerator we){
+		return startTile + " " + we.getWireName(startWire) + " --> "  + endTile + " " + we.getWireName(endWire);
+	}
+	
 	
 	
 }

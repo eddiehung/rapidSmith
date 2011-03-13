@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Brigham Young University
+ * Copyright (c) 2010-2011 Brigham Young University
  * 
  * This file is part of the BYU RapidSmith Tools.
  * 
@@ -18,39 +18,37 @@
  * get a copy of the license at <http://www.gnu.org/licenses/>.
  * 
  */
-package edu.byu.ece.rapidSmith.device.helper;
+package edu.byu.ece.rapidSmith.design.explorer;
 
-import edu.byu.ece.rapidSmith.device.WireConnection;
+import com.trolltech.qt.gui.QGraphicsPathItem;
+import com.trolltech.qt.gui.QSlider;
 
+public class TimingSlider extends QSlider{
 
-/**
- * Small object class to help with backward edge removal.
- * @author Chris Lavin
- * Created on: Jul 15, 2010
- */
-public class Connection{
+	private DesignTileScene scene;
 	
-	/** Start wire */
-	private int wire;
-	/** Destination wire */
-	private WireConnection dest;
 	
-	public Connection(int wire, WireConnection dest){
-		this.wire = wire;
-		this.dest = dest;
+	
+	/**
+	 * @param scene
+	 */
+	public TimingSlider(DesignTileScene scene) {
+		super();
+		this.scene = scene;
 	}
 
-	/**
-	 * @return the wire
-	 */
-	public int getWire(){
-		return wire;
-	}
 
-	/**
-	 * @return the dest
-	 */
-	public WireConnection getDestinationWire(){
-		return dest;
+
+	public void updatePaths(){
+		TickPosition t = tickPosition();
+		t.value();
+		
+		float constraint = 0; 
+		
+		for(PathItem item : scene.getCurrLines()){
+			if(item.getPath().getDelay() > constraint){
+
+			}
+		}
 	}
 }

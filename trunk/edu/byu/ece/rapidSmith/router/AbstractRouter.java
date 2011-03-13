@@ -33,7 +33,7 @@ import edu.byu.ece.rapidSmith.design.PIP;
 import edu.byu.ece.rapidSmith.design.Pin;
 import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.Tile;
-import edu.byu.ece.rapidSmith.device.Wire;
+import edu.byu.ece.rapidSmith.device.WireConnection;
 import edu.byu.ece.rapidSmith.device.WireEnumerator;
 
 public abstract class AbstractRouter{
@@ -133,11 +133,11 @@ public abstract class AbstractRouter{
 	 * @param wire
 	 */
 	protected void checkForIntermediateUsedNodes(PIP wire){
-		HashMap<Integer, Wire[]> wireMap = wire.getTile().getWires();
+		HashMap<Integer, WireConnection[]> wireMap = wire.getTile().getWires();
 		if(wireMap != null){
-			Wire[] wires = wireMap.get(wire.getEndWire());
+			WireConnection[] wires = wireMap.get(wire.getEndWire());
 			if(wires != null && wires.length > 1){
-				for(Wire w : wires){
+				for(WireConnection w : wires){
 					if(w.getRowOffset() != 0 || w.getColumnOffset() != 0){
 						setWireAsUsed(w.getTile(dev, wire.getTile()), w.getWire());
 					}

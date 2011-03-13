@@ -23,7 +23,7 @@ package edu.byu.ece.rapidSmith.router;
 import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.SinkPin;
 import edu.byu.ece.rapidSmith.device.Tile;
-import edu.byu.ece.rapidSmith.device.Wire;
+import edu.byu.ece.rapidSmith.device.WireConnection;
 import edu.byu.ece.rapidSmith.device.WireEnumerator;
 
 
@@ -51,7 +51,7 @@ public class Node implements Comparable<Node>{
 	/** Determines if this node connected to the node after it creates a PIP */
 	protected boolean isPIP;
 	/** Keeps track of the wires that this node connects to */
-	protected Wire[] wires;
+	protected WireConnection[] wires;
 	
 	/**
 	 * Empty constructor, sets tile and wires to null. Sets wire and cost to -1.
@@ -95,7 +95,7 @@ public class Node implements Comparable<Node>{
 	 * Gets all the possible connections to leaving this node
 	 * @return The list of all possible connections leaving this node 
 	 */
-	public Wire[] getWires(){
+	public WireConnection[] getWires(){
 		return wires;
 	}
 	
@@ -133,6 +133,10 @@ public class Node implements Comparable<Node>{
 	 */
 	public void setTile(Tile tile){
 		this.tile = tile;
+	}
+	
+	public void setCost(int cost){
+		this.cost = cost;
 	}
 
 	/**
@@ -175,6 +179,10 @@ public class Node implements Comparable<Node>{
 		y = (y << 16) >> 16; 
 		Node n = new Node(dev.getTile(tile.getRow()+y, tile.getColumn()+x),sp.switchMatrixSinkWire,null,0);
 		return n;
+	}
+	
+	public int getManhattanDistance(Node snk){
+		return tile.getManhattanDistance(snk.getTile());
 	}
 	
 	// The priority queue will use strictly the cost to evaluate priority
