@@ -75,7 +75,7 @@ public class WireConnection implements Serializable, Comparable<WireConnection>{
 		return wire;
 	}
 	
-	public Node getNodeFromWire(Device dev, Node srcNode){
+	public Node createNode(Device dev, Node srcNode){
 		return new Node(getTile(dev, srcNode.getTile()), wire, srcNode, srcNode.getLevel()+1);
 	}
 	
