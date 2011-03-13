@@ -137,7 +137,7 @@ public class StaticSourceHandler{
 		
 		Node curr = new Node(source.getTile(), dev.getPrimitiveExternalPin(source), null, 0);
 		while(!we.getWireDirection(curr.getWire()).equals(WireDirection.CLK) && !we.getWireType(curr.getWire()).equals(WireType.INT_SOURCE)){
-			WireConnection[] wires = curr.getWires();
+			WireConnection[] wires = curr.getConnections();
 			if(wires == null) return null;
 			WireConnection w = wires[0];
 			if(we.getWireName(w.getWire()).contains("COUT") && wires.length > 1 ){

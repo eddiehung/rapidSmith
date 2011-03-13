@@ -42,8 +42,8 @@ public class ExampleRouter {
 		
 		// Loop on queue output nodes to find the sink
 		while(!currNode.equals(snkNode)){
-			if(currNode.getWires() != null)
-				for(WireConnection w : currNode.getWires()){
+			if(currNode.getConnections() != null)
+				for(WireConnection w : currNode.getConnections()){
 					Node n = w.getNodeFromWire(dev, currNode);
 					n.setCost(n.getManhattanDistance(snkNode));
 					if(!pq.contains(n)) pq.add(n);
