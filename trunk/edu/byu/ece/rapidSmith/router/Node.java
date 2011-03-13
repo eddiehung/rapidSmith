@@ -95,7 +95,7 @@ public class Node implements Comparable<Node>{
 	 * Gets all the possible connections to leaving this node
 	 * @return The list of all possible connections leaving this node 
 	 */
-	public WireConnection[] getWires(){
+	public WireConnection[] getConnections(){
 		return wires;
 	}
 	

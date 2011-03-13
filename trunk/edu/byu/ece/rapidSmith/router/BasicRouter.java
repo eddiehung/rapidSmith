@@ -88,7 +88,7 @@ public class BasicRouter extends AbstractRouter{
 		// Setup the source nodes for starting the routing process
 		for(Node src : sources){
 			// Add the source nodes to the queue
-			if(src.getWires() != null){
+			if(src.getConnections() != null){
 				// Set the cost of the source
 				setCost(src, false);
 				this.queue.add(src);
@@ -115,7 +115,7 @@ public class BasicRouter extends AbstractRouter{
 			Node currNode = queue.remove();
 			nodesProcessed++;
 			
-			for(WireConnection w : currNode.getWires()){
+			for(WireConnection w : currNode.getConnections()){
 				if(w.getWire() == this.currSink.wire && w.getTile(dev, currNode.tile).equals(currSink.tile)){
 					
 					// We've found the sink, lets retrace our steps
@@ -147,7 +147,7 @@ public class BasicRouter extends AbstractRouter{
 					// Check if this node has already been visited, if so don't add it
 					if(!(visitedNodes.contains(tmp))){
 						// Make sure we haven't used this node already
-						if(tmp.getWires() != null){
+						if(tmp.getConnections() != null){
 							// This looks like a possible candidate for our next node, we'll add it
 							setCost(tmp, dev.isRouteThrough(w));
 							visitedNodes.add(tmp);
