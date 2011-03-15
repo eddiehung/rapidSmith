@@ -112,6 +112,7 @@ public class Installer{
 				partNames.add(name);
 			}
 			else{
+				name = name.toUpperCase();
 				partNames.addAll(RunXilinxTools.getPartNames(name, false));
 			}
 			
