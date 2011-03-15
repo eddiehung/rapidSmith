@@ -108,7 +108,7 @@ public class Installer{
 		ArrayList<String> partNames = new ArrayList<String>();
 		for(String name : names){
 			name = name.toLowerCase();
-			if(name.startsWith("xc")){
+			if(name.startsWith("x")){
 				partNames.add(name);
 			}
 			else{
