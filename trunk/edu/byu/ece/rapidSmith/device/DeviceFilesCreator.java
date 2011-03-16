@@ -234,12 +234,12 @@ public class DeviceFilesCreator{
 			
 			// Write the Device to File
 			parser.getDevice().writeDeviceToCompactFile(deviceFileName);
-
-			// Delete XDLRC file
-			FileTools.deleteFile(xdlrcFileName);
 			
 			// Remove backwards edges
 			removeBackwardsEdgesFromDevice(partName);
+			
+			// Delete XDLRC file
+			FileTools.deleteFile(xdlrcFileName);
 			
 		}
 		catch(OutOfMemoryError e){
