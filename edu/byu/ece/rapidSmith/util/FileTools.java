@@ -384,13 +384,13 @@ public class FileTools {
 	}
 
 	public static HashMap<Integer, WireConnection[]> readWireHashMap(Hessian2Input dis, ArrayList<WireConnection[]> wires, ArrayList<WireArrayConnection> wireConnections) {
-		HashMap<Integer, WireConnection[]> newMap = new HashMap<Integer, WireConnection[]>();
-		
 		int[] intArray = readIntArray(dis);
 		
 		if(intArray == null){
 			return null;
 		}
+		
+		HashMap<Integer, WireConnection[]> newMap = new HashMap<Integer, WireConnection[]>(intArray.length, (float) 0.85);
 		
 		for(int i : intArray){
 			WireArrayConnection wc = wireConnections.get(i);
