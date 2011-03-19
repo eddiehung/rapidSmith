@@ -39,6 +39,13 @@ public class PartNameTools{
 	/** Stores a set of FamilyTypes which require ISE 10.1.03 or older to function. */
 	private static HashSet<FamilyType> legacyTypes;
 	
+	private static FamilyType[] basicTypes = {FamilyType.KINTEX7,
+								  			FamilyType.SPARTAN2, FamilyType.SPARTAN2E, FamilyType.SPARTAN3, 
+											FamilyType.SPARTAN3A, FamilyType.SPARTAN3ADSP, FamilyType.SPARTAN3E,
+											FamilyType.SPARTAN6, FamilyType.VIRTEX, FamilyType.VIRTEX2,
+											FamilyType.VIRTEX2P, FamilyType.VIRTEX4, FamilyType.VIRTEX5,
+											FamilyType.VIRTEX6, FamilyType.VIRTEX7, FamilyType.VIRTEXE};
+	
 	static{
 		legacyTypes = new HashSet<FamilyType>();
 		legacyTypes.add(FamilyType.SPARTAN2);
@@ -47,6 +54,10 @@ public class PartNameTools{
 		legacyTypes.add(FamilyType.VIRTEXE);
 		legacyTypes.add(FamilyType.VIRTEX2);
 		legacyTypes.add(FamilyType.VIRTEX2P);
+	}
+	
+	public static FamilyType[] getBasicFamilyTypes(){
+		return basicTypes;
 	}
 	
 	/**

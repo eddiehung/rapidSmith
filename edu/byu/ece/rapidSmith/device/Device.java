@@ -21,6 +21,7 @@
 package edu.byu.ece.rapidSmith.device;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -43,6 +44,7 @@ import edu.byu.ece.rapidSmith.device.helper.TileSources;
 import edu.byu.ece.rapidSmith.device.helper.TileWires;
 import edu.byu.ece.rapidSmith.device.helper.WireArray;
 import edu.byu.ece.rapidSmith.device.helper.WireArrayConnection;
+import edu.byu.ece.rapidSmith.device.helper.WireHashMap;
 import edu.byu.ece.rapidSmith.router.Node;
 import edu.byu.ece.rapidSmith.util.FamilyType;
 import edu.byu.ece.rapidSmith.util.FileTools;
@@ -696,8 +698,8 @@ public class Device implements Serializable{
 			for (Tile tile : tileArray) {
 				// Only get the switch box tiles
 				if (switchMatrixTileTypes.contains(tile.getType())) {
-					if(tile.getWires() == null) continue;
-					for(Integer wire : tile.getWires().keySet()){
+					if(tile.getWireHashMap() == null) continue;
+					for(Integer wire : tile.getWireHashMap().keySet()){
 						if(we.getWireType(wire).equals(WireType.INT_SINK)){
 							int currINTSinkWire = wire; 
 							boolean debug = false;
@@ -705,7 +707,7 @@ public class Device implements Serializable{
 								debug = false;
 							}
 							// There should only be one wire that leaves the tile
-							for (WireConnection w : tile.getWires().get(wire)) {
+							for (WireConnection w : tile.getWireHashMap().get(wire)) {
 								if(w.getColumnOffset() != 0 || w.getRowOffset() != 0){
 									
 									Stack<Tile> tileStack = new Stack<Tile>();
@@ -720,7 +722,7 @@ public class Device implements Serializable{
 										Tile t1 = tileStack.pop();
 										WireConnection w1 = wireStack.pop();
 										if(debug) System.out.println("  POP: " + t1 + " " + we.getWireName(w1.getWire()));
-										WireConnection[] connections = t1.getWires().get(w1.getWire());
+										WireConnection[] connections = t1.getWireHashMap().get(w1.getWire());
 										if(connections == null || visited.contains(new Node(t1,w1.getWire(),null,0))){
 											continue;
 										}
@@ -799,14 +801,14 @@ public class Device implements Serializable{
 		t.setSources(tileSourcesPool.add(new TileSources(t.getSources())).sources);
 
 		// Check Wires
-		t.setWires(tileWiresPool.add(new TileWires(t.getWires())).wires);
-		if(t.getWires() != null) removeDuplicateWireArrays(t);
+		t.setWireHashMap(tileWiresPool.add(new TileWires(t.getWireHashMap())).wires);
+		if(t.getWireHashMap() != null) removeDuplicateWireArrays(t);
 	}
 
 	protected void removeDuplicateWireArrays(Tile t){
-		for(Integer key : t.getWires().keySet()){
-			WireArray unique = wireArrayPool.add(new WireArray(t.getWires().get(key)));
-			t.getWires().put(key, unique.array);
+		for(Integer key : t.getWires()){
+			WireArray unique = wireArrayPool.add(new WireArray(t.getWireConnections(key)));
+			t.getWireHashMap().put(key, unique.array);
 		}
 	}
 	
@@ -820,10 +822,10 @@ public class Device implements Serializable{
 	protected void createWireConnectionEnumeration(){
 		for(int i=0; i < getRows(); i++){
 			for(int j=0; j < getColumns(); j++){
-				if(tiles[i][j].getWires() == null) continue;
-				for(Integer wire : tiles[i][j].getWires().keySet()){
+				if(tiles[i][j].getWireHashMap() == null) continue;
+				for(Integer wire : tiles[i][j].getWires()){
 					WireArrayConnection tmp = 
-						new WireArrayConnection(wire,wireArrayPool.getEnumerationValue(new WireArray(tiles[i][j].getWires().get(wire))));
+						new WireArrayConnection(wire,wireArrayPool.getEnumerationValue(new WireArray(tiles[i][j].getWireConnections(wire))));
 					wireConnectionPool.add(tmp);
 				}
 			}
@@ -996,7 +998,7 @@ public class Device implements Serializable{
 					// Sources
 					tileSources[index] = tileSourcesPool.getEnumerationValue(new TileSources(t.getSources()));
 					// Wires
-					tileWires[index] = tileWiresPool.getEnumerationValue(new TileWires(t.getWires()));
+					tileWires[index] = tileWiresPool.getEnumerationValue(new TileWires(t.getWireHashMap()));
 					// PrimitiveSites Count
 					primitiveSitesCount[index] = t.getPrimitiveSites() == null ?  0 : t.getPrimitiveSites().length;
 					index++;
@@ -1124,6 +1126,12 @@ public class Device implements Serializable{
 				wireArrays.add(tmp);
 			}
 			
+			//Create a set of Integer objects to avoid duplication
+			Integer[] allInts = new Integer[getFamilyWireCount(fileName)];
+			for (int i = 0; i < allInts.length; i++) {
+				allInts[i] = new Integer(i);
+			}
+			
 			//=======================================================//
 			/* - wireConnectionPool -                                */
 			//=======================================================//
@@ -1142,7 +1150,7 @@ public class Device implements Serializable{
 				int length = his.readInt();
 				HashMap<Integer,SinkPin> tmp = new HashMap<Integer,SinkPin>();
 				for(int j = 0; j < length; j++){
-					tmp.put(his.readInt(), new SinkPin(his.readInt(),his.readInt()));
+					tmp.put(allInts[his.readInt()], new SinkPin(his.readInt(),his.readInt()));
 				}
 				sinks.add(tmp);
 			}
@@ -1160,10 +1168,10 @@ public class Device implements Serializable{
 			/* - tileWiresPool -                                     */
 			//=======================================================//
 			size = his.readInt();
-			ArrayList<HashMap<Integer,WireConnection[]>> wireMaps = new ArrayList<HashMap<Integer,WireConnection[]>>();
+			ArrayList<WireHashMap> wireMaps = new ArrayList<WireHashMap>();
 			wireMaps.ensureCapacity(size);
 			for(int i=0; i < size; i++){
-				wireMaps.add(FileTools.readWireHashMap(his,wireArrays,wireConnections));
+				wireMaps.add(FileTools.readWireHashMap(his,wireArrays,wireConnections, allInts));
 			}
 			
 			//=======================================================//
@@ -1190,7 +1198,7 @@ public class Device implements Serializable{
 					// Sources
 					t.setSources(sources.get(tileSources[index]));
 					// Wires
-					t.setWires(wireMaps.get(tileWires[index]));
+					t.setWireHashMap(wireMaps.get(tileWires[index]));
 
 					// Populate tileMap
 					tileMap.put(tileNames[index], t);
@@ -1213,7 +1221,7 @@ public class Device implements Serializable{
 			size = his.readInt();
 			ArrayList<HashMap<String,Integer>> primitivePinMaps = new ArrayList<HashMap<String,Integer>>(); 
 			for(int i=0; i < size; i++){
-				primitivePinMaps.add(FileTools.readHashMap(his));
+				primitivePinMaps.add(FileTools.readHashMap(his, allInts));
 			}
 			
 			//=======================================================//
@@ -1332,7 +1340,7 @@ public class Device implements Serializable{
 					}
 					
 					// Wires
-					HashMap<Integer,WireConnection[]> tmp2 = t.getWires();
+					WireHashMap tmp2 = t.getWireHashMap();
 					if(tmp2 != null){
 						Integer[] wireKeys = new Integer[tmp2.size()];
 						wireKeys = tmp2.keySet().toArray(wireKeys);
@@ -1352,6 +1360,48 @@ public class Device implements Serializable{
 		}
 		catch(IOException e){
 			MessageGenerator.briefErrorAndExit("Error writing device debug file");
+		}
+	}
+	
+	private int getFamilyWireCount(String fileName){
+		int end = fileName.lastIndexOf(File.separator);
+		int start = fileName.lastIndexOf(File.separator, end-1);
+		FamilyType familyType = FamilyType.valueOf(fileName.substring(start+1, end).toUpperCase());
+		switch(familyType){
+			case KINTEX7:
+				return 42123;
+			case SPARTAN2:
+				return 4041;
+			case SPARTAN2E:
+				return 4693;
+			case SPARTAN3:
+				return 3901;
+			case SPARTAN3A:
+				return 6284;
+			case SPARTAN3ADSP:
+				return 8842;
+			case SPARTAN3E:
+				return 6745;
+			case SPARTAN6:
+				return 46932;
+			case VIRTEX:
+				return 4081;
+			case VIRTEX2:
+				return 5283;
+			case VIRTEX2P:
+				return 23497;
+			case VIRTEX4:
+				return 57631;
+			case VIRTEX5:
+				return 72523;
+			case VIRTEX6:
+				return 46781;
+			case VIRTEX7:
+				return 53331;
+			case VIRTEXE:
+				return 4224;
+			default:
+				return 0;
 		}
 	}
 }

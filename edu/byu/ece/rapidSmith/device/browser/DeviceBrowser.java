@@ -79,7 +79,7 @@ public class DeviceBrowser extends QMainWindow{
 	/** This is the current tile that has been selected */
 	private Tile currTile = null;
 	
-	protected boolean hideTiles = true;
+	protected boolean hideTiles = false;
 	
 	protected boolean drawPrimitives = true; 
 	/**
@@ -232,8 +232,8 @@ public class DeviceBrowser extends QMainWindow{
 	 */
 	protected void updateWireList(){
 		wireList.clear();
-		if(currTile == null || currTile.getWires() == null) return;
-		for(Integer wire : currTile.getWires().keySet()) {
+		if(currTile == null || currTile.getWireHashMap() == null) return;
+		for(Integer wire : currTile.getWireHashMap().keySet()) {
 			QTreeWidgetItem treeItem = new QTreeWidgetItem();
 			treeItem.setText(0, we.getWireName(wire));
 			WireConnection[] connections = currTile.getWireConnections(wire);

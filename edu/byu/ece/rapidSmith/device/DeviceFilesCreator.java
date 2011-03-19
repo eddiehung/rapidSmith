@@ -239,7 +239,7 @@ public class DeviceFilesCreator{
 			removeBackwardsEdgesFromDevice(partName);
 			
 			// Delete XDLRC file
-			FileTools.deleteFile(xdlrcFileName);
+			//FileTools.deleteFile(xdlrcFileName);
 			
 		}
 		catch(OutOfMemoryError e){
@@ -299,12 +299,12 @@ public class DeviceFilesCreator{
 		HashMap<Tile,ArrayList<Connection>> wiresToBeRemoved = new HashMap<Tile, ArrayList<Connection>>(); 
 		for(Tile[] tileArray : dev.getTiles()){
 			for(Tile t : tileArray){
-				if(t.getWires() == null) continue;
+				if(t.getWireHashMap() == null) continue;
 				ArrayList<Connection> connectionsToRemove = new ArrayList<Connection>();
 				// Create a set of wires that can be driven by other wires within the tile
 				// We need this to do a fast look up later on
 				HashSet<Integer> wiresSourcedByTileWires = new HashSet<Integer>();
-				for(WireConnection[] wireArray : t.getWires().values()){
+				for(WireConnection[] wireArray : t.getWireHashMap().values()){
 					for(WireConnection w : wireArray){
 						if(w.getColumnOffset() == 0 && w.getRowOffset() == 0){
 							wiresSourcedByTileWires.add(w.getWire());
@@ -312,11 +312,11 @@ public class DeviceFilesCreator{
 					}
 				}
 				
-				for(Integer wire : t.getWires().keySet()){
-					for(WireConnection w : t.getWires().get(wire)){
+				for(Integer wire : t.getWires()){
+					for(WireConnection w : t.getWireConnections(wire)){
 						// Check if this wire has connections back to wire
 						Tile wireTile = w.getTile(dev, t);
-						WireConnection[] wireConns = wireTile.getWires().get(w.getWire());
+						WireConnection[] wireConns = wireTile.getWireConnections(w.getWire());
 						if(wireConns == null) continue;
 						boolean backwardsConnection = false;
 						
@@ -344,17 +344,17 @@ public class DeviceFilesCreator{
 		// Remove all backward edges from device
 		for(Tile t : wiresToBeRemoved.keySet()){
 			for(Connection c : wiresToBeRemoved.get(t)){
-				WireConnection[] currentWires = t.getWires().get(c.getWire());
+				WireConnection[] currentWires = t.getWireHashMap().get(c.getWire());
 				currentWires = removeWire(currentWires, c.getDestinationWire());
-				t.getWires().put(c.getWire(), currentWires);
+				t.getWireHashMap().put(c.getWire(), currentWires);
 			}
 		}
 		
 		// Add all wires to wirePool for file creation
 		for(Tile[] tileArray : dev.tiles){
 			for(Tile t : tileArray){
-				if(t.getWires() == null) continue;
-				for(WireConnection[] wires : t.getWires().values()){
+				if(t.getWireHashMap() == null) continue;
+				for(WireConnection[] wires : t.getWireHashMap().values()){
 					if(wires == null) continue;
 					for(int i = 0; i < wires.length; i++){
 						wires[i] = dev.wirePool.add(wires[i]);
