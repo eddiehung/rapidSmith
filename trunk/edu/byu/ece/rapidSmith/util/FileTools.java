@@ -56,6 +56,7 @@ import edu.byu.ece.rapidSmith.device.WireEnumerator;
 import edu.byu.ece.rapidSmith.device.helper.HashPool;
 import edu.byu.ece.rapidSmith.device.helper.WireArray;
 import edu.byu.ece.rapidSmith.device.helper.WireArrayConnection;
+import edu.byu.ece.rapidSmith.device.helper.WireHashMap;
 import edu.byu.ece.rapidSmith.primitiveDefs.PrimitiveDefList;
 
 /**
@@ -117,7 +118,7 @@ public class FileTools {
 	//===================================================================================//
 	/* Custom Read/Write File Functions for Device/WireEnumeration Class                 */
 	//===================================================================================//
-	public static HashMap<String,Integer> readHashMap(Hessian2Input dis){
+	public static HashMap<String,Integer> readHashMap(Hessian2Input dis, Integer[] allInts){
 		int count;
 		HashMap<String,Integer> tileMap = null;
 		String[] keys;
@@ -130,7 +131,7 @@ public class FileTools {
 				keys[i] = dis.readString();
 			}
 			for(int i=0; i < count; i++){
-				tileMap.put(keys[i], dis.readInt());
+				tileMap.put(keys[i], allInts[dis.readInt()]);
 			}
 
 		} catch (IOException e) {
@@ -361,7 +362,7 @@ public class FileTools {
 		return p;
 	}
 
-	public static boolean writeWireHashMap(Hessian2Output dos, HashMap<Integer, WireConnection[]> wires, 
+	public static boolean writeWireHashMap(Hessian2Output dos, WireHashMap wires, 
 			HashPool<WireArray> wireArrayPool, HashPool<WireArrayConnection> wireConnectionPool) {
 
 		int[] wireConnections;
@@ -383,20 +384,29 @@ public class FileTools {
 		return true;
 	}
 
-	public static HashMap<Integer, WireConnection[]> readWireHashMap(Hessian2Input dis, ArrayList<WireConnection[]> wires, ArrayList<WireArrayConnection> wireConnections) {
+	public static WireHashMap readWireHashMap(Hessian2Input dis, ArrayList<WireConnection[]> wires, ArrayList<WireArrayConnection> wireConnections, Integer[] allInts) {
 		int[] intArray = readIntArray(dis);
 		
 		if(intArray == null){
 			return null;
 		}
-		
-		HashMap<Integer, WireConnection[]> newMap = new HashMap<Integer, WireConnection[]>(intArray.length, (float) 0.85);
-		
+				
+		WireHashMap newMap = new WireHashMap((int)(intArray.length*1.3f));
+		//HashMap<Integer, WireConnection[]> checkMap = new HashMap<Integer, WireConnection[]>(); 
 		for(int i : intArray){
 			WireArrayConnection wc = wireConnections.get(i);
-			newMap.put(wc.wire, wires.get(wc.wireArrayEnum));
+			newMap.put(allInts[wc.wire], wires.get(wc.wireArrayEnum));
+			//checkMap.put(allInts[wc.wire], wires.get(wc.wireArrayEnum));
 		}
-
+		//newMap.printTableDistribution();
+		//MessageGenerator.waitOnAnyKey();
+		/*for(Integer i : checkMap.keySet()){
+			if(!Arrays.equals(newMap.get(i), checkMap.get(i))){
+				System.out.println(i + " notEqual " + Arrays.toString(newMap.get(i)) + " " + Arrays.toString(checkMap.get(i)));
+				MessageGenerator.waitOnAnyKeySilent();
+			}
+		}*/
+		//System.out.println(newMap.collisions);
 		return newMap;
 	}
 

@@ -88,7 +88,7 @@ public class BrowseDevice{
 						String startWire = br.readLine().trim();
 						
 						while(true){
-							if(t.getWires() == null){
+							if(t.getWireHashMap() == null){
 								System.out.println("This tile has no wires.");
 								break;
 							}

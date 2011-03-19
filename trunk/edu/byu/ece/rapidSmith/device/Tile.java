@@ -25,8 +25,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Set;
 
 import edu.byu.ece.rapidSmith.design.PIP;
+import edu.byu.ece.rapidSmith.device.helper.WireHashMap;
 
 
 /**
@@ -49,7 +51,7 @@ public class Tile implements Serializable{
 	/** This is a list of the sources within the tile (generally in the primitives) */
 	private int[] sources;
 	/** This variable holds all the wires and their connections within the tile */
-	private HashMap<Integer,WireConnection[]> wireConnections;
+	private WireHashMap wireConnections;
 	/** An array of primitiveSites located within the tile (null if none) */
 	private PrimitiveSite[] primitiveSites;
 	/** Absolute tile row number - the index into the device Tiles[][] array */
@@ -70,8 +72,8 @@ public class Tile implements Serializable{
 	public Tile(){
 		sinks = null;
 		sources = null;
-		wireConnections = new HashMap<Integer,WireConnection[]>();
-		sinks = new HashMap<Integer, SinkPin>();
+		wireConnections = null;
+		sinks = null;
 		dev = null;
 	}
 	
@@ -100,6 +102,15 @@ public class Tile implements Serializable{
 		return sinks;
 	}
 
+	/**
+	 * Gets the actual sink pin object from the sink wire.
+	 * @param sink The sink wire.
+	 * @return The sink pin object based on the given sink wire.
+	 */
+	public SinkPin getSinkPin(Integer sink){
+		return sinks==null? null : sinks.get(sink);
+	}
+	
 	/**
 	 * This is used to populate the tile sinks and should probably not be called 
 	 * during normal usage.
@@ -130,10 +141,14 @@ public class Tile implements Serializable{
 	 * Gets and returns the wires HashMap for this tile.
 	 * @return The wires HashMap for this tile.
 	 */
-	public HashMap<Integer, WireConnection[]> getWires(){
+	public WireHashMap getWireHashMap(){
 		return wireConnections;
 	}
 
+	public Set<Integer> getWires(){
+		return wireConnections.keySet();
+	}
+	
 	/**
 	 * This will get all of the wire connections that can be 
 	 * made from the given wire in this tile.
@@ -149,7 +164,7 @@ public class Tile implements Serializable{
 	 * during normal usage.
 	 * @param wires The new wires to set for this tile.
 	 */
-	public void setWires(HashMap<Integer, WireConnection[]> wires){
+	public void setWireHashMap(WireHashMap wires){
 		this.wireConnections = wires;
 	}
 

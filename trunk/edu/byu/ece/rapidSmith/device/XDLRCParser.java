@@ -25,7 +25,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
+import edu.byu.ece.rapidSmith.device.helper.WireHashMap;
 import edu.byu.ece.rapidSmith.primitiveDefs.Connection;
 import edu.byu.ece.rapidSmith.primitiveDefs.Element;
 import edu.byu.ece.rapidSmith.primitiveDefs.PrimitiveDefPin;
@@ -303,6 +305,12 @@ public class XDLRCParser{
 				dev.setRows(Integer.parseInt(parts[1]));
 				dev.setColumns(Integer.parseInt(parts[2]));
 				dev.createTileArray();
+				for(Tile[] tiles : dev.tiles){
+					for(Tile tile : tiles){
+						tile.setWireHashMap(new WireHashMap());
+						tile.setSinks(new HashMap<Integer, SinkPin>());
+					}
+				}
 				dev.populateTileMap(DeviceFilesCreator.createDeviceTileMap(dev.getPartName()));
 			}
 			else if(line.startsWith("(xdl_resource_report ")){

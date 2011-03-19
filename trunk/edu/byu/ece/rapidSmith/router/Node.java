@@ -165,11 +165,11 @@ public class Node implements Comparable<Node>{
 	 */
 	public void setWire(int wire){
 		this.wire = wire;
-		this.wires = tile.getWires().get(wire);
+		this.wires = tile.getWireConnections(wire);
 	}
 
 	public SinkPin getSinkPin(){
-		return tile.getSinks().get(wire);
+		return tile.getSinkPin(wire);
 	}
 	
 	public Node getSwitchBoxSink(Device dev){

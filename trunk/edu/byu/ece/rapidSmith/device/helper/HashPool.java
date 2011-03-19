@@ -66,7 +66,8 @@ public class HashPool<E> extends HashMap<Integer,ArrayList<E>> {
 		ArrayList<Integer> enumerationMatches = enumerationMap.get(obj);
 		if(enumerationMatches == null){
 			System.out.println("Object does not have enumeration value: " + obj.toString() + " in class: " + this.getClass().getCanonicalName());
-			return -1;
+			throw new IllegalArgumentException();
+			//return -1;
 		}
 		else{
 			for(Integer i : enumerationMatches){
@@ -76,7 +77,8 @@ public class HashPool<E> extends HashMap<Integer,ArrayList<E>> {
 			}
 		}
 		System.out.println("Object does not have enumeration value: " + obj.toString() + " in class: " + this.getClass().getCanonicalName());
-		return -1;
+		throw new IllegalArgumentException();
+		//return -1;
 	}
 	
 	/**

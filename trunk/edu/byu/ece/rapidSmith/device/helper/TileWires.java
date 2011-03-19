@@ -22,9 +22,7 @@ package edu.byu.ece.rapidSmith.device.helper;
 
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.HashMap;
 
-import edu.byu.ece.rapidSmith.device.WireConnection;
 
 /**
  * A helper class to help remove duplicate objects and reduce memory usage and file
@@ -35,13 +33,13 @@ public class TileWires implements Serializable{
 
 	private static final long serialVersionUID = 1884345540813741720L;
 	/** Unique set of wires which belong to one or more tiles */
-	public HashMap<Integer,WireConnection[]> wires;
+	public WireHashMap wires;
 
 	/**
 	 * Constructor 
 	 * @param wires The wires of a tile.
 	 */
-	public TileWires(HashMap<Integer,WireConnection[]> wires){
+	public TileWires(WireHashMap wires){
 		this.wires = wires;
 	}
 
