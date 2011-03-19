@@ -133,14 +133,11 @@ public abstract class AbstractRouter{
 	 * @param wire
 	 */
 	protected void checkForIntermediateUsedNodes(PIP wire){
-		HashMap<Integer, WireConnection[]> wireMap = wire.getTile().getWires();
-		if(wireMap != null){
-			WireConnection[] wires = wireMap.get(wire.getEndWire());
-			if(wires != null && wires.length > 1){
-				for(WireConnection w : wires){
-					if(w.getRowOffset() != 0 || w.getColumnOffset() != 0){
-						setWireAsUsed(w.getTile(dev, wire.getTile()), w.getWire());
-					}
+		WireConnection[] wires = wire.getTile().getWireConnections(wire.getEndWire());
+		if(wires != null && wires.length > 1){
+			for(WireConnection w : wires){
+				if(w.getRowOffset() != 0 || w.getColumnOffset() != 0){
+					setWireAsUsed(w.getTile(dev, wire.getTile()), w.getWire());
 				}
 			}
 		}
