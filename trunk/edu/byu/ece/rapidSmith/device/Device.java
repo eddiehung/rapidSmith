@@ -1171,7 +1171,7 @@ public class Device implements Serializable{
 			ArrayList<WireHashMap> wireMaps = new ArrayList<WireHashMap>();
 			wireMaps.ensureCapacity(size);
 			for(int i=0; i < size; i++){
-				wireMaps.add(FileTools.readWireHashMap(his,wireArrays,wireConnections, allInts));
+				wireMaps.add(FileTools.readWireHashMap(his,wireArrays,wireConnections));
 			}
 			
 			//=======================================================//

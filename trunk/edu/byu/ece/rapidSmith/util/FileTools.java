@@ -384,7 +384,7 @@ public class FileTools {
 		return true;
 	}
 
-	public static WireHashMap readWireHashMap(Hessian2Input dis, ArrayList<WireConnection[]> wires, ArrayList<WireArrayConnection> wireConnections, Integer[] allInts) {
+	public static WireHashMap readWireHashMap(Hessian2Input dis, ArrayList<WireConnection[]> wires, ArrayList<WireArrayConnection> wireConnections){
 		int[] intArray = readIntArray(dis);
 		
 		if(intArray == null){
@@ -395,7 +395,7 @@ public class FileTools {
 		//HashMap<Integer, WireConnection[]> checkMap = new HashMap<Integer, WireConnection[]>(); 
 		for(int i : intArray){
 			WireArrayConnection wc = wireConnections.get(i);
-			newMap.put(allInts[wc.wire], wires.get(wc.wireArrayEnum));
+			newMap.put(wc.wire, wires.get(wc.wireArrayEnum));
 			//checkMap.put(allInts[wc.wire], wires.get(wc.wireArrayEnum));
 		}
 		//newMap.printTableDistribution();
