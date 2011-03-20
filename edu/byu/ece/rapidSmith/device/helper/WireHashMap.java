@@ -21,12 +21,10 @@
 package edu.byu.ece.rapidSmith.device.helper;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 import edu.byu.ece.rapidSmith.device.WireConnection;
-import edu.byu.ece.rapidSmith.util.MessageGenerator;
 
 /**
  * DO NOT USE THIS CLASS!  This class was specially developed for the Device 
@@ -55,7 +53,7 @@ public class WireHashMap{
     /**
      * The keys table. Length MUST Always be a power of two.
      */
-    public transient Integer[] keys;
+    public transient int[] keys;
     
     /**
      * The corresponding values table.
@@ -99,7 +97,7 @@ public class WireHashMap{
         this.loadFactor = loadFactor;
         threshold = (int)(finalCapacity * loadFactor);
         
-        keys = new Integer[finalCapacity];
+        keys = new int[finalCapacity];
         values = new WireConnection[finalCapacity][];
         size = 0;
     }
@@ -134,60 +132,50 @@ public class WireHashMap{
     }
     
     
-    public WireConnection[] get(Integer key){
-        if (key == null) return null;
+    public WireConnection[] get(int key){
         
-        int i = key.intValue() & (keys.length-1);//indexFor(key.intValue(), keys.length);
-        while(keys[i] != null && !keys[i].equals(key)){
+        int i = key & (keys.length-1);//indexFor(key.intValue(), keys.length);
+        while(values[i] != null && keys[i] != key){
         	i+=3;
         	if(i >= keys.length) i=i&3;
         }
         return values[i];
     } 
 
-    public void put(Integer key, WireConnection[] value){
-        int i = key.intValue() & (keys.length-1);//indexFor(key.intValue(), keys.length);
-        while(keys[i] != null && !keys[i].equals(key)){
+    public void put(int key, WireConnection[] value){
+        int i = key & (keys.length-1);//indexFor(key.intValue(), keys.length);
+        while(values[i] != null && keys[i] != key){
         	i+=3;
         	if(i >= keys.length) i=i&3;
         }
-        if(keys[i] == null) size++;
+        if(keys[i] == 0) size++;
         keys[i] = key;
         values[i] = value;
 
         if(size > threshold){
         	grow();
         }
-        
-        // TODO remove this test later
-        /*if(!Arrays.deepEquals(get(key), value)){
-        	System.out.println("value=" + Arrays.toString(value));
-        	System.out.println("get(key)=" + Arrays.toString(get(key)));
-        	MessageGenerator.briefError("Error, insertion failed in WireHashMap");
-        	throw new IllegalArgumentException("Ahhh!");
-        }*/
     }
     
     private void grow(){
     	int newCapacity = keys.length*2;
         threshold = (int)(newCapacity * loadFactor);
-    	Integer[] oldKeys = keys;
+    	int[] oldKeys = keys;
     	WireConnection[][] oldValues = values;
-        keys = new Integer[newCapacity];
+        keys = new int[newCapacity];
         values = new WireConnection[newCapacity][];
         size = 0;
-        for(int i=0; i < oldKeys.length; i++){
-			if(oldKeys[i] != null){
+        for(int i=0; i < oldValues.length; i++){
+			if(oldValues[i] != null){
 				put(oldKeys[i], oldValues[i]);
 			}
 		}
-       // System.out.println("old= " + oldKeys.length + " new=" + keys.length);
     }
     
     public Set<Integer> keySet(){
     	HashSet<Integer> keySet = new HashSet<Integer>();
     	for(int i=0; i < keys.length; i++)
-			if(keys[i] != null) 
+			if(values[i] != null) 
 				keySet.add(keys[i]);
     	return keySet;
     }
