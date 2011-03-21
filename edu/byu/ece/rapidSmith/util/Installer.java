@@ -79,6 +79,7 @@ public class Installer{
 	public static void main(String[] args){
 		MessageGenerator.printHeader("RapidSmith Release " + Device.rapidSmithVersion +" - Installer");
 		String[] names = null;
+		long timeStart = System.currentTimeMillis();
 		if(args.length == 0){
 			String nl = System.getProperty("line.separator");
 			
@@ -97,6 +98,7 @@ public class Installer{
 				"agreement accompanying this software (/docs/gpl2.txt)");
 		MessageGenerator.agreeToContinue();
 		
+		System.out.println("START: " + FileTools.getTimeString());
 		// Check if user supplied file with parameters
 		File tmp = new File(args[0]);
 		if(tmp.exists() && tmp.isFile()){
@@ -121,7 +123,8 @@ public class Installer{
 				DeviceFilesCreator.createPartFiles(partName);				
 			}
 		}
-		
+		System.out.println("END: " + FileTools.getTimeString());
+		System.out.println("Time Elapsed: " + (System.currentTimeMillis() - timeStart)/60000.0 + " minutes");
 		MessageGenerator.printHeader("Installer Completed Successfully!");
 	}
 }
