@@ -123,6 +123,7 @@ public class FileTools {
 		HashMap<String,Integer> tileMap = null;
 		String[] keys;
 		try {
+			// TODO - The following read is necessary, but could be removed in a future version
 			dis.readInt();//size = dis.readInt();
 			count = dis.readInt();
 			tileMap = new HashMap<String,Integer>(count);
@@ -146,6 +147,7 @@ public class FileTools {
 			for(String s : map.keySet()){
 				size += s.length() + 1;
 			}
+			//TODO - The loop above is not needed, and we don't need to write the int below (remove in future version)
 			dos.writeInt(size);
 			size = map.size();
 			dos.writeInt(size);
