@@ -394,21 +394,12 @@ public class FileTools {
 		}
 				
 		WireHashMap newMap = new WireHashMap((int)(intArray.length*1.3f));
-		//HashMap<Integer, WireConnection[]> checkMap = new HashMap<Integer, WireConnection[]>(); 
+
 		for(int i : intArray){
 			WireArrayConnection wc = wireConnections.get(i);
 			newMap.put(wc.wire, wires.get(wc.wireArrayEnum));
-			//checkMap.put(allInts[wc.wire], wires.get(wc.wireArrayEnum));
 		}
-		//newMap.printTableDistribution();
-		//MessageGenerator.waitOnAnyKey();
-		/*for(Integer i : checkMap.keySet()){
-			if(!Arrays.equals(newMap.get(i), checkMap.get(i))){
-				System.out.println(i + " notEqual " + Arrays.toString(newMap.get(i)) + " " + Arrays.toString(checkMap.get(i)));
-				MessageGenerator.waitOnAnyKeySilent();
-			}
-		}*/
-		//System.out.println(newMap.collisions);
+
 		return newMap;
 	}
 
