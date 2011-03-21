@@ -1168,8 +1168,7 @@ public class Device implements Serializable{
 			/* - tileWiresPool -                                     */
 			//=======================================================//
 			size = his.readInt();
-			ArrayList<WireHashMap> wireMaps = new ArrayList<WireHashMap>();
-			wireMaps.ensureCapacity(size);
+			ArrayList<WireHashMap> wireMaps = new ArrayList<WireHashMap>(size);
 			for(int i=0; i < size; i++){
 				wireMaps.add(FileTools.readWireHashMap(his,wireArrays,wireConnections));
 			}
