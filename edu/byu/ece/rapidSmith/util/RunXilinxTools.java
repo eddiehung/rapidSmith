@@ -85,7 +85,7 @@ public class RunXilinxTools {
 		String command = "xdl -report " + commandParameters + PartNameTools.removeSpeedGrade(partName) + " " + xdlrcFileName;
 		
 		if(PartNameTools.isFamilyTypeLegacy(PartNameTools.getFamilyTypeFromPart(partName))){
-			command = getBinPathToLegacyXilinxTools() + command;
+			command = getBinPathToLegacyXilinxTools() + File.separator + command;
 		}
 		
 		// Check to see if the file already exists
@@ -109,10 +109,12 @@ public class RunXilinxTools {
 			}
 		} 
 		catch (IOException e){
+			e.printStackTrace();
 			MessageGenerator.briefError("XDLRC generation failed: error during 'xdl' execution.");
 			return false;
 		}
 		catch (InterruptedException e){
+			e.printStackTrace();
 			MessageGenerator.briefError("XDLRC generation failed: process interrupted.");
 			return false;
 		}
@@ -184,8 +186,8 @@ public class RunXilinxTools {
 		try{
 			for(int i=0; i < familyNames.length; i++){
 				// Run partgen for each family
-				if(PartNameTools.isFamilyTypeLegacy(FamilyType.valueOf(familyNames[i])))
-					pathToPartgen = getBinPathToLegacyXilinxTools();
+				if(PartNameTools.isFamilyTypeLegacy(FamilyType.valueOf(familyNames[i].toUpperCase())))
+					pathToPartgen = getBinPathToLegacyXilinxTools() + File.separator;
 				else{
 					pathToPartgen = "";
 				}
