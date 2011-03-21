@@ -239,7 +239,7 @@ public class DeviceFilesCreator{
 			removeBackwardsEdgesFromDevice(partName);
 			
 			// Delete XDLRC file
-			//FileTools.deleteFile(xdlrcFileName);
+			FileTools.deleteFile(xdlrcFileName);
 			
 		}
 		catch(OutOfMemoryError e){
