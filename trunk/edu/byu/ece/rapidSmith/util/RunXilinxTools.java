@@ -33,9 +33,18 @@ import java.util.ArrayList;
  */
 public class RunXilinxTools {
 
+	/** Environment Variable Name which points to the bin directory of ISE 10.1 or below */
+	public static final String xilinxLegacyPathVariableName = "XILINX_LEGACY_PATH";
+	
 	public static String getBinPathToLegacyXilinxTools(){
-		// TODO Make this work on more than just my machine
-		return "C:\\Xilinx\\10.1\\ISE\\bin\\nt\\";
+		String path = System.getenv(xilinxLegacyPathVariableName);
+		if(path == null){
+			return "";
+		}
+		if(path.endsWith(File.separator)){
+			path.substring(0, path.length()-1);
+		}
+		return path;
 	}
 	
 	/**
