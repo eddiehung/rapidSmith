@@ -98,6 +98,16 @@ public class Pin implements Serializable, Cloneable {
 	}
 	
 	/**
+	 * Gets and returns the module instance name corresponding to the
+	 * instance of this pin. 
+	 * @return The name of the module instance associated with this pin or null
+	 * if none exist.
+	 */
+	public String getModuleInstanceName(){
+		return instance.getModuleInstanceName();
+	}
+	
+	/**
 	 * Gets and returns the tile where this pin resides. 
 	 * @return The tile where this pin resides.
 	 */
