@@ -62,7 +62,7 @@ public class Pin implements Serializable, Cloneable {
 	public Pin(boolean isOutputPin, String pinName, Instance instance){
 		this.isOutputPin = isOutputPin;
 		this.name = pinName;
-		this.instance = instance;
+		this.setInstance(instance);
 		this.port = null;
 	}
 
@@ -126,7 +126,13 @@ public class Pin implements Serializable, Cloneable {
 	 * @param instance The instance to which this pin belongs.
 	 */
 	public void setInstance(Instance instance){
+		if(this.instance != null){
+			this.instance.removePin(this);
+		}
 		this.instance = instance;
+		if(instance != null){
+			instance.addPin(this);
+		}
 	}
 	
 	/**

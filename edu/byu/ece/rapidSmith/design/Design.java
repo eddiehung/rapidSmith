@@ -108,6 +108,28 @@ public class Design implements Serializable{
 	}
 
 	/**
+	 * Creates a new design and populates it with the given design name and 
+	 * part name.
+	 * @param designName The name of the newly created design.
+	 * @param partName The target part name of the newly created design.
+	 */
+	public Design(String designName, String partName){
+		this();
+		setName(designName);
+		setPartName(partName);
+	}
+	
+	/**
+	 * Loads and creates a design from an XDL file.
+	 * @param xdlFileName Name of the XDL file to load into the design.
+	 */
+	public Design(String xdlFileName){
+		this();
+		loadXDLFile(xdlFileName);
+	}
+	
+	
+	/**
 	 * Loads the corresponding Device and WireEnumerator based on partName.
 	 */
 	public void loadDeviceAndWireEnumerator(){

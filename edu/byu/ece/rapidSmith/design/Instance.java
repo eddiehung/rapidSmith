@@ -22,6 +22,7 @@ package edu.byu.ece.rapidSmith.design;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
@@ -54,6 +55,8 @@ public class Instance implements Serializable{
 	private PrimitiveSite site;
 	/** A list of nets to which this instance is connected */
 	private HashSet<Net> netList;
+	/** A list of all pins on this instance which are connected in nets */
+	private HashMap<String, Pin> pinMap;
 	/** Name of the module instance which this instance belongs to */
 	private ModuleInstance moduleInstance;
 	/** The module template (or definition) this instance is a member of */
@@ -72,6 +75,7 @@ public class Instance implements Serializable{
 		bonded = null;
 		site = null;
 		netList = new HashSet<Net>();
+		pinMap = new HashMap<String, Pin>();
 		
 		// Null unless this instance is of a module
 		this.moduleInstance = null;
@@ -94,6 +98,7 @@ public class Instance implements Serializable{
 		bonded = null;
 		site = null;
 		netList = new HashSet<Net>();
+		pinMap = new HashMap<String, Pin>();
 		
 		// Null unless this instance is of a module
 		this.moduleInstance = null;
@@ -467,7 +472,22 @@ public class Instance implements Serializable{
 	}
 
 	/**
-	 * This does a brute force search over this nets connecting this
+	 * Adds a pin to the pin list of this instance.
+	 * @param pin The pin to add.
+	 */
+	public void addPin(Pin pin){
+		this.pinMap.put(pin.getName(), pin);
+	}
+	
+	/**
+	 * Removes the pin from the list
+	 */
+	public Pin removePin(Pin pin){
+		return this.pinMap.remove(pin.getName());
+	}
+	
+	/**
+	 * This does a brute force search over the nets connecting this
 	 * Instance to find a pin with the matching name, pinName. Unfortunately,
 	 * that means that this method is slow and probably will need to be 
 	 * improved upon.
@@ -475,14 +495,7 @@ public class Instance implements Serializable{
 	 * @return The Pin object with a matching pin name.
 	 */
 	public Pin getPin(String pinName){
-		for(Net net : netList){
-			for(Pin pin : net.getPins()){
-				if(pin.getName().equals(pinName) && pin.getInstanceName().equals(name)){
-					return pin;
-				}
-			}
-		}
-		return null;
+		return pinMap.get(pinName);
 	}
 	
 	/**

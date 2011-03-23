@@ -89,7 +89,7 @@ public class GuiModuleInstance extends QGraphicsPolygonItem {
 
 	private void init() {
 		switchboxTypes = moduleInstance.getDesign().getDevice().getSwitchMatrixTypes();
-		ArrayList<Tile> occupiedTiles = new ArrayList<Tile>();
+		HashSet<Tile> occupiedTiles = new HashSet<Tile>();
 		HashSet<Tile> tilesWithSLICEM = new HashSet<Tile>();
 		Collection<Instance> instances = null;
 		Collection<Net> nets = null;
