@@ -456,15 +456,51 @@ public class PrimitiveSite implements Serializable{
 					compatibleSites.put(PrimitiveType.SLICEL,
 							new PrimitiveType[]{PrimitiveType.SLICEM});		
 					break;
+				case ARTIX7:
+				case KINTEX7:
+				case VIRTEX7:
+					compatibleSites.put(PrimitiveType.BUFG,
+							new PrimitiveType[]{PrimitiveType.BUFGCTRL});
+					compatibleSites.put(PrimitiveType.FIFO36E1,
+							new PrimitiveType[]{PrimitiveType.RAMBFIFO36E1});
+					compatibleSites.put(PrimitiveType.ILOGICE2,
+							new PrimitiveType[]{PrimitiveType.ILOGICE3});
+					compatibleSites.put(PrimitiveType.IOB,
+							new PrimitiveType[]{PrimitiveType.IOB18, PrimitiveType.IOB18M, PrimitiveType.IOB18S, PrimitiveType.IOB33, PrimitiveType.IOB33M, PrimitiveType.IOB33S});
+					compatibleSites.put(PrimitiveType.IOB18,
+							new PrimitiveType[]{PrimitiveType.IOB18M, PrimitiveType.IOB18S});
+					compatibleSites.put(PrimitiveType.IOB33,
+							new PrimitiveType[]{PrimitiveType.IOB33M, PrimitiveType.IOB33S});
+					compatibleSites.put(PrimitiveType.IOBM,
+							new PrimitiveType[]{PrimitiveType.IOB18M, PrimitiveType.IOB33M});
+					compatibleSites.put(PrimitiveType.IOBS,
+							new PrimitiveType[]{PrimitiveType.IOB18S, PrimitiveType.IOB33S});
+					compatibleSites.put(PrimitiveType.IPAD,
+							new PrimitiveType[]{PrimitiveType.IOB18M, PrimitiveType.IOB18S, PrimitiveType.IOB33M, PrimitiveType.IOB33S});
+					compatibleSites.put(PrimitiveType.ISERDESE2,
+							new PrimitiveType[]{PrimitiveType.ILOGICE2, PrimitiveType.ILOGICE3});
+					compatibleSites.put(PrimitiveType.OLOGICE2,
+							new PrimitiveType[]{PrimitiveType.OLOGICE3});
+					compatibleSites.put(PrimitiveType.OSERDESE2,
+							new PrimitiveType[]{PrimitiveType.OLOGICE2, PrimitiveType.OLOGICE3});
+					compatibleSites.put(PrimitiveType.PHASER_IN,
+							new PrimitiveType[]{PrimitiveType.PHASER_IN_PHY});
+					compatibleSites.put(PrimitiveType.PHASER_IN_ADV,
+							new PrimitiveType[]{PrimitiveType.PHASER_IN_PHY});
+					compatibleSites.put(PrimitiveType.PHASER_OUT,
+							new PrimitiveType[]{PrimitiveType.PHASER_OUT_PHY});
+					compatibleSites.put(PrimitiveType.PHASER_OUT_ADV,
+							new PrimitiveType[]{PrimitiveType.PHASER_OUT_PHY});
+					compatibleSites.put(PrimitiveType.RAMB18E1,
+							new PrimitiveType[]{PrimitiveType.FIFO18E1});
+					compatibleSites.put(PrimitiveType.RAMB36E1,
+							new PrimitiveType[]{PrimitiveType.RAMBFIFO36E1});
+					compatibleSites.put(PrimitiveType.SLICEL,
+							new PrimitiveType[]{PrimitiveType.SLICEM});	
+					break;
 				case VIRTEXE:
 					compatibleSites.put(PrimitiveType.IOB,
 							new PrimitiveType[]{PrimitiveType.DLLIOB, PrimitiveType.PCIIOB});
-					break;
-				case ARTIX7:
-					break;
-				case KINTEX7:
-					break;
-				case VIRTEX7:
 					break;
 				default:
 					break;
