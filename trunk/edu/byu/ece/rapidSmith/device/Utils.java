@@ -43,7 +43,7 @@ public class Utils{
 	 * @return The PrimitiveType corresponding to the string s, null if none exists.
 	 */
 	public static PrimitiveType createPrimitiveType(String s){
-		return PrimitiveType.valueOf(s);
+		return PrimitiveType.valueOf(s.toUpperCase());
 	}
 
 	/**
@@ -53,7 +53,7 @@ public class Utils{
 	 * @return The TileType corresponding to String s, null if none exists.
 	 */
 	public static TileType createTileType(String s){
-		return TileType.valueOf(s);
+		return TileType.valueOf(s.toUpperCase());
 	}
 	
 	/**
