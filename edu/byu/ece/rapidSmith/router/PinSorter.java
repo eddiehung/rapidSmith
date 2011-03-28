@@ -91,7 +91,7 @@ public class PinSorter{
 		public Node node;
 		public Pin pin;
 		public Net net;
-		
+		public Node reservedResource = null;
 		public StaticSink(Node node, Pin pin, Net net) {
 			this.node = node;
 			this.pin = pin;
