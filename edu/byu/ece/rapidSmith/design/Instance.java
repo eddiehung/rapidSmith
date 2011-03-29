@@ -22,8 +22,10 @@ package edu.byu.ece.rapidSmith.design;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.PrimitiveType;
@@ -464,7 +466,7 @@ public class Instance implements Serializable{
 	}
 
 	/**
-	 * Adds the XDL_Net net to the end of the netList for this instance
+	 * Adds the net to the end of the netList for this instance
 	 * @param net The net to be added
 	 */
 	public void addToNetList(Net net){
@@ -487,12 +489,10 @@ public class Instance implements Serializable{
 	}
 	
 	/**
-	 * This does a brute force search over the nets connecting this
-	 * Instance to find a pin with the matching name, pinName. Unfortunately,
-	 * that means that this method is slow and probably will need to be 
-	 * improved upon.
-	 * @param pinName Name of the pin to find.
-	 * @return The Pin object with a matching pin name.
+	 * This method will get and return the instantiation of the Pin class object
+	 * that represents a used pin on this instance given the pin name.
+	 * @param pinName Name of the pin on this instance.
+	 * @return The Pin instantiation with matching pinName.
 	 */
 	public Pin getPin(String pinName){
 		return pinMap.get(pinName);
@@ -504,6 +504,22 @@ public class Instance implements Serializable{
 	 */
 	public HashMap<String, Pin> getPinMap(){
 		return pinMap;
+	}
+	
+	/**
+	 * Gets all the pin names that are currently being used on this instance.
+	 * @return A set of pin names used on this instance.
+	 */
+	public Set<String> getUsedPinNames(){
+		return pinMap.keySet();
+	}
+	
+	/**
+	 * Gets and returns the set of pins being used on this instance.
+	 * @return A set of pins being used on this instance.
+	 */
+	public Collection<Pin> getUsedPins(){
+		return pinMap.values();
 	}
 	
 	/**
