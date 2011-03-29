@@ -140,7 +140,7 @@ public class Pin implements Serializable, Cloneable {
 			this.instance.removePin(this);
 		}
 		this.instance = instance;
-		if(instance != null){
+		if(name != null && instance != null){
 			instance.addPin(this);
 		}
 	}

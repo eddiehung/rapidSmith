@@ -484,6 +484,7 @@ public class DesignParser{
 				break;
 			case PIN_NAME:
 				currPin.setPinName(pool.getUnique(token));
+				currPin.getInstance().addPin(currPin);
 				if(currModule != null){
 				    modPinMap.put(currPin.getInstanceName() + currPin.getName(), currPin);
 				}
