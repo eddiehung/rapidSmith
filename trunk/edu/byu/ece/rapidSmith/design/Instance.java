@@ -476,7 +476,7 @@ public class Instance implements Serializable{
 	 * @param pin The pin to add.
 	 */
 	public void addPin(Pin pin){
-		this.pinMap.put(pin.getName(), pin);
+		if(pin.getName() != null) this.pinMap.put(pin.getName(), pin);
 	}
 	
 	/**
@@ -496,6 +496,14 @@ public class Instance implements Serializable{
 	 */
 	public Pin getPin(String pinName){
 		return pinMap.get(pinName);
+	}
+	
+	/**
+	 * Gets the pin map for this instance.
+	 * @return Returns the pin map for this instance.
+	 */
+	public HashMap<String, Pin> getPinMap(){
+		return pinMap;
 	}
 	
 	/**
