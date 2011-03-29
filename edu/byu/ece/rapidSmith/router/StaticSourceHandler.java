@@ -583,6 +583,7 @@ public class StaticSourceHandler{
 				if(ss.reservedResource != null){
 					addReservedNode(ss.reservedResource, matchingNet);
 				}
+
 				
 				
 				// Special case with CLK pins BRAMs on Virtex5 devices, when competing for FANs against GND Nets
@@ -603,6 +604,11 @@ public class StaticSourceHandler{
 			for(StaticSink ss : ps.attemptTIEOFF){
 				Instance inst = updateTIEOFF(ss.node.tile, ss.net, false);
 				Net matchingNet = null;
+				
+				//if(ss.node.getTile().getName().equals("INT_X19Y104") && ss.node.getWire() == we.getWireEnum("BYP_B1")){
+				//	System.out.println("Here: " + ss.node.toString(we));
+				//}
+				//TODO
 				// Find the correct net corresponding to this TIEOFF if it exists
 				for(Net net : inst.getNetList()){
 					if(net.getType().equals(ss.net.getType()) && !net.getSource().getName().equals("HARD1")){
@@ -626,7 +632,16 @@ public class StaticSourceHandler{
 				if(dev.getFamilyType().equals(FamilyType.VIRTEX5)){
 					int switchBoxSink = ss.node.wire;			
 					
-					if(switchBoxSink == v5ctrlWires[0] || switchBoxSink == v5ctrlWires[1] || switchBoxSink == v5ctrlWires[2] || switchBoxSink == v5ctrlWires[3]){
+					if(we.getWireName(ss.node.getWire()).startsWith("BYP_B")){
+						Node nn = new Node(inst.getTile(), we.getWireEnum(we.getWireName(switchBoxSink).replace("_B","")), null, 0);
+						if(ss.net.getType().equals(NetType.VCC)){
+							vccReserved.add(nn);
+						}
+						else{
+							gndReserved.add(nn);
+						}
+					}
+					else if(switchBoxSink == v5ctrlWires[0] || switchBoxSink == v5ctrlWires[1] || switchBoxSink == v5ctrlWires[2] || switchBoxSink == v5ctrlWires[3]){
 						Node nn = new Node(inst.getTile(), we.getWireEnum(we.getWireName(switchBoxSink).replace("_B","")), null, 0);
 						if(ss.net.getType().equals(NetType.VCC)){
 							vccReserved.add(nn);
