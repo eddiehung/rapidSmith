@@ -29,6 +29,8 @@ import com.trolltech.qt.core.Qt.Orientation;
 import com.trolltech.qt.gui.QGraphicsScene;
 import com.trolltech.qt.gui.QGraphicsView;
 import com.trolltech.qt.gui.QGridLayout;
+import com.trolltech.qt.gui.QLabel;
+import com.trolltech.qt.gui.QLineEdit;
 import com.trolltech.qt.gui.QSplitter;
 import com.trolltech.qt.gui.QWidget;
 
@@ -60,6 +62,10 @@ public class TileWindow extends QWidget{
 	protected Design design;
 	/** The layout for the window */
 	private QGridLayout layout;
+	/** The sidebar view (for use with timing analysis) */
+	protected QGraphicsView sidebarView;
+	
+	protected TimingSlider slider;
 	
 	protected QGraphicsScene sidebarScene;
 	/**
@@ -72,15 +78,25 @@ public class TileWindow extends QWidget{
 		view = new TileView(scene);
 		layout = new QGridLayout();
 
-		sidebarScene = new QGraphicsScene(this);
-		TimingSlider slider = new TimingSlider(scene);
-		sidebarScene.addWidget(slider);
-		
-		
+		// Side bar setup
+		QGridLayout sidebarLayout = new QGridLayout();
+		sidebarScene = new QGraphicsScene(this);		
+		QLineEdit textBox = new QLineEdit();
+		sidebarView = new QGraphicsView(sidebarScene);
+		slider = new TimingSlider(scene, textBox);
+		slider.setFixedHeight(200);
+		sidebarLayout.addWidget(new QLabel("Choose\nConstraint:"), 0, 0);
+		sidebarLayout.addWidget(slider, 1, 0);
+		sidebarLayout.addWidget(textBox, 2, 0);
+		sidebarLayout.addWidget(new QLabel("ns"), 2, 1);
+		sidebarView.setLayout(sidebarLayout);
+		slider.sliderMoved.connect(slider, "updatePaths(Integer)");
+		textBox.textChanged.connect(slider, "updateText(String)");
 		
 		QSplitter splitter = new QSplitter(Orientation.Horizontal);
 		splitter.setEnabled(true);
-		splitter.addWidget(new QGraphicsView(sidebarScene));
+		sidebarView.setMinimumWidth(90);
+		splitter.addWidget(sidebarView);
 		splitter.addWidget(view);
 		layout.addWidget(splitter);		
 		this.setLayout(layout);
@@ -140,6 +156,7 @@ public class TileWindow extends QWidget{
 			}
 			scn.drawPath(conns, pd);
 		}
+		scn.sortPaths();
 	}
 	
 	public ArrayList<Connection> getAllConnections(Net net){

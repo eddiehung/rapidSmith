@@ -233,6 +233,7 @@ public class DesignExplorer extends QMainWindow{
 		tabs.addTab(offsetWindow, PATH_OFFSETS);
 		
 		tileWindow.drawCriticalPaths(delays);
+		tileWindow.slider.setDelays();
 	}
 	
 	/**
