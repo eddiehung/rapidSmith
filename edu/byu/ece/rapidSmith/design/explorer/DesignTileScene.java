@@ -21,6 +21,7 @@
 package edu.byu.ece.rapidSmith.design.explorer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import com.trolltech.qt.core.Qt.PenStyle;
 import com.trolltech.qt.gui.QBrush;
@@ -85,8 +86,17 @@ public class DesignTileScene extends TileScene {
 		}
 		else if(pd.getDelay() < minDelay){
 			minDelay = pd.getDelay();
+		}	
+	}
+	
+	public void sortPaths(){
+		PathItem[] paths = new PathItem[currLines.size()];
+		paths = currLines.toArray(paths);
+		Arrays.sort(paths);
+		currLines.clear();
+		for(PathItem p : paths){
+			currLines.add(p);
 		}
-		
 	}
 	
 	/*public void drawWire(Connection conn){

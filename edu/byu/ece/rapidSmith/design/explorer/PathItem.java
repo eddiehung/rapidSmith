@@ -20,8 +20,6 @@
  */
 package edu.byu.ece.rapidSmith.design.explorer;
 
-import java.io.File;
-
 import com.trolltech.qt.core.Qt.MouseButton;
 import com.trolltech.qt.core.Qt.PenStyle;
 import com.trolltech.qt.gui.QColor;
@@ -30,15 +28,19 @@ import com.trolltech.qt.gui.QGraphicsSceneHoverEvent;
 import com.trolltech.qt.gui.QGraphicsSceneMouseEvent;
 import com.trolltech.qt.gui.QPainterPath;
 import com.trolltech.qt.gui.QPen;
-import com.trolltech.qt.gui.QSound;
 
 import edu.byu.ece.rapidSmith.timing.PathDelay;
 
-public class PathItem extends QGraphicsPathItem {
+@SuppressWarnings("rawtypes")
+public class PathItem extends QGraphicsPathItem implements Comparable{
+	/** Keeps a green pen handy for selected wire connections on mouse over */
+	private static QPen selectedPen  = new QPen(QColor.fromRgb(255, 125, 0), 1.5, PenStyle.SolidLine);
 	/** Keeps a red pen handy for highlighting wire connections on mouse over */
-	private static QPen highlighted  = new QPen(QColor.red, 0.75, PenStyle.SolidLine);
+	private static QPen highlighted  = new QPen(QColor.red, 1.0, PenStyle.SolidLine);
 	/** Keeps a yellow pen for drawing the wire connections */
-	private static QPen unHighlighted = new QPen(QColor.yellow, 0.75, PenStyle.SolidLine);
+	private static QPen unHighlighted = new QPen(QColor.yellow, 1.0, PenStyle.SolidLine);
+	
+	private QPen constraintPen;
 	
 	private boolean selected = false;
 	
@@ -47,36 +49,47 @@ public class PathItem extends QGraphicsPathItem {
 	public PathItem(QPainterPath path, PathDelay pd){
 		super(path);
 		this.setPath(pd);
+		this.setZValue(this.zValue()+10);
+		constraintPen = unHighlighted;
 	}
 
 	@Override
 	public void hoverEnterEvent(QGraphicsSceneHoverEvent event){
-		this.setPen(highlighted);
+		this.setPen(selectedPen);
 		this.setZValue(this.zValue()+1);
-		//QSound.play(DesignExplorer.rsrcPath + File.separator + "bugZapper.wav");
 	}
 	
 	@Override
 	public void hoverLeaveEvent(QGraphicsSceneHoverEvent event){
 		if(!selected){
-			this.setPen(unHighlighted);
+			this.setPen(constraintPen);
 			this.setZValue(this.zValue()-1);			
 		}
 	}
 	
 	public void setHighlighted(){
-		
+		constraintPen = highlighted;
+		if(!selected){
+			this.setPen(constraintPen);
+		}
+	}
+	
+	public void setUnhighlighted(){
+		constraintPen = unHighlighted;
+		if(!selected){
+			this.setPen(constraintPen);							
+		}
 	}
 	
 	@Override
 	public void mousePressEvent(QGraphicsSceneMouseEvent event){
 		if(!event.button().equals(MouseButton.LeftButton)) return;
 		if(selected){
-			this.setPen(unHighlighted);
+			this.setPen(constraintPen);
 			selected = false;			
 		}
 		else{
-			this.setPen(highlighted);
+			this.setPen(selectedPen);
 			selected = true;
 		}
 	}
@@ -93,5 +106,10 @@ public class PathItem extends QGraphicsPathItem {
 	 */
 	public PathDelay getPath() {
 		return pd;
+	}
+
+	@Override
+	public int compareTo(Object arg0) {
+		return (int) ((pd.getDelay() - ((PathItem)arg0).pd.getDelay())*1000.0);
 	}
 }
