@@ -105,6 +105,10 @@ public abstract class AbstractRouter{
 		currSink = new Node();
 	}
 	
+	public Design getDesign(){
+		return design;
+	}
+	
 	/**
 	 * Sets a wire as used for the given routing
 	 * @param t The tile in the node that is used

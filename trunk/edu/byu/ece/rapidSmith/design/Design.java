@@ -679,6 +679,32 @@ public class Design implements Serializable{
 		saveXDLFile(fileName, false);
 	}
 
+	
+	
+	public String getMaxClkPeriodOfModuleInstancesReport(){
+		String nl = System.getProperty("line.separator");
+		float maxModulePeriod = 0.0f;
+		int missingClockRate = 0;
+		for(ModuleInstance mi : getModuleInstances()){
+			float currModuleClkPeriod = mi.getModule().getMinClkPeriod(); 
+			if(currModuleClkPeriod != Float.MAX_VALUE){
+				if(currModuleClkPeriod > maxModulePeriod)
+					maxModulePeriod = currModuleClkPeriod;
+			}
+			else{
+				missingClockRate++;
+			}
+		}
+		StringBuilder sb = new StringBuilder(nl + "Theoretical Min Clock Period: " +
+				String.format("%6.3f", maxModulePeriod) +
+				" ns (" + 1000.0f*(1/maxModulePeriod) +" MHz)" + nl);
+		if(missingClockRate > 0){
+			sb.append("  (Although, " + missingClockRate + " module instances did not have min clock period stored)" + nl);
+		}
+		
+		return sb.toString();
+	}
+	
 	/**
 	 * Saves the XDL design and adds comments based on the parameter addComments.
 	 * @param fileName Name of the file to save the design to. 

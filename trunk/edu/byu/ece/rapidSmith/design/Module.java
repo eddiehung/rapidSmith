@@ -68,7 +68,8 @@ public class Module implements Serializable{
 	private HashMap<String,Net> netMap;
 	/** This provides meta data for scenarios where inputs map directly to outputs in hard macros */
 	private HashMap<String, ArrayList<String>> externalPortMap = null;
-	
+	/** Keeps track of the minimum clock period of this module */
+	private float minClkPeriod = Float.MAX_VALUE; 
 	/**
 	 * Empty constructor, strings are null, everything else is initialized
 	 */
@@ -281,6 +282,20 @@ public class Module implements Serializable{
 	 */
 	public HashMap<String, ArrayList<String>> getExternalPortMap() {
 		return externalPortMap;
+	}
+
+	/**
+	 * @return the minClkPeriod
+	 */
+	public float getMinClkPeriod() {
+		return minClkPeriod;
+	}
+
+	/**
+	 * @param minClkPeriod the minClkPeriod to set
+	 */
+	public void setMinClkPeriod(float minClkPeriod) {
+		this.minClkPeriod = minClkPeriod;
 	}
 
 	/**
@@ -530,6 +545,7 @@ public class Module implements Serializable{
 			
 			if(externalPortMap != null){
 				FileTools.writeStringMultiMap(hos, externalPortMap);
+				hos.writeDouble(minClkPeriod);
 			}
 			
 			hos.close();
@@ -742,6 +758,7 @@ public class Module implements Serializable{
 			
 			if(!his.isEnd()){
 				setExternalPortMap(FileTools.readStringMultiMap(his));
+				if(!his.isEnd())this.minClkPeriod = (float) his.readDouble();
 			}
 			
 			his.close();
