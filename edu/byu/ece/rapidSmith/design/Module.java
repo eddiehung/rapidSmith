@@ -765,6 +765,7 @@ public class Module implements Serializable{
 			
 		} catch(IOException e){
 			e.printStackTrace();
+			MessageGenerator.briefErrorAndExit("ERROR: Could not load hard macro!");
 		}
 	}
 	
