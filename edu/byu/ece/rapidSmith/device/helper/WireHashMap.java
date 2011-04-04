@@ -20,6 +20,7 @@
  */
 package edu.byu.ece.rapidSmith.device.helper;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -31,9 +32,14 @@ import edu.byu.ece.rapidSmith.device.WireConnection;
  * wire connections hash map.  It is specifically optimized for that purpose.
  * Created on: Mar 18, 2011
  */
-public class WireHashMap{
+public class WireHashMap implements Serializable{
 
     /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1812997315891050408L;
+
+	/**
      * The default initial capacity - MUST be a power of two.
      */
     static final int DEFAULT_INITIAL_CAPACITY = 16;
