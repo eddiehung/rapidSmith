@@ -220,6 +220,7 @@ public class Net implements Comparable<Net>, Serializable {
 			fanOut++;
 		}
 		pins.add(pin);
+		pin.setNet(this);
 		return true;
 	}
 	/**
@@ -249,6 +250,7 @@ public class Net implements Comparable<Net>, Serializable {
 		else{
 			fanOut--;
 		}
+		pin.setNet(null);
 		return pins.remove(pin);
 	}
 	

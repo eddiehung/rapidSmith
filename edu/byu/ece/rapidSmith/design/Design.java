@@ -221,7 +221,9 @@ public class Design implements Serializable{
 			inst.setName(prefix+templateInst.getName());
 			inst.setModuleTemplate(module);
 			inst.setModuleTemplateInstance(templateInst);
-			inst.setAttributes(new ArrayList<Attribute>(templateInst.getAttributes()));
+			for(Attribute attr : templateInst.getAttributes()){
+				inst.addAttribute(attr);
+			}
 			inst.setBonded(templateInst.getBonded());
 			inst.setType(templateInst.getType());
 			

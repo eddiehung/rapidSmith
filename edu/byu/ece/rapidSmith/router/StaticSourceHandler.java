@@ -211,7 +211,7 @@ public class StaticSourceHandler{
 				}
 			}
 			else{ // Let's look at the other nets, reserve nodes that they will need
-				if(net.isStaticNet()){
+				if(net.isStaticNet() && net.getPIPs().size() == 0){
 					MessageGenerator.briefErrorAndExit("ERROR: Static Net found with a source: " + net.getName());
 				}
 				
@@ -896,18 +896,18 @@ public class StaticSourceHandler{
 				for(PrimitiveSite site : currentTile.getPrimitiveSites()){
 					if(!router.design.getUsedPrimitiveSites().contains(site) && (site.getType().equals(PrimitiveType.SLICEL) || site.getType().equals(PrimitiveType.SLICEM))){
 						Instance returnMe = new Instance();
-						ArrayList<Attribute> list = new ArrayList<Attribute>();
-						list.add(new Attribute("_NO_USER_LOGIC","",""));
+						HashMap<String, Attribute> attributeMap = new HashMap<String, Attribute>();
+						attributeMap.put("_NO_USER_LOGIC", new Attribute("_NO_USER_LOGIC","",""));
 						if(sourceType.equals(NetType.VCC)){
-							list.add(new Attribute("_VCC_SOURCE","",slicePin));	
+							attributeMap.put("_VCC_SOURCE", new Attribute("_VCC_SOURCE","",slicePin));	
 						}
 						else{
-							list.add(new Attribute("_GND_SOURCE","",slicePin));
+							attributeMap.put("_GND_SOURCE", new Attribute("_GND_SOURCE","",slicePin));
 						}
 						
 						returnMe.place(site);
 						returnMe.setType(PrimitiveType.SLICEL);
-						returnMe.setAttributes(list);
+						returnMe.setAttributes(attributeMap);
 						returnMe.setName("XDL_DUMMY_" + returnMe.getTile() + "_" + site.getName());
 						return returnMe;
 					}

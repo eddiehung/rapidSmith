@@ -23,31 +23,14 @@ package edu.byu.ece.rapidSmith.tests;
 import edu.byu.ece.rapidSmith.design.Design;
 import edu.byu.ece.rapidSmith.util.MessageGenerator;
 
-public class CheckDesignMemoryUsage {
-	public static void main(String[] args) {
-		if(args.length != 1){
-			MessageGenerator.briefMessageAndExit("USAGE: <designFile.xdl>");
+public class CreateDiffXDL {
+	public static void main(String[] args){
+		if(args.length != 2){
+			MessageGenerator.briefMessageAndExit("USAGE: <firstXDLDesign.xdl> <secondXDLDesign.xdl>");
 		}
-		// Measure Initial Heap Size
-		Runtime rt = Runtime.getRuntime();
-		System.gc();
-		long initial_usage = rt.totalMemory() - rt.freeMemory();
-
-		// Start Timer
-		long start = System.nanoTime();
-		
-		Design design = new Design(args[0]);
-		
-		// Stop Timer
-		long stop = System.nanoTime();
-		
-		// Measure Final Heap Size
-		System.gc();
-		long total_usage = rt.totalMemory() - rt.freeMemory() - initial_usage;
-		
-		System.out.printf("Loaded %s design in %5.3f seconds using %d MBs of heap space.%s", 
-			design.getPartName(), (stop-start)/1000000000.0, total_usage/(1024*1024), System.getProperty("line.separator"));
-		
-		design.saveXDLFile(args[0].replace(".xdl", "_saved.xdl"), true);
+		Design d1 = new Design(args[0]);
+		Design d2 = new Design(args[1]);
+		d1.saveComparableXDLFile(args[0].replace(".xdl", "_diff.xdl"));
+		d2.saveComparableXDLFile(args[1].replace(".xdl", "_diff.xdl"));
 	}
 }

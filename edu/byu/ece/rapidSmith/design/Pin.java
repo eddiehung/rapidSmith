@@ -42,6 +42,8 @@ public class Pin implements Serializable, Cloneable {
 	private Instance instance;
 	/** The Port that references this pin, if there is one */
 	private Port port;
+	/** The net this pin is a member of */
+	private Net net;
 	
 	/**
 	 * Constructor setting things to null and false.
@@ -51,6 +53,7 @@ public class Pin implements Serializable, Cloneable {
 		this.name = null;
 		this.setInstance(null);
 		this.port = null;
+		this.setNet(null);
 	}
 	
 	/**
@@ -161,6 +164,20 @@ public class Pin implements Serializable, Cloneable {
 		return this.port;
 	}
 	
+	/**
+	 * @param net the net to set
+	 */
+	public void setNet(Net net) {
+		this.net = net;
+	}
+
+	/**
+	 * @return the net
+	 */
+	public Net getNet() {
+		return net;
+	}
+
 	/**
 	 * Generates an equivalent XDL string representation of the pin.
 	 */

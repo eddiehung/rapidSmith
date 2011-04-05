@@ -628,13 +628,13 @@ public class Module implements Serializable{
 				
 				int attributeSize = his.readInt();
 				if(attributeSize != 0){
-					ArrayList<Attribute> attributes = new ArrayList<Attribute>(attributeSize);
+					HashMap<String, Attribute> attributes = new HashMap<String, Attribute>(attributeSize);
 					for(int j = 0; j < attributeSize; j++){
 						String physicalName = strings[his.readInt()];
 						String logicalName = strings[his.readInt()];
 						String value = strings[his.readInt()];
 						
-						attributes.add(new Attribute(physicalName, logicalName, value));
+						attributes.put(physicalName, new Attribute(physicalName, logicalName, value));
 						
 					}
 					instance.setAttributes(attributes);
