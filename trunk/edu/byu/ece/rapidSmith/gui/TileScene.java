@@ -516,7 +516,7 @@ public class TileScene extends QGraphicsScene{
 			tileColumnTypesToHide.add(TileType.INT_BUFS_R);
 			tileColumnTypesToHide.add(TileType.INT_BUFS_R_MON);
 			tileColumnTypesToHide.add(TileType.INT_INTERFACE);
-			tileColumnTypesToHide.add(TileType.IOI);
+			//tileColumnTypesToHide.add(TileType.IOI);
 			tileRowTypesToHide.add(TileType.HCLK); 
 			tileRowTypesToHide.add(TileType.BRKH);
 		case VIRTEX6:

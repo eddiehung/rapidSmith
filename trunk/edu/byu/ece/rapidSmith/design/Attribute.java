@@ -26,7 +26,11 @@ import java.io.Serializable;
  * The Attribute object in XDL is used in several places, Design, Instance, Net 
  * and Module.  Each are generally a list of attributes.  An attribute in XDL consists
  * of a triplet of Strings separated by colons: "Physical Name":"Logical Name":"Value".
- * This class captures these elements of an attribute.  
+ * This class captures these elements of an attribute. One must also note, that in XDL,
+ * the physical name of an attribute can have multiple logical names and/or values.  To
+ * Make this work in a typical hashmap (as used in the Instance class), the multiple 
+ * logical and value strings are separated by the multiValueSeparator char found in this
+ * class.  
  * @author Chris Lavin
  * Created on: Jun 22, 2010
  */
@@ -40,6 +44,11 @@ public class Attribute implements Serializable{
 	private String logicalName;
 	/** Value of the attribute (::_) */
 	private String value;
+	/** 
+	 * This is used to separate multiple value and multiple logical names 
+	 * found in attributes where multiple entries have the same physical name.
+	 */
+	public static final String multiValueSeparator = "`";
 	
 	/**
 	 * @param physicalName Physical name of the attribute (_::)
@@ -117,6 +126,19 @@ public class Attribute implements Serializable{
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
+		if(logicalName.contains(multiValueSeparator)){
+			String[] logicalNames = logicalName.split(multiValueSeparator, -1);
+			String[] values = value.split(multiValueSeparator, -1);
+			for (int i = 0; i < values.length; i++) {
+				sb.append(physicalName);
+				sb.append(":");
+				sb.append(logicalNames[i]);
+				sb.append(":");
+				sb.append(values[i]);
+				if(i < values.length-1) sb.append(" ");
+			}
+			return sb.toString();
+		}
 		sb.append(physicalName);
 		sb.append(":");
 		sb.append(logicalName);

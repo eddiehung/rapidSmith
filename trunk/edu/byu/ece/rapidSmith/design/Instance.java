@@ -21,7 +21,6 @@
 package edu.byu.ece.rapidSmith.design;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -48,7 +47,7 @@ public class Instance implements Serializable{
 	 * it is null if this instance is part of a module definition */
 	private transient Design design;
 	/** All of the attributes in this instance */
-	private ArrayList<Attribute> attributes;
+	private HashMap<String, Attribute> attributes;
 	/** Type of the instance (e.g. "SLICEM" or "SLICEL") */
 	private PrimitiveType type;
 	/** When an instance is unplaced, it might be bonded (true) or unbonded (false) */
@@ -72,7 +71,7 @@ public class Instance implements Serializable{
 	public Instance(){
 		name = null;
 		design = null;
-		attributes = new ArrayList<Attribute>();
+		attributes = new HashMap<String, Attribute>();
 		type = null;
 		bonded = null;
 		site = null;
@@ -96,7 +95,7 @@ public class Instance implements Serializable{
 		this.type = type;
 		
 		design = null;
-		attributes = new ArrayList<Attribute>();
+		attributes = new HashMap<String, Attribute>();
 		bonded = null;
 		site = null;
 		netList = new HashSet<Net>();
@@ -112,8 +111,8 @@ public class Instance implements Serializable{
 	 * Gets and returns the current attributes of this instance
 	 * @return The current attributes of this instance
 	 */
-	public ArrayList<Attribute> getAttributes(){
-		return attributes;
+	public Collection<Attribute> getAttributes(){
+		return attributes.values();
 	}
 	
 	/**
@@ -122,7 +121,15 @@ public class Instance implements Serializable{
 	 * @param value Value to set the new attribute to.
 	 */
 	public void addAttribute(String physicalName, String logicalName, String value){
-		attributes.add(new Attribute(physicalName, logicalName, value));
+		if(physicalName.getBytes()[0] == '_'){
+			Attribute attr = attributes.get(physicalName);
+			if(attr != null){
+				attr.setLogicalName(attr.getLogicalName() + Attribute.multiValueSeparator + logicalName);
+				attr.setValue(attr.getValue() + Attribute.multiValueSeparator + value);
+				return;
+			}
+		}
+		attributes.put(physicalName, new Attribute(physicalName, logicalName, value));
 	}
 	
 	/**
@@ -130,7 +137,7 @@ public class Instance implements Serializable{
 	 * @param attribute The attribute to add.
 	 */
 	public void addAttribute(Attribute attribute){
-		attributes.add(attribute);
+		addAttribute(attribute.getPhysicalName(), attribute.getLogicalName(), attribute.getValue());
 	}
 	
 	/**
@@ -145,27 +152,21 @@ public class Instance implements Serializable{
 	}
 	
 	/**
-	 * TODO Improve performance of this method.  
 	 * Gets the attribute from this instance with the physical name given.
 	 * @param physicalName Name of the attribute to get
 	 * @return The attribute with the physical name specified, or null if 
 	 * no such attribute exists.
 	 */
 	public Attribute getAttribute(String physicalName){
-		for(Attribute attr : attributes){
-			if(attr.getPhysicalName().equals(physicalName)){
-				return attr;
-			}
-		}
-		return null;
+		return attributes.get(physicalName);
 	}
 	
 	/**
-	 * Sets the list of attributes for this instance.
+	 * Sets the map of attributes for this instance.
 	 * @param attributes The new list of attributes to associate with this
 	 * instance.
 	 */
-	public void setAttributes(ArrayList<Attribute> attributes){
+	public void setAttributes(HashMap<String, Attribute> attributes){
 		this.attributes = attributes;
 	}
 	
@@ -575,7 +576,7 @@ public class Instance implements Serializable{
 					getModuleTemplateInstance().getName() + "\" ,");
 		}
 		sb.append(nl + "  cfg \"");
-		for(Attribute attr : attributes){
+		for(Attribute attr : attributes.values()){
 			sb.append(" " + attr.toString());
 		}
 		sb.append(" \"" + nl + "  ;" + nl);
