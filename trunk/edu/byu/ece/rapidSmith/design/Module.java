@@ -54,6 +54,8 @@ public class Module implements Serializable{
 	private static final long serialVersionUID = 7127893920489370872L;
 	/** This is the current module file version (saved in file to ensure proper compatibility) */
 	public static final String moduleFileVersion = "0.5";
+	/** This is the key into externalPortMap for retrieving the constraints used to build the hard macro */
+	public static final String moduleBuildConstraints = "MODULE_BUILD_CONSTRAINTS";
 	/** Unique name of this module */
 	private String name;
 	/** All of the attributes in this module */
