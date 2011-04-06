@@ -32,7 +32,6 @@ import com.trolltech.qt.gui.QAction;
 import com.trolltech.qt.gui.QBrush;
 import com.trolltech.qt.gui.QColor;
 import com.trolltech.qt.gui.QGraphicsLineItem;
-import com.trolltech.qt.gui.QGraphicsRectItem;
 import com.trolltech.qt.gui.QGraphicsSceneMouseEvent;
 import com.trolltech.qt.gui.QMenu;
 import com.trolltech.qt.gui.QPen;
@@ -162,16 +161,9 @@ public class DeviceBrowserScene extends TileScene{
 		menuReachabilityClear();
 		for(Tile t : map.keySet()){
 			int color = map.get(t)*16 > 255 ? 255 : map.get(t)*16;
-			
-			//QGraphicsRectItem rect = new QGraphicsRectItem(new QRectF(x, y, tileSize -2, tileSize -2));
 			NumberedHighlightedTile tile = new NumberedHighlightedTile(t, this, map.get(t));
 			tile.setBrush(new QBrush(new QColor(0, color, 0)));
 			currentTiles.add(tile);
-			
-			/*painter.fillRect(x * tileSize, y * tileSize,
-					tileSize - 2 * offset, tileSize - 2 * offset, new QBrush(new QColor(0, color, 0)));
-			painter.drawText(x * tileSize + (tileSize/4), y * tileSize + (tileSize/2), map.get(t).toString());*/
-
 		}
 	}
 	
