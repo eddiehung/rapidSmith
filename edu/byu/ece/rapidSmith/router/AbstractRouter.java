@@ -35,6 +35,7 @@ import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.Tile;
 import edu.byu.ece.rapidSmith.device.WireConnection;
 import edu.byu.ece.rapidSmith.device.WireEnumerator;
+import edu.byu.ece.rapidSmith.device.WireType;
 
 public abstract class AbstractRouter{
 
@@ -142,6 +143,16 @@ public abstract class AbstractRouter{
 			for(WireConnection w : wires){
 				if(w.getRowOffset() != 0 || w.getColumnOffset() != 0){
 					setWireAsUsed(w.getTile(dev, wire.getTile()), w.getWire());
+				}
+			}
+		}
+		if(we.getWireType(wire.getStartWire()).equals(WireType.LONG) && we.getWireType(wire.getEndWire()).equals(WireType.LONG)){
+			wires = wire.getTile().getWireConnections(wire.getStartWire());
+			if(wires != null && wires.length > 1){
+				for(WireConnection w : wires){
+					if(w.getRowOffset() != 0 || w.getColumnOffset() != 0){
+						setWireAsUsed(w.getTile(dev, wire.getTile()), w.getWire());
+					}
 				}
 			}
 		}
