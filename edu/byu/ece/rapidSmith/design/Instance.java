@@ -511,7 +511,7 @@ public class Instance implements Serializable{
 	 * Gets all the pin names that are currently being used on this instance.
 	 * @return A set of pin names used on this instance.
 	 */
-	public Set<String> getUsedPinNames(){
+	public Set<String> getPinNames(){
 		return pinMap.keySet();
 	}
 	
@@ -519,7 +519,7 @@ public class Instance implements Serializable{
 	 * Gets and returns the set of pins being used on this instance.
 	 * @return A set of pins being used on this instance.
 	 */
-	public Collection<Pin> getUsedPins(){
+	public Collection<Pin> getPins(){
 		return pinMap.values();
 	}
 	
