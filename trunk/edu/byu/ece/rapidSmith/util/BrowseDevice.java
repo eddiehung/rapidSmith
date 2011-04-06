@@ -99,13 +99,13 @@ public class BrowseDevice{
 							WireConnection[] wireConnections = t.getWireConnections(we.getWireEnum(startWire));
 							System.out.println(t.getName() + " " + startWire + ":");
 							for (int i = 0; i < wireConnections.length; i++) {
-								System.out.println("  " + i + ". " + wireConnections[i].getTile(dev, t) +" " + we.getWireName(wireConnections[i].getWire()));
+								System.out.println("  " + i + ". " + wireConnections[i].getTile(t) +" " + we.getWireName(wireConnections[i].getWire()));
 							}
 							System.out.print("Choose a wire: ");
 							int ndx;
 							try{
 								ndx = Integer.parseInt(br.readLine().trim());
-								t = wireConnections[ndx].getTile(dev, t);
+								t = wireConnections[ndx].getTile(t);
 								startWire = we.getWireName(wireConnections[ndx].getWire());
 							}
 							catch(Exception e){

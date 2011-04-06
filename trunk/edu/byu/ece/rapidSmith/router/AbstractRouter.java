@@ -142,7 +142,7 @@ public abstract class AbstractRouter{
 		if(wires != null && wires.length > 1){
 			for(WireConnection w : wires){
 				if(w.getRowOffset() != 0 || w.getColumnOffset() != 0){
-					setWireAsUsed(w.getTile(dev, wire.getTile()), w.getWire());
+					setWireAsUsed(w.getTile(wire.getTile()), w.getWire());
 				}
 			}
 		}
@@ -151,7 +151,7 @@ public abstract class AbstractRouter{
 			if(wires != null && wires.length > 1){
 				for(WireConnection w : wires){
 					if(w.getRowOffset() != 0 || w.getColumnOffset() != 0){
-						setWireAsUsed(w.getTile(dev, wire.getTile()), w.getWire());
+						setWireAsUsed(w.getTile(wire.getTile()), w.getWire());
 					}
 				}
 			}

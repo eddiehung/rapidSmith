@@ -182,11 +182,11 @@ public class TileWindow extends QWidget{
 			//System.out.println("  " + tmp.toString(scene.getWireEnumerator()));
 			if(tmp.getConnections() == null) continue;
 			for(WireConnection w : tmp.getConnections()){
-				tmp2.setTileAndWire(w.getTile(dev, tmp.getTile()), w.getWire());
+				tmp2.setTileAndWire(w.getTile(tmp.getTile()), w.getWire());
 				//System.out.println("    " + tmp2.toString(scene.getWireEnumerator()));
 				if(!tmp2.getTile().equals(tmp.getTile()) && tmp2.getConnections() != null){
 					for(WireConnection w2 : tmp2.getConnections()){
-						tmp3.setTileAndWire(w2.getTile(dev, tmp2.getTile()), w2.getWire());
+						tmp3.setTileAndWire(w2.getTile(tmp2.getTile()), w2.getWire());
 						//System.out.println("      " + tmp3.toString(scene.getWireEnumerator()));
 						if(nodeMap.get(tmp3) != null){
 							if(scene.tileXMap.get(tmp.getTile()) != null && scene.tileYMap.get(tmp2.getTile()) != null){

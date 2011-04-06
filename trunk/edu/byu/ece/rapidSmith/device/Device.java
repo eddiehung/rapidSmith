@@ -728,9 +728,9 @@ public class Device implements Serializable{
 										}
 										for (WireConnection wire2 : connections) {
 											if(setOfExternalPrimitivePins.contains(wire2.getWire())){
-												SinkPin found = wire2.getTile(this, t1).getSinks().get(wire2.getWire());
-												int xOffset = (tile.getColumn() - wire2.getTile(this, t1).getColumn());
-												int yOffset = (tile.getRow() - wire2.getTile(this, t1).getRow());
+												SinkPin found = wire2.getTile(t1).getSinks().get(wire2.getWire());
+												int xOffset = (tile.getColumn() - wire2.getTile(t1).getColumn());
+												int yOffset = (tile.getRow() - wire2.getTile(t1).getRow());
 												
 												if(found == null){
 													/*System.out.println("Null Sink: " + wire2.getTile(this, t1) + " " + we.getWireName(wire2.getWire()));
@@ -747,18 +747,18 @@ public class Device implements Serializable{
 												found.switchMatrixSinkWire = currINTSinkWire;
 												found.switchMatrixTileOffset = (xOffset << 16) | (yOffset & 0xFFFF);
 
-												if(debug) System.out.println("  FOUND: " + wire2.getTile(this, t1) + " " + we.getWireName(wire2.getWire()) +" xOffset="+ xOffset + " yOffset=" + yOffset);
+												if(debug) System.out.println("  FOUND: " + wire2.getTile(t1) + " " + we.getWireName(wire2.getWire()) +" xOffset="+ xOffset + " yOffset=" + yOffset);
 												
-												if(debug) System.out.println("  SECOND: " + wire2.getTile(this, t1) + " " + we.getWireName(wire2.getWire()));
+												if(debug) System.out.println("  SECOND: " + wire2.getTile(t1) + " " + we.getWireName(wire2.getWire()));
 												if(!visited.contains(new Node(t1,w1.getWire(),null,0))) {
-													tileStack.push(wire2.getTile(this, t1));
+													tileStack.push(wire2.getTile(t1));
 													wireStack.push(wire2);													
 												}
 											}
-											else if(wire2.getTile(this, t1) != null && !switchMatrixTileTypes.contains(wire2.getTile(this, t1).getType())){
-												if(debug) System.out.println("  POTENTIAL: " + wire2.getTile(this, t1) + " " + we.getWireName(wire2.getWire()));
+											else if(wire2.getTile(t1) != null && !switchMatrixTileTypes.contains(wire2.getTile(t1).getType())){
+												if(debug) System.out.println("  POTENTIAL: " + wire2.getTile(t1) + " " + we.getWireName(wire2.getWire()));
 												if(!visited.contains(new Node(t1,w1.getWire(),null,0))) {
-													tileStack.push(wire2.getTile(this, t1));
+													tileStack.push(wire2.getTile(t1));
 													wireStack.push(wire2);													
 												}											
 											}

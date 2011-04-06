@@ -43,6 +43,8 @@ public class TileView extends QGraphicsView{
 	QPoint lastPan;
 	/** A flag indicating if the right mouse button has been pressed */
 	private boolean rightPressed;
+	
+	public boolean hasPanned;
 	/** The maximum value to which we can zoom out */
 	protected static double zoomMin = 0.05;
 	/** The maximum value to which we can zoom in */
@@ -67,6 +69,7 @@ public class TileView extends QGraphicsView{
 		if (event.button().equals(Qt.MouseButton.RightButton)){
 			// For panning the view
 			rightPressed = true;
+			hasPanned = false;
 			lastPan = event.pos();
 			setCursor(new QCursor(CursorShape.ClosedHandCursor));
 		}
@@ -92,6 +95,7 @@ public class TileView extends QGraphicsView{
 	public void mouseMoveEvent(QMouseEvent event){
 		if (rightPressed){
 			if (lastPan != null && !lastPan.isNull()) {
+				hasPanned = true;
 				// Get how much we panned
 				QPointF s1 = mapToScene(new QPoint((int) lastPan.x(),
 						(int) lastPan.y()));

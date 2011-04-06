@@ -193,11 +193,11 @@ public class HandRouter{
 					choices = new ArrayList<Node>();
 					for (int i = 0; i < wiresList.length; i++) {
 						currWire = wiresList[i];
-						choices.add(new Node(currWire.getTile(dev, currNode.getTile()),
+						choices.add(new Node(currWire.getTile(currNode.getTile()),
 								currWire.getWire(), currNode, currNode.getLevel() + 1));
 
 						System.out.println("    " + i + ". "
-								+ currWire.getTile(dev, currNode.getTile()).getName()
+								+ currWire.getTile(currNode.getTile()).getName()
 								+ " " + we.getWireName(currWire.getWire()) + " "
 								+ choices.get(i).getCost() + " " + choices.get(i).getLevel());
 					}

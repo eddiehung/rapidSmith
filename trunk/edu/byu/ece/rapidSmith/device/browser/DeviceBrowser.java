@@ -59,7 +59,7 @@ import edu.byu.ece.rapidSmith.util.MessageGenerator;
  */
 public class DeviceBrowser extends QMainWindow{
 	/** The Qt View for the browser */
-	private TileView view;
+	protected TileView view;
 	/** The Qt Scene for the browser */
 	private DeviceBrowserScene scene;
 	/** The label for the status bar at the bottom */
@@ -123,7 +123,7 @@ public class DeviceBrowser extends QMainWindow{
 		we = FileTools.loadWireEnumerator(currPart);
 		
 		// Setup the scene and view for the GUI
-		scene = new DeviceBrowserScene(device, we, hideTiles, drawPrimitives);
+		scene = new DeviceBrowserScene(device, we, hideTiles, drawPrimitives, this);
 		view = new TileView(scene);
 		setCentralWidget(view);
 
@@ -198,7 +198,7 @@ public class DeviceBrowser extends QMainWindow{
 		if(currWire < 0) return;
 		if(currTile.getWireConnections(we.getWireEnum(index.data().toString())) == null) return;
 		for(WireConnection wire : currTile.getWireConnections(we.getWireEnum(index.data().toString()))){
-			scene.drawWire(currTile, currWire, wire.getTile(device, currTile), wire.getWire());
+			scene.drawWire(currTile, currWire, wire.getTile(currTile), wire.getWire());
 		}
 	}
 	
