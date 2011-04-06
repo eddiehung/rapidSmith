@@ -32,15 +32,16 @@ import com.trolltech.qt.gui.QAction;
 import com.trolltech.qt.gui.QBrush;
 import com.trolltech.qt.gui.QColor;
 import com.trolltech.qt.gui.QGraphicsLineItem;
+import com.trolltech.qt.gui.QGraphicsRectItem;
 import com.trolltech.qt.gui.QGraphicsSceneMouseEvent;
 import com.trolltech.qt.gui.QMenu;
-import com.trolltech.qt.gui.QPainter;
 import com.trolltech.qt.gui.QPen;
 
 import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.Tile;
 import edu.byu.ece.rapidSmith.device.WireConnection;
 import edu.byu.ece.rapidSmith.device.WireEnumerator;
+import edu.byu.ece.rapidSmith.gui.NumberedHighlightedTile;
 import edu.byu.ece.rapidSmith.gui.TileScene;
 import edu.byu.ece.rapidSmith.router.Node;
 
@@ -49,12 +50,22 @@ import edu.byu.ece.rapidSmith.router.Node;
  * provides the scene content of the 2D tile array.
  */
 public class DeviceBrowserScene extends TileScene{
+	/**	 */
 	private WireEnumerator we;
+	/**	 */
 	public Signal1<Tile> updateTile = new Signal1<Tile>();
+	/**	 */
 	private QPen wirePen;
+	/**	 */
 	private ArrayList<QGraphicsLineItem> currLines;
+	/**	 */
 	private DeviceBrowser browser;
+	/**	 */
 	private Tile reachabilityTile;
+	/**	 */
+	private ArrayList<NumberedHighlightedTile> currentTiles = new ArrayList<NumberedHighlightedTile>();
+	
+	
 	public DeviceBrowserScene(Device device, WireEnumerator we, boolean hideTiles, boolean drawPrimitives, DeviceBrowser browser){
 		super(device, hideTiles, drawPrimitives);
 		setWireEnumerator(we);
@@ -135,102 +146,67 @@ public class DeviceBrowserScene extends TileScene{
 			else{
 				reachabilityMap.put(currNode.getTile(), i+1);						
 			}
-			if(currNode.getLevel() > hops-1){
+			if(currNode.getLevel() < hops-1){
 				WireConnection[] connections = currNode.getConnections();
 				if(connections != null){
 					for(WireConnection wc : connections){
-						wc.createNode(currNode);
+						queue.add(wc.createNode(currNode));
 					}
 				}
 			}
 		}
-		
-		/*
-		for(Integer wire : t.getWires()){
-			WireConnection[] connections = t.getWireConnections(wire);
-			if(connections == null) continue;
-			for(WireConnection wc : connections){
-				Tile connTile = wc.getTile(t.getDevice(), t);
-				if(!t.equals(connTile)){
-					Integer i = reachabilityMap.get(connTile);
-					if(i == null){
-						i = new Integer(1);
-						reachabilityMap.put(connTile, i);
-					}
-					else{
-						reachabilityMap.put(connTile, i+1);						
-					}
-					if(hops > 1){
-						if(connTile.getWireConnections(wc.getWire()) != null){
-							for(WireConnection wc2 : connTile.getWireConnections(wc.getWire())){
-								Tile connTile2 = wc2.getTile(connTile.getDevice(), connTile);
-								if(!t.equals(connTile2)){
-									Integer i2 = reachabilityMap.get(connTile2);
-									if(i2 == null){
-										i2 = new Integer(1);
-										reachabilityMap.put(connTile2, i2);
-									}
-									else{
-										reachabilityMap.put(connTile2, i2+1);						
-									}
-									if(hops > 2){
-										if(connTile.getWireConnections(wc2.getWire()) != null){
-											for(WireConnection wc3 : connTile.getWireConnections(wc2.getWire())){
-												Tile connTile3 = wc3.getTile(connTile2.getDevice(), connTile2);
-												if(!t.equals(connTile3)){
-													Integer i3 = reachabilityMap.get(connTile3);
-													if(i3 == null){
-														i3 = new Integer(1);
-														reachabilityMap.put(connTile3, i3);
-													}
-													else{
-														reachabilityMap.put(connTile3, i3+1);						
-													}
-												}
-											}										
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}*/
 		return reachabilityMap;
 	}
 	
 	private void drawReachability(HashMap<Tile, Integer> map){
-		QPainter painter = new QPainter(qImage);
-		int offset = 1;
-		
+		menuReachabilityClear();
 		for(Tile t : map.keySet()){
-			int x = tileXMap.get(t);
-			int y = tileYMap.get(t);
-			painter.fillRect(x * tileSize, y * tileSize,
-					tileSize - 2 * offset, tileSize - 2 * offset, new QBrush(QColor.white));
-			painter.drawText(x * tileSize + (tileSize/4), y * tileSize + (tileSize/2), map.get(t).toString());
+			int color = map.get(t)*16 > 255 ? 255 : map.get(t)*16;
+			
+			//QGraphicsRectItem rect = new QGraphicsRectItem(new QRectF(x, y, tileSize -2, tileSize -2));
+			NumberedHighlightedTile tile = new NumberedHighlightedTile(t, this, map.get(t));
+			tile.setBrush(new QBrush(new QColor(0, color, 0)));
+			currentTiles.add(tile);
+			
+			/*painter.fillRect(x * tileSize, y * tileSize,
+					tileSize - 2 * offset, tileSize - 2 * offset, new QBrush(new QColor(0, color, 0)));
+			painter.drawText(x * tileSize + (tileSize/4), y * tileSize + (tileSize/2), map.get(t).toString());*/
+
 		}
-		painter.end();
 	}
 	
 	@SuppressWarnings("unused")
 	private void menuReachability1(){
-		System.out.println("menu1");
-		//drawReachability(findReachability(reachabilityTile, 1));
+		drawReachability(findReachability(reachabilityTile, 1));
 	}
 
 	@SuppressWarnings("unused")
 	private void menuReachability2(){
-		System.out.println("menu2");
-		//drawReachability(findReachability(reachabilityTile, 2));
+		drawReachability(findReachability(reachabilityTile, 2));
 	}
 	
 	@SuppressWarnings("unused")
 	private void menuReachability3(){
-		System.out.println("menu3");
-		//drawReachability(findReachability(reachabilityTile, 3));
+		drawReachability(findReachability(reachabilityTile, 3));
 	}
+
+	@SuppressWarnings("unused")
+	private void menuReachability4(){
+		drawReachability(findReachability(reachabilityTile, 4));
+	}
+
+	@SuppressWarnings("unused")
+	private void menuReachability5(){
+		drawReachability(findReachability(reachabilityTile, 5));
+	}
+	
+	private void menuReachabilityClear(){
+		for(NumberedHighlightedTile rect : currentTiles){
+			rect.remove();
+		}
+		currentTiles.clear();
+	}
+
 	
 	@Override
 	public void mouseDoubleClickEvent(QGraphicsSceneMouseEvent event){
@@ -252,12 +228,21 @@ public class DeviceBrowserScene extends TileScene{
 				QAction action1 = new QAction("Draw Reachability (1 Hop)", this);
 				QAction action2 = new QAction("Draw Reachability (2 Hops)", this);
 				QAction action3 = new QAction("Draw Reachability (3 Hops)", this);
+				QAction action4 = new QAction("Draw Reachability (4 Hops)", this);
+				QAction action5 = new QAction("Draw Reachability (5 Hops)", this);
+				QAction actionClear = new QAction("Clear Highlighted Tiles", this);
 				action1.triggered.connect(this, "menuReachability1()");
 				action2.triggered.connect(this, "menuReachability2()");
 				action3.triggered.connect(this, "menuReachability3()");
+				action4.triggered.connect(this, "menuReachability4()");
+				action5.triggered.connect(this, "menuReachability5()");
+				actionClear.triggered.connect(this, "menuReachabilityClear()");
 				menu.addAction(action1);
 				menu.addAction(action2);
 				menu.addAction(action3);
+				menu.addAction(action4);
+				menu.addAction(action5);
+				menu.addAction(actionClear);
 				menu.exec(event.screenPos());			
 			}
 		}
