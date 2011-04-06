@@ -482,6 +482,7 @@ public class Module implements Serializable{
 				
 				//String instanceName
 				// Instance instance;
+				//TODO - On the next module version, take this out
 				hos.writeInt(instancePool.getEnumerationValue(port.getInstance()));
 				
 				// String pinName;
@@ -697,6 +698,8 @@ public class Module implements Serializable{
 				Port port = new Port();
 				
 				port.setName(strings[his.readInt()]);
+				//TODO - On the next module version, take this out
+				his.readInt();
 				
 				port.setPin(pins[his.readInt()]);
 				
