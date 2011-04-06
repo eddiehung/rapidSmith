@@ -35,12 +35,8 @@ public class Port implements Serializable, Cloneable{
 
 	/** Name of the Port of the current module, this is the port of an instance in the module. */
 	private String name;
-	/** This is the name of the instance that the port references. */
-	private String instanceName;
 	/** This is the instance that the port references. */
 	private Instance instance;
-	/** This is the name of the pin on the instance that the port references. */
-	private String pinName;
 	/** This is the pin that the port references. */
 	private Pin pin;
 
@@ -49,8 +45,6 @@ public class Port implements Serializable, Cloneable{
 	 */
 	public Port(){
 		name = null;
-		instanceName = null;
-		pinName = null;
 		setInstance(null);
 		setPin(null);
 	}
@@ -62,8 +56,6 @@ public class Port implements Serializable, Cloneable{
 	 */
 	public Port(String name, Pin pin){
 		this.name = name;
-		this.instanceName = pin.getInstanceName();
-		this.pinName = pin.getName();
 		this.setPin(pin);
 		this.setInstance(pin.getInstance());
 	}
@@ -86,19 +78,11 @@ public class Port implements Serializable, Cloneable{
 	}
 	
 	/**
-	 * Sets the instance name.
-	 * @param instanceName The new instance name.
-	 */
-	public void setInstanceName(String instanceName){
-		this.instanceName = instanceName;
-	}
-	
-	/**
 	 * Gets and returns the instance name.
 	 * @return The name of the instance where this port resides.
 	 */
 	public String getInstanceName(){
-		return instanceName;
+		return instance.getName();
 	}
 	
 	/**
@@ -106,16 +90,9 @@ public class Port implements Serializable, Cloneable{
 	 * @return The pin name of the port.
 	 */
 	public String getPinName(){
-		return pinName;
+		return pin.getName();
 	}
 	
-	/**
-	 * Sets the pin name of the port.
-	 * @param pinName The new pin name for the port.
-	 */
-	public void setPinName(String pinName){
-		this.pinName = pinName;
-	}
 
 	/**
 	 * @param pin the pin to set
@@ -152,9 +129,9 @@ public class Port implements Serializable, Cloneable{
 	public int hashCode(){
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((instanceName == null) ? 0 : instanceName.hashCode());
+		result = prime * result + ((getInstanceName() == null) ? 0 : getInstanceName().hashCode());
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + ((pinName == null) ? 0 : pinName.hashCode());
+		result = prime * result + ((getPinName() == null) ? 0 : getPinName().hashCode());
 		return result;
 	}
 
@@ -171,11 +148,11 @@ public class Port implements Serializable, Cloneable{
 		if(getClass() != obj.getClass())
 			return false;
 		Port other = (Port) obj;
-		if(instanceName == null){
-			if(other.instanceName != null)
+		if(getInstanceName() == null){
+			if(other.getInstanceName() != null)
 				return false;
 		}
-		else if(!instanceName.equals(other.instanceName))
+		else if(!getInstanceName().equals(other.getInstanceName()))
 			return false;
 		if(name == null){
 			if(other.name != null)
@@ -183,11 +160,11 @@ public class Port implements Serializable, Cloneable{
 		}
 		else if(!name.equals(other.name))
 			return false;
-		if(pinName == null){
-			if(other.pinName != null)
+		if(getPinName() == null){
+			if(other.getPinName() != null)
 				return false;
 		}
-		else if(!pinName.equals(other.pinName))
+		else if(!getPinName().equals(other.getPinName()))
 			return false;
 		return true;
 	}

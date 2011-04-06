@@ -149,6 +149,17 @@ public class Pin implements Serializable, Cloneable {
 	}
 	
 	/**
+	 * Removes any reference to the instance from this pin and
+	 * removes the pin from the pin map in the instance.
+	 */
+	public void detachInstance(){
+		if(instance != null){
+			instance.removePin(this);
+			this.instance = null;
+		}
+	}
+	
+	/**
 	 * Sets the port that references this pin.
 	 * @param port the port that references this pin.
 	 */
