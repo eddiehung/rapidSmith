@@ -315,13 +315,13 @@ public class DeviceFilesCreator{
 				for(Integer wire : t.getWires()){
 					for(WireConnection w : t.getWireConnections(wire)){
 						// Check if this wire has connections back to wire
-						Tile wireTile = w.getTile(dev, t);
+						Tile wireTile = w.getTile(t);
 						WireConnection[] wireConns = wireTile.getWireConnections(w.getWire());
 						if(wireConns == null) continue;
 						boolean backwardsConnection = false;
 						
 						for(WireConnection w2 : wireConns){
-							Tile check = w2.getTile(dev, wireTile);
+							Tile check = w2.getTile(wireTile);
 							if(check.equals(t) && w2.getWire() == wire.intValue()){
 								backwardsConnection = !wiresSourcedByTileWires.contains(wire); 
 							}

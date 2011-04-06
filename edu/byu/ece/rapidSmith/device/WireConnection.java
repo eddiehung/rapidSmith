@@ -75,15 +75,19 @@ public class WireConnection implements Serializable, Comparable<WireConnection>{
 		return wire;
 	}
 	
-	public Node createNode(Device dev, Node srcNode){
-		return new Node(getTile(dev, srcNode.getTile()), wire, srcNode, srcNode.getLevel()+1);
+	public Node createNode(Node srcNode){
+		return new Node(getTile(srcNode.getTile()), wire, srcNode, srcNode.getLevel()+1);
+	}
+	
+	public Node createNode(Tile currTile){
+		return new Node(getTile(currTile), wire, null, 0);
 	}
 	
 	/**
 	 * @return the tile
 	 */
-	public Tile getTile(Device dev, Tile currTile) {
-		return dev.getTile(currTile.getRow()-this.rowOffset, currTile.getColumn()-this.columnOffset);
+	public Tile getTile(Tile currTile) {
+		return currTile.getDevice().getTile(currTile.getRow()-this.rowOffset, currTile.getColumn()-this.columnOffset);
 	}
 		
 	

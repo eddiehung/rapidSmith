@@ -157,7 +157,7 @@ public class StaticSourceHandler{
 				
 				w = wires[1];
 			}
-			curr = new Node(w.getTile(dev, curr.tile),w.getWire(), null, 0);
+			curr = new Node(w.getTile(curr.tile),w.getWire(), null, 0);
 		}
 		
 		return curr;

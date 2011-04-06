@@ -88,7 +88,7 @@ public class TileScene extends QGraphicsScene{
 	/** The current design associated with this scene */
 	private Design design;
 	/** This is the actual image shown in the scene of the FPGA fabric */
-	private QImage qImage;
+	public QImage qImage;
 	/** This is the set of column tile types which should not be drawn */
 	private HashSet<TileType> tileColumnTypesToHide;
 	/** This is the set of row tile types which should not be drawn */
@@ -236,6 +236,8 @@ public class TileScene extends QGraphicsScene{
 		}
 		
 		// Draw the tile layout
+		int offset = (int) Math.ceil((lineWidth / 2.0));
+		
 		for(int y = 0; y < rows; y++){
 			for(int x = 0; x < cols; x++){
 				Tile tile = drawnTiles[y][x];
@@ -245,7 +247,6 @@ public class TileScene extends QGraphicsScene{
 				QColor color = TileColors.getSuggestedTileColor(tile);
 				painter.setPen(color);
 				
-				int offset = (int) Math.ceil((lineWidth / 2.0));
 				int rectX = x * tileSize;
 				int rectY = y * tileSize;
 				int rectSide = tileSize - 2 * offset;
@@ -271,7 +272,7 @@ public class TileScene extends QGraphicsScene{
 
 		painter.end();
 	}
-
+	
 	public void drawBackground(QPainter painter, QRectF rect){
 		super.drawBackground(painter, rect);
 		painter.drawImage(0, 0, qImage);

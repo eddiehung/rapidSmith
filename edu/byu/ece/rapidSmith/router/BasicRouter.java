@@ -116,10 +116,10 @@ public class BasicRouter extends AbstractRouter{
 			nodesProcessed++;
 			
 			for(WireConnection w : currNode.getConnections()){
-				if(w.getWire() == this.currSink.wire && w.getTile(dev, currNode.tile).equals(currSink.tile)){
+				if(w.getWire() == this.currSink.wire && w.getTile(currNode.tile).equals(currSink.tile)){
 					
 					// We've found the sink, lets retrace our steps
-					Node currPathNode = new Node(w.getTile(dev, currNode.tile), w.getWire(), currNode, currNode.level+1);
+					Node currPathNode = new Node(w.getTile(currNode.tile), w.getWire(), currNode, currNode.level+1);
 
 					// Add this connection as a PIP, and follow it back to the source
 					while(currPathNode.parent != null){
@@ -142,7 +142,7 @@ public class BasicRouter extends AbstractRouter{
 				} 
 				else{						
 					// This is not the sink, but is this wire one we should look at in the future?
-					Node tmp = new Node(w.getTile(dev, currNode.tile), w.getWire(), null, currNode.level+1);
+					Node tmp = new Node(w.getTile(currNode.tile), w.getWire(), null, currNode.level+1);
 					
 					// Check if this node has already been visited, if so don't add it
 					if(!(visitedNodes.contains(tmp))){
