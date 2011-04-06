@@ -698,8 +698,6 @@ public class Module implements Serializable{
 				
 				port.setName(strings[his.readInt()]);
 				
-				port.setInstance(instances[his.readInt()]);
-				
 				port.setPin(pins[his.readInt()]);
 				
 				portList.add(port);

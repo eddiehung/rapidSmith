@@ -32,11 +32,8 @@ import java.io.Serializable;
 public class Port implements Serializable, Cloneable{
 
 	private static final long serialVersionUID = -8961782654770650827L;
-
 	/** Name of the Port of the current module, this is the port of an instance in the module. */
 	private String name;
-	/** This is the instance that the port references. */
-	private Instance instance;
 	/** This is the pin that the port references. */
 	private Pin pin;
 
@@ -45,7 +42,6 @@ public class Port implements Serializable, Cloneable{
 	 */
 	public Port(){
 		name = null;
-		setInstance(null);
 		setPin(null);
 	}
 	
@@ -57,7 +53,6 @@ public class Port implements Serializable, Cloneable{
 	public Port(String name, Pin pin){
 		this.name = name;
 		this.setPin(pin);
-		this.setInstance(pin.getInstance());
 	}
 	
 
@@ -82,7 +77,7 @@ public class Port implements Serializable, Cloneable{
 	 * @return The name of the instance where this port resides.
 	 */
 	public String getInstanceName(){
-		return instance.getName();
+		return pin.getInstanceName();
 	}
 	
 	/**
@@ -109,17 +104,10 @@ public class Port implements Serializable, Cloneable{
 	}
 
 	/**
-	 * @param instance the instance to set
-	 */
-	public void setInstance(Instance instance) {
-		this.instance = instance;
-	}
-
-	/**
 	 * @return the instance
 	 */
 	public Instance getInstance() {
-		return instance;
+		return pin.getInstance();
 	}
 
 	/**
