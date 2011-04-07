@@ -38,7 +38,6 @@ import edu.byu.ece.rapidSmith.design.Design;
 import edu.byu.ece.rapidSmith.design.ModuleInstance;
 import edu.byu.ece.rapidSmith.design.Net;
 import edu.byu.ece.rapidSmith.design.PIP;
-import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.Tile;
 import edu.byu.ece.rapidSmith.device.WireConnection;
 import edu.byu.ece.rapidSmith.gui.GuiModuleInstance;
@@ -176,7 +175,6 @@ public class TileWindow extends QWidget{
 		Node tmp = new Node();
 		Node tmp2 = new Node();
 		Node tmp3 = new Node();
-		Device dev = design.getDevice();
 		for(PIP p : net.getPIPs()){
 			tmp.setTileAndWire(p.getTile(), p.getEndWire());
 			//System.out.println("  " + tmp.toString(scene.getWireEnumerator()));
