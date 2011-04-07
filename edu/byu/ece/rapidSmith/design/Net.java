@@ -342,6 +342,13 @@ public class Net implements Comparable<Net>, Serializable {
 	}
 	
 	/**
+	 * This removes all PIPs from this net, causing it to be in an unrouted state.
+	 */
+	public void unroute(){
+		this.pips.clear();
+	}
+	
+	/**
 	 * Gets and returns the total number of pins plus the total number 
 	 * of PIPs.
 	 * @return The sum of pins and PIPs in the net.

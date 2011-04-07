@@ -209,6 +209,72 @@ public class Module implements Serializable{
 	}
 	
 	/**
+	 * Removes a net from the design
+	 * @param name The name of the net to remove.
+	 */
+	public void removeNet(String name){
+		Net n = getNet(name);
+		if(n != null) removeNet(n);
+	}
+	
+	/**
+	 * Removes a net from the design
+	 * @param net The net to remove from the design.
+	 */
+	public void removeNet(Net net){
+		for(Pin p : net.getPins()){
+			p.getInstance().getNetList().remove(net);
+			if(p.getNet().equals(net)){
+				p.setNet(null);
+			}
+		}
+		netMap.remove(net.getName());
+	}
+	
+	
+	/**
+	 * This method carefully removes an instance in a design with its
+	 * pins and possibly nets.  Nets are only removed if they are empty
+	 * after removal of the instance's pins. This method CANNOT remove 
+	 * instances that are part of a ModuleInstance.
+	 * @param instance The instance in the design to remove.
+	 * @return True if the operation was successful, false otherwise.
+	 */
+	public boolean removeInstance(String name){
+		return removeInstance(getInstance(name));
+	}
+	
+	/**
+	 * This method carefully removes an instance in a design with its
+	 * pins and possibly nets.  Nets are only removed if they are empty
+	 * after removal of the instance's pins. This method CANNOT remove 
+	 * instances that are part of a ModuleInstance.
+	 * @param instance The instance in the design to remove.
+	 * @return True if the operation was successful, false otherwise.
+	 */
+	public boolean removeInstance(Instance instance){
+		if(instance.getModuleInstance() != null){
+			return false;
+		}
+		for(Pin p : instance.getPins()){
+			// TODO - We can sort through PIPs to only remove those that need
+			// to be removed, we just need a method to do that
+			p.getNet().unroute(); 
+			if(p.getNet().getPins().size() == 1){
+				netMap.remove(p.getName());
+			}
+			p.getNet().removePin(p);
+		}
+		instanceMap.remove(instance.getName());
+		instance.setDesign(null);
+		instance.setNetList(null);
+		instance.setModuleTemplate(null);
+		return true;
+	}
+	
+	
+	
+	/**
 	 * Sets the anchor instance for this module.
 	 * @param anchor New anchor instance for this module.
 	 */
