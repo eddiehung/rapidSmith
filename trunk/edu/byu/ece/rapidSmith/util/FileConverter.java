@@ -189,13 +189,16 @@ public class FileConverter {
 			} 
 			catch (InterruptedException e){
 				e.printStackTrace();
-				MessageGenerator.briefError("Unknown Error While converting XDL to NCD/NMC.");
+				MessageGenerator.briefError("Unknown Error While converting " +
+						"XDL to NCD/NMC.");
 				return false;
 			}
 			p.destroy();
 		} catch (IOException e) {
-			MessageGenerator.briefError("NCD/NMC Generation failed.  Are the Xilinx tools on your path?" + 
-					"COMMAND: \""+ command +"\"");
+			MessageGenerator.briefError("NCD/NMC Generation failed.  " +
+					"Are the Xilinx tools on your path?" + 
+					System.getProperty("line.separator") +  
+					"  COMMAND: \""+ command +"\"");
 			return false;
 		}		
 		return true;
