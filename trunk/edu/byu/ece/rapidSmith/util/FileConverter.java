@@ -20,6 +20,7 @@
  */
 package edu.byu.ece.rapidSmith.util;
 
+import java.io.File;
 import java.io.IOException;
 
 public class FileConverter {
@@ -146,14 +147,34 @@ public class FileConverter {
 		boolean success = convertXDL2NCD(xdlFileName, nmcFileName);
 		return success ? nmcFileName : null;
 	}
+
 	
 	/**
-	 * Converts xdlFileName to an NCD file called ncdFileName.  It uses the -force option by default
+	 * Converts xdlFileName to an NCD file called ncdFileName.  It uses the -force option by default.
 	 * @param xdlFileName The input XDL file
 	 * @param ncdFileName The output NCD file
+	 * @return True if operation was successful, false otherwise.
 	 */
 	public static boolean convertXDL2NCD(String xdlFileName, String ncdFileName){
-		String command = "xdl -xdl2ncd -force " + xdlFileName + " " + ncdFileName;		
+		return convertXDL2NCD(xdlFileName, ncdFileName, false);
+	}
+	
+	/**
+	 * Converts xdlFileName to an NCD file called ncdFileName.  It uses the 
+	 * -force option by default.
+	 * @param xdlFileName The input XDL file
+	 * @param ncdFileName The output NCD file
+	 * @param useLegacyTools Flag indicating if the method should use the 
+	 * legacy xdl tool (10.1 or earlier as specified by environment variable
+	 *  XILINX_LEGACY_PATH. If the environment variable is not set, it defaults
+	 *  to regular tools on PATH.
+	 * @return True if operation was successful, false otherwise.
+	 */
+	public static boolean convertXDL2NCD(String xdlFileName, String ncdFileName, boolean useLegacyTools){
+		String command = "xdl -xdl2ncd -force " + xdlFileName + " " + ncdFileName;
+		if(useLegacyTools){
+			command = RunXilinxTools.getBinPathToLegacyXilinxTools() + File.separator + command;
+		}
 		// Generate NCD
 		try {
 			Process p = Runtime.getRuntime().exec(command);
