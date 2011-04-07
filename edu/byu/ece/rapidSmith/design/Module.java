@@ -53,7 +53,7 @@ public class Module implements Serializable{
 
 	private static final long serialVersionUID = 7127893920489370872L;
 	/** This is the current module file version (saved in file to ensure proper compatibility) */
-	public static final String moduleFileVersion = "0.5";
+	public static final String moduleFileVersion = "0.6";
 	/** This is the key into externalPortMap for retrieving the constraints used to build the hard macro */
 	public static final String moduleBuildConstraints = "MODULE_BUILD_CONSTRAINTS";
 	/** Unique name of this module */
@@ -549,7 +549,7 @@ public class Module implements Serializable{
 				//String instanceName
 				// Instance instance;
 				//TODO - On the next module version, take this out
-				hos.writeInt(instancePool.getEnumerationValue(port.getInstance()));
+				//hos.writeInt(instancePool.getEnumerationValue(port.getInstance()));
 				
 				// String pinName;
 				// Pin pin;
@@ -765,7 +765,7 @@ public class Module implements Serializable{
 				
 				port.setName(strings[his.readInt()]);
 				//TODO - On the next module version, take this out
-				his.readInt();
+				//his.readInt();
 				
 				port.setPin(pins[his.readInt()]);
 				
