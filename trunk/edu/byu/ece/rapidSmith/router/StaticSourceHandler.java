@@ -82,6 +82,11 @@ public class StaticSourceHandler{
 	private static String[] v5ctrl = {"CTRL_B0", "CTRL_B1", "CTRL_B2", "CTRL_B3"};
 	private static int[] v5ctrlWires = new int[4];
 
+	private ArrayList<Node> gndReserved = new ArrayList<Node>();
+	private ArrayList<Node> vccReserved = new ArrayList<Node>();
+	
+	private Pin currStaticSourcePin = null;
+	
 	// Attributes used in creating TIEOFFs
 	private Attribute noUserLogicAttr;
 	private Attribute hard1Attr;
@@ -162,6 +167,19 @@ public class StaticSourceHandler{
 		
 		return curr;
 	}
+	//TODO
+	private boolean addNodeToReserveList(Node node, StaticSink ss){
+		if(router.usedNodes.contains(node)){
+			return false;
+		}
+		if(ss.net.getType().equals(NetType.VCC)){
+			vccReserved.add(node);
+		}
+		else{
+			gndReserved.add(node);
+		}
+		return true;
+	}
 	
 	/**
 	 * This function will remove the static source'd nets from inputDesign 
@@ -181,7 +199,7 @@ public class StaticSourceHandler{
 			// Do re-entrant routing, if a net already has PIPs
 			// on it we are going to assume it is routed
 			if(net.getPIPs().size() > 0){
-				for(PIP p : net.getPIPs()){
+				for(PIP p : net.getPIPs()){					
 					router.setWireAsUsed(p.getTile(), p.getStartWire());
 					router.setWireAsUsed(p.getTile(), p.getEndWire());
 					router.checkForIntermediateUsedNodes(p);
@@ -553,14 +571,27 @@ public class StaticSourceHandler{
 			}
 		}
 		
-		ArrayList<Node> gndReserved = new ArrayList<Node>();
-		ArrayList<Node> vccReserved = new ArrayList<Node>();
+
 		
 		// Handle each group of sinks separately, allocating TIEOFF to those sinks according
 		// to priority
 		for(PinSorter ps : tileMap.values()){
 			for(StaticSink ss : ps.highPriorityForTIEOFF){
 				Instance inst = updateTIEOFF(ss.node.tile, ss.net, true);
+				
+				// Special case with CLK pins BRAMs on Virtex5 devices, when competing for FANs against GND Nets
+				if(dev.getFamilyType().equals(FamilyType.VIRTEX5)){				
+					if(ss.pin.getInstance().getPrimitiveSite().getType().equals(PrimitiveType.RAMBFIFO36) && ss.pin.getName().contains("CLK")){
+						String[] fanWireNames = fanBounceMap.get(we.getWireName(ss.node.wire));
+						Node nn = new Node(inst.getTile(), we.getWireEnum(fanWireNames[0]), null, 0);
+						if(!addNodeToReserveList(nn, ss)){
+							// we need to use a SLICE 
+							ps.useSLICE.add(ss);
+							continue;
+						}
+					}
+				}
+				
 				// Find the correct net corresponding to this TIEOFF if it exists
 				Net matchingNet = null;
 				for(Net net : inst.getNetList()){
@@ -583,31 +614,50 @@ public class StaticSourceHandler{
 				if(ss.reservedResource != null){
 					addReservedNode(ss.reservedResource, matchingNet);
 				}
-
-				
-				
-				// Special case with CLK pins BRAMs on Virtex5 devices, when competing for FANs against GND Nets
-				if(dev.getFamilyType().equals(FamilyType.VIRTEX5)){				
-					if(ss.pin.getInstance().getPrimitiveSite().getType().equals(PrimitiveType.RAMBFIFO36) && ss.pin.getName().contains("CLK")){
-						String[] fanWireNames = fanBounceMap.get(we.getWireName(ss.node.wire));
-						Node nn = new Node(inst.getTile(), we.getWireEnum(fanWireNames[0]), null, 0);
-						if(ss.net.getType().equals(NetType.VCC)){
-							vccReserved.add(nn);
-						}
-						else{
-							gndReserved.add(nn);
-						}
-					}
-				}
 			}
 			
 			for(StaticSink ss : ps.attemptTIEOFF){
 				Instance inst = updateTIEOFF(ss.node.tile, ss.net, false);
+				// Special case with CLK pins BRAMs on Virtex5 devices, when competing for FANs against GND Nets
+				if(dev.getFamilyType().equals(FamilyType.VIRTEX5)){
+					int switchBoxSink = ss.node.wire;			
+					
+					if(we.getWireName(ss.node.getWire()).startsWith("BYP_B")){
+						Node nn = new Node(inst.getTile(), we.getWireEnum(we.getWireName(switchBoxSink).replace("_B","")), null, 0);
+						
+						if(!addNodeToReserveList(nn, ss)){
+							// we need to use a SLICE 
+							ps.useSLICE.add(ss);
+							continue;
+						}
+					}
+					else if(switchBoxSink == v5ctrlWires[0] || switchBoxSink == v5ctrlWires[1] || switchBoxSink == v5ctrlWires[2] || switchBoxSink == v5ctrlWires[3]){
+						Node nn = new Node(inst.getTile(), we.getWireEnum(we.getWireName(switchBoxSink).replace("_B","")), null, 0);
+						if(!addNodeToReserveList(nn, ss)){
+							// we need to use a SLICE 
+							ps.useSLICE.add(ss);
+							continue;
+						}
+					}else if(ss.pin.getInstance().getPrimitiveSite().getType().equals(PrimitiveType.DSP48E) && ss.pin.getName().contains("CEP")){
+						Node nn = new Node(inst.getTile(), we.getWireEnum("CTRL1"), null, 0);
+						if(!addNodeToReserveList(nn, ss)){
+							// we need to use a SLICE 
+							ps.useSLICE.add(ss);
+							continue;
+						}
+					}
+					else if(ss.pin.getName().contains("ENBL")){
+						Node nn = new Node(inst.getTile(), we.getWireEnum("CTRL2"), null, 0);
+						if(!addNodeToReserveList(nn, ss)){
+							// we need to use a SLICE 
+							ps.useSLICE.add(ss);
+							continue;
+						}
+					}
+				}
+				
 				Net matchingNet = null;
 				
-				//if(ss.node.getTile().getName().equals("INT_X19Y104") && ss.node.getWire() == we.getWireEnum("BYP_B1")){
-				//	System.out.println("Here: " + ss.node.toString(we));
-				//}
 				//TODO
 				// Find the correct net corresponding to this TIEOFF if it exists
 				for(Net net : inst.getNetList()){
@@ -626,50 +676,6 @@ public class StaticSourceHandler{
 					matchingNet.addPin(ss.pin);
 					ss.pin.getInstance().addToNetList(matchingNet);
 				}
-				
-								
-				// Special case with CLK pins BRAMs on Virtex5 devices, when competing for FANs against GND Nets
-				if(dev.getFamilyType().equals(FamilyType.VIRTEX5)){
-					int switchBoxSink = ss.node.wire;			
-					
-					if(we.getWireName(ss.node.getWire()).startsWith("BYP_B")){
-						Node nn = new Node(inst.getTile(), we.getWireEnum(we.getWireName(switchBoxSink).replace("_B","")), null, 0);
-						if(ss.net.getType().equals(NetType.VCC)){
-							vccReserved.add(nn);
-						}
-						else{
-							gndReserved.add(nn);
-						}
-					}
-					else if(switchBoxSink == v5ctrlWires[0] || switchBoxSink == v5ctrlWires[1] || switchBoxSink == v5ctrlWires[2] || switchBoxSink == v5ctrlWires[3]){
-						Node nn = new Node(inst.getTile(), we.getWireEnum(we.getWireName(switchBoxSink).replace("_B","")), null, 0);
-						if(ss.net.getType().equals(NetType.VCC)){
-							vccReserved.add(nn);
-						}
-						else{
-							gndReserved.add(nn);
-						}
-					}else if(ss.pin.getInstance().getPrimitiveSite().getType().equals(PrimitiveType.DSP48E) && ss.pin.getName().contains("CEP")){
-						Node nn = new Node(inst.getTile(), we.getWireEnum("CTRL1"), null, 0);
-						//addReservedNode(nn, matchingNet);
-						if(ss.net.getType().equals(NetType.VCC)){
-							vccReserved.add(nn);
-						}
-						else{
-							gndReserved.add(nn);
-						}
-					}
-					else if(ss.pin.getName().contains("ENBL")){
-						Node nn = new Node(inst.getTile(), we.getWireEnum("CTRL2"), null, 0);
-						//addReservedNode(nn, matchingNet);
-						if(ss.net.getType().equals(NetType.VCC)){
-							vccReserved.add(nn);
-						}
-						else{
-							gndReserved.add(nn);
-						}
-					}
-				}
 			}
 			
 			if(ps.useSLICE.size() > 0){
@@ -687,19 +693,20 @@ public class StaticSourceHandler{
 				if(gnds.size() > 0){
 					// Create the new net
 					Net newNet = createNewNet(ps.useSLICE.get(0).net, gnds);
-					if(ps.useSLICE.get(0).node.tile.getName().equals("INT_X63Y158")) System.out.println("SLICE: " + newNet.getName() + " " + we.getWireName(ps.useSLICE.get(0).node.getWire()) + " " + ps.useSLICE.get(0).pin.getName());
 					finalStaticNets.add(newNet);
 
 					// Create new instance of SLICE primitive to get source
 					Instance currInst = findClosestAvailableSLICE(ps.useSLICE.get(0).node.tile, ps.useSLICE.get(0).net.getType());
-					
-					router.design.addInstance(currInst);
-
-					currInst.addToNetList(newNet);
-					
-					Pin source = new Pin(true, slicePin, currInst); 
-					newNet.addPin(source);
-					source.getInstance().addToNetList(newNet);
+					if(currStaticSourcePin != null){
+						currInst.addToNetList(newNet);
+						newNet.addPin(currStaticSourcePin);
+					}
+					else{
+						router.design.addInstance(currInst);
+						currInst.addToNetList(newNet);
+						Pin source = new Pin(true, slicePin, currInst); 
+						newNet.addPin(source);					
+					}
 				}
 				if(vccs.size() > 0){
 					// Create the new net
@@ -708,14 +715,17 @@ public class StaticSourceHandler{
 
 					// Create new instance of SLICE primitive to get source
 					Instance currInst = findClosestAvailableSLICE(ps.useSLICE.get(0).node.tile, ps.useSLICE.get(0).net.getType());
-					
-					router.design.addInstance(currInst);
 
-					currInst.addToNetList(newNet);
-					
-					Pin source = new Pin(true, slicePin, currInst); 
-					newNet.addPin(source);
-					source.getInstance().addToNetList(newNet);
+					if(currStaticSourcePin != null){
+						currInst.addToNetList(newNet);
+						newNet.addPin(currStaticSourcePin);						
+					}
+					else{
+						router.design.addInstance(currInst);
+						currInst.addToNetList(newNet);
+						Pin source = new Pin(true, slicePin, currInst); 
+						newNet.addPin(source);
+					}
 				}
 			}
 		}
@@ -833,6 +843,7 @@ public class StaticSourceHandler{
 	}
 		
 	enum Direction{UP, DOWN, LEFT, RIGHT};
+	
 	/**
 	 * Finds an available SLICE to be used as a static source.  
 	 * @param tile The tile where the sink to be driven is located
@@ -846,6 +857,8 @@ public class StaticSourceHandler{
 		int maxRow = row+1;
 		int minColumn = column-1;
 		int minRow = row;
+		String srcTypeString = sourceType.equals(NetType.VCC) ? "_VCC_SOURCE" : "_GND_SOURCE";
+		boolean isVirtex5 = dev.getFamilyType().equals(FamilyType.VIRTEX5);
 		Tile currentTile;
 		boolean foundFreeSlice = false;
 		while(!foundFreeSlice){
@@ -894,7 +907,51 @@ public class StaticSourceHandler{
 			currentTile = dev.getTile(row, column);
 			if(currentTile != null && currentTile.getPrimitiveSites() != null){
 				for(PrimitiveSite site : currentTile.getPrimitiveSites()){
-					if(!router.design.getUsedPrimitiveSites().contains(site) && (site.getType().equals(PrimitiveType.SLICEL) || site.getType().equals(PrimitiveType.SLICEM))){
+					if(site.getType().equals(PrimitiveType.SLICEL) || site.getType().equals(PrimitiveType.SLICEM)){
+						if(!router.design.getUsedPrimitiveSites().contains(site)){
+							Instance returnMe = new Instance();
+							HashMap<String, Attribute> attributeMap = new HashMap<String, Attribute>();
+							attributeMap.put("_NO_USER_LOGIC", new Attribute("_NO_USER_LOGIC","",""));
+							
+							attributeMap.put(srcTypeString, new Attribute(srcTypeString,"",slicePin));
+							
+							returnMe.place(site);
+							returnMe.setType(PrimitiveType.SLICEL);
+							returnMe.setAttributes(attributeMap);
+							returnMe.setName("XDL_DUMMY_" + returnMe.getTile() + "_" + site.getName());
+							currStaticSourcePin = null;
+							return returnMe;							
+						}
+						else if(isVirtex5){
+							Instance i = router.design.getInstanceAtPrimitiveSite(site);
+							if(i.testAttributeValue("A5LUT", "#OFF") && i.testAttributeValue("A6LUT", "#OFF") && !i.hasAttribute(srcTypeString)){
+								i.addAttribute(new Attribute(new Attribute(srcTypeString,"","A")));
+								currStaticSourcePin = new Pin(true, "A", i);
+								i.addPin(currStaticSourcePin);
+								return i;
+							}
+							else if(i.testAttributeValue("B5LUT", "#OFF") && i.testAttributeValue("B6LUT", "#OFF") && !i.hasAttribute(srcTypeString)){
+								i.addAttribute(new Attribute(new Attribute(srcTypeString,"","B")));
+								currStaticSourcePin = new Pin(true, "B", i);
+								i.addPin(currStaticSourcePin);
+								return i;
+							}
+							else if(i.testAttributeValue("C5LUT", "#OFF") && i.testAttributeValue("C6LUT", "#OFF") && !i.hasAttribute(srcTypeString)){
+								i.addAttribute(new Attribute(new Attribute(srcTypeString,"","C")));
+								currStaticSourcePin = new Pin(true, "C", i);
+								i.addPin(currStaticSourcePin);
+								return i;
+							}
+							else if(i.testAttributeValue("D5LUT", "#OFF") && i.testAttributeValue("D6LUT", "#OFF") && !i.hasAttribute(srcTypeString)){
+								i.addAttribute(new Attribute(new Attribute(srcTypeString,"","D")));
+								currStaticSourcePin = new Pin(true, "D", i);
+								i.addPin(currStaticSourcePin);
+								return i;
+							}
+						}
+					}	
+				
+					/*if(!router.design.getUsedPrimitiveSites().contains(site) && (site.getType().equals(PrimitiveType.SLICEL) || site.getType().equals(PrimitiveType.SLICEM))){
 						Instance returnMe = new Instance();
 						HashMap<String, Attribute> attributeMap = new HashMap<String, Attribute>();
 						attributeMap.put("_NO_USER_LOGIC", new Attribute("_NO_USER_LOGIC","",""));
@@ -910,7 +967,7 @@ public class StaticSourceHandler{
 						returnMe.setAttributes(attributeMap);
 						returnMe.setName("XDL_DUMMY_" + returnMe.getTile() + "_" + site.getName());
 						return returnMe;
-					}
+					}*/
 				}
 			}
 		}
@@ -958,19 +1015,17 @@ public class StaticSourceHandler{
 	 */
 	public static HashSet<Integer> getPinsNeedingNonTIEOFFSource(String partName, WireEnumerator we){
 		HashSet<Integer> set = new HashSet<Integer>();
-		if(partName.startsWith("xc4v")){
+		if(we.getFamilyType().equals(FamilyType.VIRTEX4)){
 			for(int i = 0; i < 4; i++){
 				set.add(we.getWireEnum("CLK_B" + i));
 			}
 			return set;
 		}
-		else if(partName.startsWith("xc5v")){
+		else if(we.getFamilyType().equals(FamilyType.VIRTEX5)){
 			return set;
 		}
-		else {
-			MessageGenerator.briefErrorAndExit("Sorry, this architecture is not yet supported.");
-			return null;
-		}
+		MessageGenerator.briefErrorAndExit("Sorry, this architecture is not yet supported.");
+		return null;
 	}
 	
 	/**
