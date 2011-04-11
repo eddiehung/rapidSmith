@@ -350,7 +350,11 @@ public class DesignParser{
 					MessageGenerator.briefErrorAndExit("XDL Design Parser Error in file: "+ fileName +", Invalid primitive site " +
 							token + " on line " + lineNumber);
 				}
-				currInstance.place(dev.getPrimitiveSite(token));
+				if(currModule != null){
+					currInstance.setSite(dev.getPrimitiveSite(token));
+				}else{
+					currInstance.place(dev.getPrimitiveSite(token));					
+				}
 				state = ParserState.MODULE_INSTANCE_TOKEN;
 				break;
 			case INSTANCE_BONDED:
