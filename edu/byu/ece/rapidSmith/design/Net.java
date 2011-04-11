@@ -155,6 +155,14 @@ public class Net implements Comparable<Net>, Serializable {
 	}
 	
 	/**
+	 * Checks if the net has any PIPs.
+	 * @return True if the net contains 1 or more PIPs, false otherwise.
+	 */
+	public boolean hasPIPs(){
+		return pips.size() > 0;
+	}
+	
+	/**
 	 * Sets the name of the net. User is responsible to make sure the 
 	 * net name is unique to all other net names.
 	 * @param name New name of the net.
