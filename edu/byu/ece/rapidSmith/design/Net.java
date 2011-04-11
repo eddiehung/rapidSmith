@@ -185,7 +185,7 @@ public class Net implements Comparable<Net>, Serializable {
 	 */
 	public boolean setPins(ArrayList<Pin> list){
 		Pin src = null;
-		int sinkCount = 0;
+		this.fanOut = 0;
 		for(Pin p : list){
 			if(p.isOutPin()){
 				if(src != null){
@@ -194,12 +194,13 @@ public class Net implements Comparable<Net>, Serializable {
 				src = p;
 			}
 			else{
-				sinkCount++;
+				this.fanOut++;
 			}
+			p.setNet(this);
+			p.getInstance().addToNetList(this);
 		}
 		this.pins = list;
 		this.source = src;
-		this.fanOut = sinkCount;
 		return true;
 	}
 	
