@@ -396,6 +396,14 @@ public class Instance implements Serializable{
 	}
 	
 	/**
+	 * This method is used for Module creation only.  DO NOT use.  
+	 * @param site The site for Instance within the module definition.
+	 */
+	public void setSite(PrimitiveSite site){
+		this.site = site;
+	}
+	
+	/**
 	 * Places the primitive at the site specified.
 	 * @param site The site where the instance will reside
 	 */
