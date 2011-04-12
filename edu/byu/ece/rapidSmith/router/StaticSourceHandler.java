@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 
+import org.omg.CORBA.OMGVMCID;
+
 import edu.byu.ece.rapidSmith.design.Attribute;
 import edu.byu.ece.rapidSmith.design.Instance;
 import edu.byu.ece.rapidSmith.design.Net;
@@ -62,10 +64,6 @@ public class StaticSourceHandler{
 	private int netCount;
 	/** Final set of static nets */
 	private ArrayList<Net> finalStaticNets;
-	/** Special switch matrix sink wires that need HARD1 */
-	HashSet<Integer> needsHard1;
-	/** Special switch matrix sink wires that need a SLICE as a static source */
-	HashSet<Integer> needsNonTIEOFFSource;
 	/** Default pin on SLICE to be used as static output source */
 	String slicePin;
 	/** Just a node that is used so it doesn't have to be created over and over */
@@ -81,17 +79,18 @@ public class StaticSourceHandler{
 	
 	private static String[] v5ctrl = {"CTRL_B0", "CTRL_B1", "CTRL_B2", "CTRL_B3"};
 	private static int[] v5ctrlWires = new int[4];
-
-	private ArrayList<Node> gndReserved = new ArrayList<Node>();
-	private ArrayList<Node> vccReserved = new ArrayList<Node>();
 	
 	private Pin currStaticSourcePin = null;
+	
+	private HashMap<Node, Pin> reservedGNDVCCResources;
 	
 	// Attributes used in creating TIEOFFs
 	private Attribute noUserLogicAttr;
 	private Attribute hard1Attr;
 	private Attribute keep1Attr;
 	private Attribute keep0Attr;
+	
+	FamilyType familyType;
 	
 	/**
 	 * Constructor
@@ -101,11 +100,11 @@ public class StaticSourceHandler{
 		this.router = router;
 		dev = router.dev;
 		we = router.we;
+		familyType = dev.getFamilyType();
 		netCount = 0;
 		finalStaticNets = new ArrayList<Net>();
-		needsHard1 = getPinsNeedingHardPowerSource(dev.getPartName(), we);
-		needsNonTIEOFFSource = getPinsNeedingNonTIEOFFSource(dev.getPartName(), we);
 		tempNode = new Node();
+		reservedGNDVCCResources = new HashMap<Node, Pin>();
 		if(router.dev.getPartName().startsWith("xc5v")){
 			slicePin = "B";
 		}
@@ -126,6 +125,43 @@ public class StaticSourceHandler{
 		for (int i = 0; i < v5ctrl.length; i++) {
 			v5ctrlWires[i] = we.getWireEnum(v5ctrl[i]);			
 		}
+	}
+	
+	/**
+	 * Reserves a node for a ground or vcc inpin that has
+	 * not been assigned a final net yet.
+	 * @param node The node to reserve.
+	 * @param pin The pin for which to reserve the routing resource.
+	 */
+	private boolean addReservedGNDVCCNode(Node node, Pin pin){
+		if(router.usedNodes.contains(node)){
+			LinkedList<Net> nets = router.usedNodesMap.get(node);
+			if(nets == null){
+				Pin p = reservedGNDVCCResources.get(node);
+				if(p == null){
+					return false;
+				}
+				else if(!p.getNet().getType().equals(pin.getNet().getType())){
+					return false;
+				}
+			}
+			else if(!nets.get(0).getType().equals(pin.getNet().getType())){
+				return false;
+			}
+		}
+		
+		LinkedList<Net> nets = router.usedNodesMap.get(node);
+		if(nets == null){
+			nets = new LinkedList<Net>();
+			router.usedNodesMap.put(node, nets);
+		}
+		nets.add(pin.getNet());
+		
+		// We will update the net reserved list later,
+		// after the pin has been assigned its final net
+		reservedGNDVCCResources.put(node, pin);
+		router.usedNodes.add(node);
+		return true;
 	}
 	
 	private void addReservedNode(Node node, Net net){
@@ -167,374 +203,448 @@ public class StaticSourceHandler{
 		
 		return curr;
 	}
-	//TODO
-	private boolean addNodeToReserveList(Node node, StaticSink ss){
-		if(router.usedNodes.contains(node)){
-			return false;
+	
+	/**
+	 * Some designs may already have some routed nets.  This method makes sure
+	 * that the router notes the resources already used in the routed net.
+	 * @param net The routed net to mark used nodes 
+	 */
+	private void accomodateRoutedNet(Net net){
+		for(PIP p : net.getPIPs()){					
+			addReservedNode(new Node(p.getTile(), p.getStartWire(), null, 0), net);
+			addReservedNode(new Node(p.getTile(), p.getEndWire(), null, 0), net);
+			
+			Node tmp = router.setWireAsUsed(p.getTile(), p.getStartWire());
+			router.addUsedWireMapping(net, tmp);
+			tmp = router.setWireAsUsed(p.getTile(), p.getEndWire());
+			router.addUsedWireMapping(net, tmp);
+			router.checkForIntermediateUsedNodes(p, net);
 		}
-		if(ss.net.getType().equals(NetType.VCC)){
-			vccReserved.add(node);
-		}
-		else{
-			gndReserved.add(node);
-		}
-		return true;
 	}
 	
 	/**
-	 * This function will remove the static source'd nets from inputDesign 
-	 * and return them in their own list.  
+	 * Determines the critical resource for a given wire.  
+	 * @param wire The wire to determine if it is critical
+	 * in order to route to the underlying pin.
+	 * @return The critical wire resource (which could be different from 
+	 * the given wire) or -1 if the resource is not critical.
 	 */
-	public void separateStaticSourceNets(){
-		ArrayList<Net> netList = router.netList;
-		ArrayList<Net> staticNetList = new ArrayList<Net>();
-		HashMap<Tile, ArrayList<Net>> sourceCount = new HashMap<Tile, ArrayList<Net>>();
-		
-		// Normalize static source nets type name and separate them from design
-		for(int i = 0; i < netList.size(); i++){			
-			Net net = netList.get(i);
-			NetType netType = net.getType();
-			
-			
-			// Do re-entrant routing, if a net already has PIPs
-			// on it we are going to assume it is routed
-			if(net.getPIPs().size() > 0){
-				for(PIP p : net.getPIPs()){					
-					router.setWireAsUsed(p.getTile(), p.getStartWire());
-					router.setWireAsUsed(p.getTile(), p.getEndWire());
-					router.checkForIntermediateUsedNodes(p);
-				}
+	private int getCriticalResource(int wire){
+		String name = we.getWireName(wire); 
+		if(name.startsWith("BYP_INT_B")) // VIRTEX4
+			return wire;
+		else if(name.startsWith("BYP_B")) // VIRTEX5
+			return we.getWireEnum("BYP" + name.charAt(name.length()-1));
+		else if(name.startsWith("CTRL_B")) // VIRTEX5
+			return we.getWireEnum("CTRL" + name.charAt(name.length()-1));
+		else if(name.startsWith("FAN_B")) // VIRTEX5
+			return we.getWireEnum("FAN" + name.charAt(name.length()-1));
+		return -1;
+	}
+	
+	/**
+	 * Reserves resources for nets which require specific routing resources
+	 * in order to complete a net.
+	 * @param net the net to examine.
+	 * @return A List of critical resources that should be reserved for the 
+	 * net.
+	 */
+	private ArrayList<Node> reserveCriticalNodes(Net net){
+		ArrayList<Node> reservedNodes = new ArrayList<Node>();
+		for(Pin p : net.getPins()){
+			if(p.isOutPin()) continue; // Skip outpins
+			int extPin = dev.getPrimitiveExternalPin(p);
+			tempNode.setTileAndWire(p.getInstance().getTile(), extPin);
+			Node reserved = tempNode.getSwitchBoxSink(dev);
+			if(reserved.wire == -1) continue;
+			if(router.usedNodes.contains(reserved)){
+				MessageGenerator.briefError("Warning: Could not reserve " +
+					reserved.toString(we) + " for net: " + net.getName() +
+					" This is likely to cause a failure in routing.");
+				continue;
 			}
+			int criticalResource = getCriticalResource(reserved.wire);
+			if(criticalResource != -1){
+				reserved.setWire(criticalResource);
+				reservedNodes.add(reserved);
+			}
+		}
+		return reservedNodes;
+	}
+	
+	/**
+	 * This is for Virtex 4 designs only.  It reserves some of the OMUX
+	 * wires for heavily congested switch matrices.
+	 */
+	private void reserveVirtex4SpecificResources(ArrayList<Net> netList){
+		HashMap<Tile, ArrayList<Net>> sourceCount = new HashMap<Tile, ArrayList<Net>>();
+		for(Net net : netList){
+			Pin p = net.getSource();
+			if(p == null) continue;
+			ArrayList<Net> nets = sourceCount.get(p.getTile());
+			if(nets == null){
+				nets = new ArrayList<Net>();
+				sourceCount.put(p.getTile(), nets);
+			}
+			nets.add(net);
+		}
+		HashMap<Tile, ArrayList<Net>> switchMatrixSources = new HashMap<Tile, ArrayList<Net>>();
+		for(Tile t : sourceCount.keySet()){
+			ArrayList<Net> nets = sourceCount.get(t);
+			for(Net n : nets){
+				Node node = getSwitchBoxWire(n);
+				if(node == null) continue;
+				ArrayList<Net> tmp = switchMatrixSources.get(node.tile);
+				if(tmp == null){
+					tmp = new ArrayList<Net>();
+					switchMatrixSources.put(node.tile,tmp);
+				}
+				tmp.add(n);
+			}
+		}
+		for(Tile t : switchMatrixSources.keySet()){
+			ArrayList<Net> nets = switchMatrixSources.get(t);
 			
-			if(net.getSource() == null){
-				// Sorts the nets into static sourced and wire nets
-				if(netType == NetType.WIRE){
-					if(!net.hasAttributes() && net.getModuleInstance() != null){
-						MessageGenerator.briefErrorAndExit("This case has not yet been coded for" +
-								" handling.  I believe it is a bad file. Net: " + net.getName());
+			if(nets.size() == 0) continue;
+			int reservedTop = 0;
+			int reservedBot = 0;				
+			ArrayList<Net> secondaryNets = new ArrayList<Net>();
+			for(Net n : nets){
+				if(n.getPIPs().size() > 0) continue;
+				Node node = getSwitchBoxWire(n);
+				if(node == null) continue;
+				String wireName = we.getWireName(node.getWire()); 
+				if(wireName.startsWith("HALF")){
+					if(wireName.contains("TOP")){
+						if(reservedTop > 7){
+							break;
+						}
+						Node newNode = new Node(node.tile, we.getWireEnum(v4TopOmuxs[reservedTop]), null, 0);
+						while(router.usedNodes.contains(newNode)){
+
+							reservedTop++;
+							if(reservedTop > 7) {
+								break;
+							}
+							newNode = new Node(node.tile, we.getWireEnum(v4TopOmuxs[reservedTop]), null, 0);
+						}
+						addReservedNode(newNode, n);
+						reservedTop++;									
+					}
+					else if(wireName.contains("BOT")){
+						if(reservedBot > 7){
+							break;
+						}
+						Node newNode = new Node(node.tile, we.getWireEnum(v4BottomOmuxs[reservedBot]), null, 0);
+						while(router.usedNodes.contains(newNode)){
+							reservedBot++;
+							if(reservedBot > 7){
+								break;
+							}
+							newNode = new Node(node.tile, we.getWireEnum(v4BottomOmuxs[reservedBot]), null, 0);
+						}
+						addReservedNode(newNode, n);
+						reservedBot++;
 					}
 				}
-				else if(netType.equals(NetType.VCC)){
-					staticNetList.add(netList.get(i));
-				}
-				else if(netType.equals(NetType.GND)){
-					staticNetList.add(netList.get(i));
-				}
-				else if(net.hasAttributes()){
-					netType.equals(NetType.WIRE);
-				}
-				else{
-					MessageGenerator.briefErrorAndExit(net.toString(we) + "The Net type: " + netType +
-														" does not have a driver (outpin).");
+				else if(wireName.startsWith("SECONDARY")){
+					secondaryNets.add(n);
 				}
 			}
-			else{ // Let's look at the other nets, reserve nodes that they will need
-				if(net.isStaticNet() && net.getPIPs().size() == 0){
-					MessageGenerator.briefErrorAndExit("ERROR: Static Net found with a source: " + net.getName());
+			for(Net n : secondaryNets){
+				Node node = getSwitchBoxWire(n);
+				if(node == null) continue;
+				if(reservedTop < 8){
+					Node newNode = new Node(node.tile, we.getWireEnum(v4TopOmuxs[reservedTop]), null, 0);
+					while(router.usedNodes.contains(newNode)){
+						reservedTop++;
+						if(reservedTop > 7) break;
+						newNode = new Node(node.tile, we.getWireEnum(v4TopOmuxs[reservedTop]), null, 0);
+					}
+					addReservedNode(newNode, n);
+					reservedTop++;						
+				}
+				else if(reservedBot < 8){
+					Node newNode = new Node(node.tile, we.getWireEnum(v4BottomOmuxs[reservedBot]), null, 0);
+					while(router.usedNodes.contains(newNode)){
+						reservedBot++;
+						if(reservedBot > 7) {
+							break;
+						}
+						newNode = new Node(node.tile, we.getWireEnum(v4BottomOmuxs[reservedBot]), null, 0);
+					}
+					addReservedNode(newNode, n);							
+					reservedBot++;												
+				}
+				else{
+					break;
+				}
+			}
+		}			
+	}	
+	
+	private HashMap<Tile, PinSorter> sortPinsVirtex4(ArrayList<Net> staticSourcedNets){
+		HashMap<Tile, PinSorter> pinSwitchMatrixMap = new HashMap<Tile, PinSorter>();
+		Node bounce0 = new Node(); bounce0.wire = we.getWireEnum("BOUNCE0");
+		Node bounce1 = new Node(); bounce1.wire = we.getWireEnum("BOUNCE1");
+		Node bounce2 = new Node(); bounce2.wire = we.getWireEnum("BOUNCE2");
+		Node bounce3 = new Node(); bounce3.wire = we.getWireEnum("BOUNCE3");
+		
+		for(Net net : staticSourcedNets){
+			for(Pin pin : net.getPins()){
+				// Switch matrix sink, where the route has to connect through
+				Node switchMatrixSink  = dev.getSwitchMatrixSink(pin);
+				PinSorter tmp = pinSwitchMatrixMap.get(switchMatrixSink.tile);
+				if(tmp == null){
+					tmp = PinSorter.createPinSorter(familyType);
+					pinSwitchMatrixMap.put(switchMatrixSink.tile, tmp);
 				}
 				
-				ArrayList<Node> rNodes = new ArrayList<Node>();
-				for(Pin p : net.getPins()){
-					if(!p.isOutPin()){
-						int extPin = dev.getPrimitiveExternalPin(p);
-						tempNode.setTileAndWire(p.getInstance().getTile(), extPin);
-						Node reserved = tempNode.getSwitchBoxSink(dev);
-						if(reserved.wire == -1) continue;
-						if(router.usedNodes.contains(reserved)) continue;
-						String name = we.getWireName(reserved.wire); 
-						if(name.startsWith("BYP_INT_B")){
-							rNodes.add(reserved);
+				String wireName = we.getWireName(switchMatrixSink.wire);
+				String bounce = v4BounceMap.get(wireName);
+				if(bounce != null && net.getType().equals(NetType.GND) && 
+				   router.isNodeUsed(switchMatrixSink.tile, we.getWireEnum(bounce))){
+					bounce0.setTile(switchMatrixSink.tile);
+					bounce1.setTile(switchMatrixSink.tile);
+					bounce2.setTile(switchMatrixSink.tile);
+					bounce3.setTile(switchMatrixSink.tile);
+					if(wireName.startsWith("CE") || wireName.startsWith("SR")){
+						
+						if(router.isNodeUsed(bounce0) && router.isNodeUsed(bounce1) &&
+						   router.isNodeUsed(bounce2) && router.isNodeUsed(bounce3)){
+							tmp.addPinToSliceList(switchMatrixSink, pin);
 						}
-						else if(name.startsWith("BYP_B")){
-							reserved.setWire(we.getWireEnum("BYP" + name.charAt(name.length()-1)));
-							rNodes.add(reserved);
-						}
-						else if(name.startsWith("CTRL_B")){
-							reserved.setWire(we.getWireEnum("CTRL" + name.charAt(name.length()-1)));
-							rNodes.add(reserved);
-						}
-						else if(name.startsWith("FAN_B")){
-							reserved.setWire(we.getWireEnum("FAN" + name.charAt(name.length()-1)));
-							rNodes.add(reserved);
+						else{
+							tmp.addPin(switchMatrixSink, pin);
 						}
 					}
 					else{
-						ArrayList<Net> nets = sourceCount.get(p.getTile());
-						if(nets == null) {
-							nets = new ArrayList<Net>();
-							sourceCount.put(p.getTile(), nets);
-						}
-						nets.add(net);
+						tmp.addPinToSliceList(switchMatrixSink, pin);
 					}
 				}
-				if(rNodes.size() > 0){
+				else{
+					tmp.addPin(switchMatrixSink, pin);
+				}
+			}
+		}			
+
+		return pinSwitchMatrixMap;
+	}
+	
+	private HashMap<Tile, PinSorter> sortPinsVirtex5(ArrayList<Net> staticSourcedNets){
+		HashMap<Tile, PinSorter> pinSwitchMatrixMap = new HashMap<Tile, PinSorter>();
+		for(Net net : staticSourcedNets){
+			for(Pin pin : net.getPins()){
+				Node switchMatrixSink = dev.getSwitchMatrixSink(pin);
+				int wire = getCriticalResource(switchMatrixSink.wire);
+				
+				if(wire != -1){
+					// This pin requires a critical resource, let's try to reserve it
+					Node n = new Node(switchMatrixSink.tile, wire, null, 0);
+					if(!addReservedGNDVCCNode(n, pin)){
+						MessageGenerator.briefError("ERROR: This pin requires the critical resource " + n.toString(we) + " which has already been used.");
+					}
+				}
+				
+				PinSorter ps = pinSwitchMatrixMap.get(switchMatrixSink.tile);
+				if(ps == null) {
+					ps = PinSorter.createPinSorter(familyType);
+					pinSwitchMatrixMap.put(switchMatrixSink.tile, ps);
+				}
+				ps.addPin(switchMatrixSink, pin);
+			}
+		}
+		return pinSwitchMatrixMap;
+	}
+	
+	
+	/**
+	 * This function makes sure that all the GND and VCC sources are grouped together
+	 * @param inputList The input static source net list
+	 * @return The grouped net list with GND nets first
+	 */
+	public ArrayList<Net> orderGNDNetsFirst(ArrayList<Net> inputList){
+		ArrayList<Net> gndNets = new ArrayList<Net>();
+		ArrayList<Net> vccNets = new ArrayList<Net>();
+		
+		for(Net net : inputList){
+			if(net.getType().equals(NetType.GND)){
+				gndNets.add(net);
+			}
+			else if(net.getType().equals(NetType.VCC)){
+				vccNets.add(net);
+			}
+			else{
+				MessageGenerator.briefErrorAndExit("Error: found non-static net in static netlist.");
+			}
+		}
+		gndNets.addAll(vccNets);
+		return gndNets;
+	}
+	
+	private Tile getNeighboringSwitchBox(int yOffset, Tile currTile){
+		String newTileName = "INT_X" + currTile.getTileXCoordinate() + "Y" + (currTile.getTileYCoordinate()+yOffset);
+		return dev.getTile(newTileName);
+	}
+	
+	/**
+	 * This method will separate out static sourced nets, partitioning them into localized
+	 * nets
+	 */
+	public void separateStaticSourceNets(){
+		ArrayList<Net> netList = router.netList;
+		ArrayList<Net> staticSourcedNets = new ArrayList<Net>();
+		
+		if(familyType.equals(FamilyType.VIRTEX4)){
+			reserveVirtex4SpecificResources(netList);
+		}
+		
+		//===================================================================//
+		// Step 1: Separate static sourced nets, re-entrant routing stuff, 
+		//         and reserve nodes for critical inpins on nets
+		//===================================================================//
+		for(Net net : netList){
+			if(net.getPIPs().size() > 0){
+				//===========================================================//
+				// Do re-entrant routing, if a net already has PIPs, 
+				// assume its routed, GND/VCC nets are also included
+				//===========================================================//	
+				accomodateRoutedNet(net);
+			}
+			else if(net.isStaticNet()){
+				//===========================================================//
+				// Separate out static sourced nets
+				//===========================================================//	
+				if(net.getSource() != null){
+					MessageGenerator.briefError("Error: GND/VCC net already " +
+						"has a source pin: " +net.getName() + 
+						net.getSource().toString() +", it will be removed.");
+					net.removePin(net.getSource());
+				}					
+				staticSourcedNets.add(net);
+			}
+			else{
+				//===========================================================//
+				// Reserve Nodes for Critical Input Pins on Nets
+				//===========================================================//				
+				ArrayList<Node> reservedNodes = reserveCriticalNodes(net);				
+				if(!reservedNodes.isEmpty()){
 					ArrayList<Node> nodes = router.reservedNodes.get(net);
 					if(nodes == null){
-						nodes = new ArrayList<Node>();
-						router.reservedNodes.put(net,rNodes);
+						nodes = reservedNodes;
+						router.reservedNodes.put(net, nodes);
+					}else {
+						nodes.addAll(reservedNodes);						
 					}
-					nodes.addAll(rNodes);
-
-					router.usedNodes.addAll(rNodes);
+					router.usedNodes.addAll(reservedNodes);
 				}
 			}
 		}
+			
+		// Remove all static sourced nets from original netlist, to be 
+		// recombined later
+		netList.removeAll(staticSourcedNets);
 		
-		/*
-		 * Reserve OMUX wires for congested Virtex 4 switch boxes 
-		 */
-		if(dev.getFamilyType().equals(FamilyType.VIRTEX4)){
-			HashMap<Tile, ArrayList<Net>> switchMatrixSources = new HashMap<Tile, ArrayList<Net>>();
-			for(Tile t : sourceCount.keySet()){
-				ArrayList<Net> nets = sourceCount.get(t);
-				for(Net n : nets){
-					Node node = getSwitchBoxWire(n);
-					if(node == null) continue;
-					ArrayList<Net> tmp = switchMatrixSources.get(node.tile);
-					if(tmp == null){
-						tmp = new ArrayList<Net>();
-						switchMatrixSources.put(node.tile,tmp);
-					}
-					tmp.add(n);
-				}
-			}
-			for(Tile t : switchMatrixSources.keySet()){
-				
-				
-				ArrayList<Net> nets = switchMatrixSources.get(t);
-				//System.out.println("Tile: " + t.getName() +" "+ nets.size());
-				boolean debug = false;
-				if(nets.size() > 0){
-
-					int reservedTop = 0;
-					int reservedBot = 0;
-					
-					ArrayList<Net> secondaryNets = new ArrayList<Net>();
-					for(Net n : nets){
-						if(n.getPIPs().size() > 0) continue;
-						Node node = getSwitchBoxWire(n);
-						if(debug) System.out.println("Debugging " + t.getName() + " net: " + n.getName() + " node: " + node.toString(we));
-						if(debug) System.out.println("NET: " + n.toString(we));
-						if(node == null) continue;
-						String wireName = we.getWireName(node.getWire()); 
-						if(wireName.startsWith("HALF")){
-							if(wireName.contains("TOP")){
-								if(reservedTop > 7){
-									break;
-								}
-								Node newNode = new Node(node.tile, we.getWireEnum(v4TopOmuxs[reservedTop]), null, 0);
-								while(router.usedNodes.contains(newNode)){
-									if(debug) System.out.println("HALF Reserved Top "+ reservedTop + " for " + v4TopOmuxs[reservedTop] + " net: " + n.getName() + " " + n.getSource().getName());
-									reservedTop++;
-									if(reservedTop > 7) {
-										break;
-									}
-									newNode = new Node(node.tile, we.getWireEnum(v4TopOmuxs[reservedTop]), null, 0);
-								}
-								addReservedNode(newNode, n);
-								if(debug) System.out.println("HALF Reserved Top "+ reservedTop + " for " + v4TopOmuxs[reservedTop] + " net: " + n.getName() + " " + n.getSource().getName());
-								reservedTop++;									
-							}
-							else if(wireName.contains("BOT")){
-								if(reservedBot > 7){
-									break;
-								}
-								Node newNode = new Node(node.tile, we.getWireEnum(v4BottomOmuxs[reservedBot]), null, 0);
-								while(router.usedNodes.contains(newNode)){
-									if(debug) System.out.println("HALF Reserved Bot "+ reservedTop + " for " + v4BottomOmuxs[reservedBot] + " net: " + n.getName() + " " + n.getSource().getName());
-									reservedBot++;
-									if(reservedBot > 7){
-										break;
-									}
-									newNode = new Node(node.tile, we.getWireEnum(v4BottomOmuxs[reservedBot]), null, 0);
-								}
-								addReservedNode(newNode, n);
-								if(debug) System.out.println("HALF Reserved Bot "+ reservedTop + " for " + v4BottomOmuxs[reservedBot] + " net: " + n.getName() + " " + n.getSource().getName());
-								reservedBot++;
-							}
-						}
-						else if(wireName.startsWith("SECONDARY")){
-							secondaryNets.add(n);
-						}
-					}
-					for(Net n : secondaryNets){
-						Node node = getSwitchBoxWire(n);
-						if(node == null) continue;
-						if(reservedTop < 8){
-							Node newNode = new Node(node.tile, we.getWireEnum(v4TopOmuxs[reservedTop]), null, 0);
-							while(router.usedNodes.contains(newNode)){
-								if(debug) System.out.println("SEC Reserved Top "+ reservedTop + " for " + v4TopOmuxs[reservedTop] + " net: " + n.getName() + " " + n.getSource().getName());
-								reservedTop++;
-								if(reservedTop > 7) break;
-								newNode = new Node(node.tile, we.getWireEnum(v4TopOmuxs[reservedTop]), null, 0);
-							}
-							addReservedNode(newNode, n);
-							if(debug) System.out.println("SEC Reserved Top "+ reservedTop + " for " + v4TopOmuxs[reservedTop] + " net: " + n.getName() + " " + n.getSource().getName());
-							reservedTop++;						
-						}
-						else if(reservedBot < 8){
-							Node newNode = new Node(node.tile, we.getWireEnum(v4BottomOmuxs[reservedBot]), null, 0);
-							while(router.usedNodes.contains(newNode)){
-								if(debug) System.out.println("SEC Reserved Bot "+ reservedBot + " for " + v4BottomOmuxs[reservedBot] + " net: " + n.getName() + " " + n.getSource().getName());
-								reservedBot++;
-								if(reservedBot > 7) {
-									break;
-								}
-								newNode = new Node(node.tile, we.getWireEnum(v4BottomOmuxs[reservedBot]), null, 0);
-							}
-							addReservedNode(newNode, n);							
-							if(debug) System.out.println("SEC Reserved Bot "+ reservedBot + " for " + v4BottomOmuxs[reservedBot] + " net: " + n.getName() + " " + n.getSource().getName());
-							reservedBot++;												
-						}
-						else{
-							break;
-						}
-					}
-				}
-			}			
-		}		
-		
-		// Remove all static source'd nets afterwards from original design
-		netList.removeAll(staticNetList);
-		
-		HashMap<Tile, PinSorter> tileMap = new HashMap<Tile, PinSorter>();
-		
+		//===================================================================//
+		// Step 2: Find which static sourced inpins go to which switch 
+		//         matrices, sort pins to go into categories: useTIEOFF, 
+		//         attemptTIEOFF, useSLICE
+		//===================================================================//
+		HashMap<Tile, PinSorter> pinSwitchMatrixMap = null;
 		// Iterate through all static nets and create mapping of all sinks to their
 		// respective switch matrix tile, each pin is separated into groups of how their
 		// sources should be created. There are 3 groups:
 		// 1. High priority TIEOFF sinks - Do the best you can to attach these sinks to the TIEOFF
 		// 2. Attempt TIEOFF sinks - Attempt to connect them to a TIEOFF, but not critical
 		// 3. SLICE Source - Instance a nearby slice to supply GND/VCC
-		if(dev.getFamilyType().equals(FamilyType.VIRTEX4)){
-			Node bounce0 = new Node(); bounce0.wire = we.getWireEnum("BOUNCE0");
-			Node bounce1 = new Node(); bounce1.wire = we.getWireEnum("BOUNCE1");
-			Node bounce2 = new Node(); bounce2.wire = we.getWireEnum("BOUNCE2");
-			Node bounce3 = new Node(); bounce3.wire = we.getWireEnum("BOUNCE3");
-			
-			for(Net net : staticNetList){
-				for(Pin pin : net.getPins()){
-					// Switch matrix sink, where the route has to connect through
-					Node switchMatrixSink  = dev.getSwitchMatrixSink(pin);
-					PinSorter tmp = tileMap.get(switchMatrixSink.tile);
-					if(tmp == null){
-						tmp = new PinSorter();
-						tileMap.put(switchMatrixSink.tile, tmp);
-					}
-					
-					String wireName = we.getWireName(switchMatrixSink.wire);
-					String bounce = v4BounceMap.get(wireName);
-					if(bounce != null && net.getType().equals(NetType.GND) && router.isNodeUsed(switchMatrixSink.tile, we.getWireEnum(bounce))){
-						bounce0.setTile(switchMatrixSink.tile);
-						bounce1.setTile(switchMatrixSink.tile);
-						bounce2.setTile(switchMatrixSink.tile);
-						bounce3.setTile(switchMatrixSink.tile);
-						if(wireName.startsWith("CE") || wireName.startsWith("SR")){
-							
-							if(router.isNodeUsed(bounce0) && router.isNodeUsed(bounce1) &&
-							   router.isNodeUsed(bounce2) && router.isNodeUsed(bounce3) ){
-								tmp.addPinToSliceList(switchMatrixSink, pin, net);
-							}
-							else{
-								tmp.addPin(switchMatrixSink, pin, net, needsHard1, needsNonTIEOFFSource);
-							}
-						}
-						else{
-							tmp.addPinToSliceList(switchMatrixSink, pin, net);
-						}
-					}
-					else{
-						tmp.addPin(switchMatrixSink, pin, net, needsHard1, needsNonTIEOFFSource);
-					}
-					
-					
-				}
-			}			
-		}
-		else if(dev.getFamilyType().equals(FamilyType.VIRTEX5)){
-			for(Net net : staticNetList){
-				for(Pin pin : net.getPins()){
-					// Switch matrix sink, where the route has to connect through
-					Node switchMatrixSink  = dev.getSwitchMatrixSink(pin);
-					PinSorter tmp = tileMap.get(switchMatrixSink.tile);
-					if(tmp == null){
-						tmp = new PinSorter();
-						tileMap.put(switchMatrixSink.tile, tmp);
-					}
-					tmp.addPin(switchMatrixSink, pin, net, needsHard1, needsNonTIEOFFSource);
-				}
-			}
-		}
-		else {
-			MessageGenerator.briefErrorAndExit("Sorry, this architecture is not yet supported.");
+		switch(familyType){
+			case VIRTEX4:
+				pinSwitchMatrixMap = sortPinsVirtex4(staticSourcedNets);
+				break;
+			case VIRTEX5:
+				pinSwitchMatrixMap = sortPinsVirtex5(staticSourcedNets);
+				break;
+			default:
+				MessageGenerator.briefErrorAndExit("ERROR: " + familyType +
+					" is unsupported.");
 		}
 		
+		//===================================================================//
+		// Step 3: Make more adjustments to pin categories and create final
+		//         partitioned nets
+		//===================================================================//
 		HashSet<Tile> contentionTiles = new HashSet<Tile>();
-		
-		for(Tile tile : tileMap.keySet()){
-			PinSorter ps = tileMap.get(tile);
+		for(Tile tile : pinSwitchMatrixMap.keySet()){
+			PinSorter ps = pinSwitchMatrixMap.get(tile);
 			boolean foundVCC = false;
 			boolean foundGND = false;
-			for(StaticSink ss : ps.highPriorityForTIEOFF){
-				if(ss.net.getType().equals(NetType.GND)) foundGND = true;
-				if(ss.net.getType().equals(NetType.VCC)) foundVCC = true;
+			for(StaticSink ss : ps.useTIEOFF){
+				if(ss.pin.getNet().getType().equals(NetType.GND)) foundGND = true;
+				if(ss.pin.getNet().getType().equals(NetType.VCC)) foundVCC = true;
 			}
 			if(foundVCC && foundGND){
 				contentionTiles.add(tile);
 			}
 		}
 		
-		
-		
 		// For every switch matrix tile we have found that requires static sink connections
-		for(Tile tile : tileMap.keySet()){
-			PinSorter ps = tileMap.get(tile);
+		for(Tile tile : pinSwitchMatrixMap.keySet()){
+			PinSorter ps = pinSwitchMatrixMap.get(tile);
 			ArrayList<StaticSink> removeThese = new ArrayList<StaticSink>();
 			
 			// Virtex 5 has some special pins that we should reserve
 			if(dev.getFamilyType().equals(FamilyType.VIRTEX5)){
-				for(StaticSink ss : ps.highPriorityForTIEOFF){
-
-					String[] fans = fanBounceMap.get(we.getWireName(ss.node.wire));
+				for(StaticSink ss : ps.useTIEOFF){
+					String[] fans = fanBounceMap.get(we.getWireName(ss.switchMatrixSink.wire));
 					Node newNode = null;
-
+					
 					for(String fan : fans){
 						tempNode.setTile(tile);
 						tempNode.setWire(we.getWireEnum(fan));
+						
+						
+						boolean ableToReserveResource = (!router.usedNodes.contains(tempNode)) || 
+												(reservedGNDVCCResources.get(tempNode) != null && 
+												reservedGNDVCCResources.get(tempNode).equals(ss.pin)); 
+						
 						// Add this to reserved
-						if(!router.usedNodes.contains(tempNode)){
+						if(ableToReserveResource){
 							newNode = new Node(tile, we.getWireEnum(fan), null, 0);
-							String wireName = we.getWireName(newNode.wire);
+							String wireName = we.getWireName(newNode.wire);				
 							
-							
-							if(wireName.equals("FAN0") && !we.getWireName(ss.node.wire).equals("FAN_B0")){
-								ss.node.tile = getNeighboringSwitchBox(1, ss.node.tile);
-								newNode.tile = ss.node.tile;
+							if(wireName.equals("FAN0") && !we.getWireName(ss.switchMatrixSink.wire).equals("FAN_B0")){
+								ss.switchMatrixSink.tile = getNeighboringSwitchBox(1, ss.switchMatrixSink.tile);
+								newNode.tile = ss.switchMatrixSink.tile;
 								
 								// Special case when neighboring resources are used (hard macros)
-								tempNode.tile = ss.node.tile;
+								tempNode.tile = ss.switchMatrixSink.tile;
 								tempNode.wire = we.getWireEnum("FAN0");
 								if(tempNode.tile == null || router.usedNodes.contains(tempNode)){
 									newNode = null;
 								}
 							}
-							else if(wireName.equals("FAN7") && !we.getWireName(ss.node.wire).equals("FAN_B7")){
-								ss.node.tile = getNeighboringSwitchBox(-1, ss.node.tile);
-								newNode.tile = ss.node.tile;
+							else if(wireName.equals("FAN7") && !we.getWireName(ss.switchMatrixSink.wire).equals("FAN_B7")){
+								ss.switchMatrixSink.tile = getNeighboringSwitchBox(-1, ss.switchMatrixSink.tile);
+								newNode.tile = ss.switchMatrixSink.tile;
 								
 								// Special case when neighboring resources are used (hard macros)
-								tempNode.tile = ss.node.tile;
+								tempNode.tile = ss.switchMatrixSink.tile;
 								tempNode.wire = we.getWireEnum("FAN7");
 								if(tempNode.tile == null || router.usedNodes.contains(tempNode)){
 									newNode = null;
 								}
 							}
 							
-							if(newNode != null && ss.net.getType().equals(NetType.GND)){
+							if(newNode != null && ss.pin.getNet().getType().equals(NetType.GND)){
 								if(contentionTiles.contains(tile)){
 									newNode = null;									
 								}
-								else if(ss.pin.getName().equals("SSRBU")){								
-									ss.reservedResource = new Node(ss.node.tile, we.getWireEnum(we.getWireName(ss.node.wire).replace("_B", "")),null, 0);
+								else if(ss.pin.getName().equals("SSRBU")){
+									Node n = new Node(ss.switchMatrixSink.tile, we.getWireEnum(we.getWireName(ss.switchMatrixSink.wire).replace("_B", "")),null, 0);
+									if(!addReservedGNDVCCNode(n, ss.pin)){
+										MessageGenerator.briefError("ERROR: Possible problem routing pin: " + ss.pin.toString());
+									}
+
 								}
 							}
 													
@@ -546,12 +656,12 @@ public class StaticSourceHandler{
 						ps.useSLICE.add(ss);
 					}
 				}
-				ps.highPriorityForTIEOFF.removeAll(removeThese);				
+				ps.useTIEOFF.removeAll(removeThese);				
 			
 				removeThese = new ArrayList<StaticSink>();
 				for(StaticSink ss : ps.attemptTIEOFF){
-					if(ss.net.getType().equals(NetType.GND)){
-						String[] fans = fanBounceMap.get(we.getWireName(ss.node.wire));
+					if(ss.pin.getNet().getType().equals(NetType.GND)){
+						String[] fans = fanBounceMap.get(we.getWireName(ss.switchMatrixSink.wire));
 						boolean useSLICE = true;
 						for(String fan : fans){
 							tempNode.setWire(we.getWireEnum(fan));
@@ -570,24 +680,27 @@ public class StaticSourceHandler{
 				ps.attemptTIEOFF.removeAll(removeThese);
 			}
 		}
-		
-
-		
+				
 		// Handle each group of sinks separately, allocating TIEOFF to those sinks according
 		// to priority
-		for(PinSorter ps : tileMap.values()){
-			for(StaticSink ss : ps.highPriorityForTIEOFF){
-				Instance inst = updateTIEOFF(ss.node.tile, ss.net, true);
+		for(PinSorter ps : pinSwitchMatrixMap.values()){
+			ssLoop : for(StaticSink ss : ps.useTIEOFF){
+				Instance inst = updateTIEOFF(ss.switchMatrixSink.tile, ss.pin.getNet(), true);
 				
-				// Special case with CLK pins BRAMs on Virtex5 devices, when competing for FANs against GND Nets
 				if(dev.getFamilyType().equals(FamilyType.VIRTEX5)){				
-					if(ss.pin.getInstance().getPrimitiveSite().getType().equals(PrimitiveType.RAMBFIFO36) && ss.pin.getName().contains("CLK")){
-						String[] fanWireNames = fanBounceMap.get(we.getWireName(ss.node.wire));
+					String[] fanWireNames = null;
+					if((fanWireNames = fanBounceMap.get(we.getWireName(ss.switchMatrixSink.wire))) != null){
 						Node nn = new Node(inst.getTile(), we.getWireEnum(fanWireNames[0]), null, 0);
-						if(!addNodeToReserveList(nn, ss)){
-							// we need to use a SLICE 
-							ps.useSLICE.add(ss);
-							continue;
+						for(String fanWireName : fanWireNames){
+							nn.setWire(we.getWireEnum(fanWireName));
+							boolean reservedWire = addReservedGNDVCCNode(nn, ss.pin);
+							if(reservedWire){
+								break;
+							}
+							if(!reservedWire && fanWireName.equals(fanWireNames[fanWireNames.length-1])){
+								ps.useSLICE.add(ss);
+								continue ssLoop;
+							}
 						}
 					}
 				}
@@ -595,13 +708,13 @@ public class StaticSourceHandler{
 				// Find the correct net corresponding to this TIEOFF if it exists
 				Net matchingNet = null;
 				for(Net net : inst.getNetList()){
-					if(net.getType().equals(ss.net.getType()) && !net.getSource().getName().equals("KEEP1")){
+					if(net.getType().equals(ss.pin.getNet().getType()) && !net.getSource().getName().equals("KEEP1")){
 						matchingNet = net;
 						break;
 					}
 				}
 				if(matchingNet == null){
-					matchingNet = createNewNet(ss.net, ss.pin);
+					matchingNet = createNewNet(ss.pin.getNet(), ss.pin);
 					finalStaticNets.add(matchingNet);
 					inst.addToNetList(matchingNet);
 					createAndAddPin(matchingNet, inst, true);
@@ -610,22 +723,17 @@ public class StaticSourceHandler{
 					matchingNet.addPin(ss.pin);
 					ss.pin.getInstance().addToNetList(matchingNet);
 				}
-				
-				if(ss.reservedResource != null){
-					addReservedNode(ss.reservedResource, matchingNet);
-				}
 			}
 			
 			for(StaticSink ss : ps.attemptTIEOFF){
-				Instance inst = updateTIEOFF(ss.node.tile, ss.net, false);
+				Instance inst = updateTIEOFF(ss.switchMatrixSink.tile, ss.pin.getNet(), false);
 				// Special case with CLK pins BRAMs on Virtex5 devices, when competing for FANs against GND Nets
 				if(dev.getFamilyType().equals(FamilyType.VIRTEX5)){
-					int switchBoxSink = ss.node.wire;			
+					int switchBoxSink = ss.switchMatrixSink.wire;			
 					
-					if(we.getWireName(ss.node.getWire()).startsWith("BYP_B")){
+					if(we.getWireName(ss.switchMatrixSink.getWire()).startsWith("BYP_B")){
 						Node nn = new Node(inst.getTile(), we.getWireEnum(we.getWireName(switchBoxSink).replace("_B","")), null, 0);
-						
-						if(!addNodeToReserveList(nn, ss)){
+						if(!addReservedGNDVCCNode(nn, ss.pin)){
 							// we need to use a SLICE 
 							ps.useSLICE.add(ss);
 							continue;
@@ -633,14 +741,14 @@ public class StaticSourceHandler{
 					}
 					else if(switchBoxSink == v5ctrlWires[0] || switchBoxSink == v5ctrlWires[1] || switchBoxSink == v5ctrlWires[2] || switchBoxSink == v5ctrlWires[3]){
 						Node nn = new Node(inst.getTile(), we.getWireEnum(we.getWireName(switchBoxSink).replace("_B","")), null, 0);
-						if(!addNodeToReserveList(nn, ss)){
+						if(!addReservedGNDVCCNode(nn, ss.pin)){
 							// we need to use a SLICE 
 							ps.useSLICE.add(ss);
 							continue;
 						}
 					}else if(ss.pin.getInstance().getPrimitiveSite().getType().equals(PrimitiveType.DSP48E) && ss.pin.getName().contains("CEP")){
 						Node nn = new Node(inst.getTile(), we.getWireEnum("CTRL1"), null, 0);
-						if(!addNodeToReserveList(nn, ss)){
+						if(!addReservedGNDVCCNode(nn, ss.pin)){
 							// we need to use a SLICE 
 							ps.useSLICE.add(ss);
 							continue;
@@ -648,7 +756,7 @@ public class StaticSourceHandler{
 					}
 					else if(ss.pin.getName().contains("ENBL")){
 						Node nn = new Node(inst.getTile(), we.getWireEnum("CTRL2"), null, 0);
-						if(!addNodeToReserveList(nn, ss)){
+						if(!addReservedGNDVCCNode(nn, ss.pin)){
 							// we need to use a SLICE 
 							ps.useSLICE.add(ss);
 							continue;
@@ -658,16 +766,15 @@ public class StaticSourceHandler{
 				
 				Net matchingNet = null;
 				
-				//TODO
 				// Find the correct net corresponding to this TIEOFF if it exists
 				for(Net net : inst.getNetList()){
-					if(net.getType().equals(ss.net.getType()) && !net.getSource().getName().equals("HARD1")){
+					if(net.getType().equals(ss.pin.getNet().getType()) && !net.getSource().getName().equals("HARD1")){
 						matchingNet = net;
 						break;
 					}
 				}
 				if(matchingNet == null){
-					matchingNet = createNewNet(ss.net, ss.pin);
+					matchingNet = createNewNet(ss.pin.getNet(), ss.pin);
 					finalStaticNets.add(matchingNet);
 					inst.addToNetList(matchingNet);
 					createAndAddPin(matchingNet, inst, false);
@@ -682,21 +789,21 @@ public class StaticSourceHandler{
 				ArrayList<Pin> gnds = new ArrayList<Pin>();
 				ArrayList<Pin> vccs = new ArrayList<Pin>();
 				for(StaticSink ss : ps.useSLICE){
-					if(ss.net.getType().equals(NetType.GND)){
+					if(ss.pin.getNet().getType().equals(NetType.GND)){
 						gnds.add(ss.pin);
 					}
-					else if(ss.net.getType().equals(NetType.VCC)){
+					else if(ss.pin.getNet().getType().equals(NetType.VCC)){
 						vccs.add(ss.pin);
 					}
 				}		
 				
 				if(gnds.size() > 0){
 					// Create the new net
-					Net newNet = createNewNet(ps.useSLICE.get(0).net, gnds);
+					Net newNet = createNewNet(NetType.GND, gnds);
 					finalStaticNets.add(newNet);
 
 					// Create new instance of SLICE primitive to get source
-					Instance currInst = findClosestAvailableSLICE(ps.useSLICE.get(0).node.tile, ps.useSLICE.get(0).net.getType());
+					Instance currInst = findClosestAvailableSLICE(ps.useSLICE.get(0).switchMatrixSink.tile, NetType.GND);
 					if(currStaticSourcePin != null){
 						currInst.addToNetList(newNet);
 						newNet.addPin(currStaticSourcePin);
@@ -710,15 +817,15 @@ public class StaticSourceHandler{
 				}
 				if(vccs.size() > 0){
 					// Create the new net
-					Net newNet = createNewNet(ps.useSLICE.get(0).net, vccs);
+					Net newNet = createNewNet(NetType.VCC, vccs);
 					finalStaticNets.add(newNet);
 
 					// Create new instance of SLICE primitive to get source
-					Instance currInst = findClosestAvailableSLICE(ps.useSLICE.get(0).node.tile, ps.useSLICE.get(0).net.getType());
+					Instance currInst = findClosestAvailableSLICE(ps.useSLICE.get(0).switchMatrixSink.tile, NetType.VCC);
 
 					if(currStaticSourcePin != null){
 						currInst.addToNetList(newNet);
-						newNet.addPin(currStaticSourcePin);						
+						newNet.addPin(currStaticSourcePin);
 					}
 					else{
 						router.design.addInstance(currInst);
@@ -730,19 +837,48 @@ public class StaticSourceHandler{
 			}
 		}
 		
-		// Re order and assemble nets for router
-		ArrayList<Net> tmpList = new ArrayList<Net>();
 		
-		finalStaticNets = orderGNDNetsFirst(finalStaticNets, gndReserved, vccReserved);
+		//===================================================================//
+		// Step 4: Finalize node reservations and re-order and assemble nets 
+		//         for router
+		//===================================================================//
+		for(Node n : reservedGNDVCCResources.keySet()){
+			Pin pinToReserve = reservedGNDVCCResources.get(n);
+			addReservedNode(n, pinToReserve.getNet());
+		}	
 		
-		tmpList.addAll(finalStaticNets);
-		tmpList.addAll(netList);
-		router.netList = tmpList;
+		finalStaticNets = orderGNDNetsFirst(finalStaticNets);
+		finalStaticNets.addAll(netList);
+		router.netList = finalStaticNets;
 	}
 	
-	private Tile getNeighboringSwitchBox(int yOffset, Tile currTile){
-		String newTileName = "INT_X" + currTile.getTileXCoordinate() + "Y" + (currTile.getTileYCoordinate()+yOffset);
-		return dev.getTile(newTileName);
+	/**
+	 * Creates a new net based on the staticNet and will contain the newPinList
+	 * @param staticNet Parent net to create new net from
+	 * @param newPinList The new set of pins for the new net
+	 * @return The newly created net
+	 */
+	private Net createNewNet(NetType type, ArrayList<Pin> newPinList){
+		Net newNet = type.equals(NetType.VCC) ? new Net("GLOBAL_LOGIC1_" + netCount, type) : new Net("GLOBAL_LOGIC0_" + netCount, type) ;
+		newNet.setPins(newPinList);
+		netCount++;
+		return newNet;
+	}
+
+	/**
+	 * Creates a new net based on the staticNet and will contain the newPin
+	 * @param staticNet Parent net to create new net from
+	 * @param newPin The new pin of the new net
+	 * @return The newly created net
+	 */
+	private Net createNewNet(Net staticNet, Pin newPin){
+		Net newNet = new Net();
+		newNet.addPin(newPin);
+		newPin.getInstance().addToNetList(newNet);
+		newNet.setName(staticNet.getName() + "_" + netCount);
+		newNet.setType(staticNet.getType());
+		netCount++;
+		return newNet;
 	}
 	
 	/**
@@ -764,82 +900,6 @@ public class StaticSourceHandler{
 		Pin source = new Pin(true,pinName, inst); 
 		net.addPin(source);
 		inst.addToNetList(net);
-	}
-	
-	/**
-	 * Creates or updates the appropriate TIEOFF to act as a source for a given net.
-	 * @param net The net driven by the TIEOFF.
-	 * @param needHard1 Determines if the source should be a HARD1.
-	 * @return The created/updated TIEOFF.
-	 */
-	private Instance updateTIEOFF(Tile tile, Net net, boolean needHard1){
-		String tileSuffix = tile.getTileNameSuffix();
-		String instName = "XDL_DUMMY_INT" + tileSuffix + "_TIEOFF" + tileSuffix;
-		Instance currInst = router.design.getInstance(instName);
-		Attribute vccAttr = needHard1 ? hard1Attr : keep1Attr;
-		// Add the appropriate attribute if instance already exists
-		if(currInst != null){
-			if(net.getType().equals(NetType.VCC)){
-				// Add HARD1
-				if(!currInst.hasAttribute(vccAttr.getPhysicalName())){
-					currInst.addAttribute(vccAttr);
-				}
-			}
-			else if(net.getType().equals(NetType.GND)){
-				if(!currInst.hasAttribute(keep0Attr.getPhysicalName())){
-					currInst.addAttribute(keep0Attr);
-				}
-			}
-		}
-		// Add the instance (it doesn't exist yet)
-		else{
-			currInst = new Instance();
-			currInst.place(router.dev.getPrimitiveSite("TIEOFF" + tileSuffix));
-			currInst.setType(PrimitiveType.TIEOFF);
-			currInst.setName(instName);
-			currInst.addAttribute(noUserLogicAttr);
-			if(net.getType().equals(NetType.VCC)){
-				// Add HARD1
-				currInst.addAttribute(vccAttr);
-			}
-			else if(net.getType().equals(NetType.GND)){
-				currInst.addAttribute(keep0Attr);
-			}
-			router.design.addInstance(currInst);
-		}
-
-		return currInst;
-	}
-
-	/**
-	 * Creates a new net based on the staticNet and will contain the newPinList
-	 * @param staticNet Parent net to create new net from
-	 * @param newPinList The new set of pins for the new net
-	 * @return The newly created net
-	 */
-	private Net createNewNet(Net staticNet, ArrayList<Pin> newPinList){
-		Net newNet = new Net();
-		newNet.setPins(newPinList);
-		newNet.setName(staticNet.getName() + "_" + netCount);
-		newNet.setType(staticNet.getType());
-		netCount++;
-		return newNet;
-	}
-	
-	/**
-	 * Creates a new net based on the staticNet and will contain the newPin
-	 * @param staticNet Parent net to create new net from
-	 * @param newPin The new pin of the new net
-	 * @return The newly created net
-	 */
-	private Net createNewNet(Net staticNet, Pin newPin){
-		Net newNet = new Net();
-		newNet.addPin(newPin);
-		newPin.getInstance().addToNetList(newNet);
-		newNet.setName(staticNet.getName() + "_" + netCount);
-		newNet.setType(staticNet.getType());
-		netCount++;
-		return newNet;
 	}
 		
 	enum Direction{UP, DOWN, LEFT, RIGHT};
@@ -950,24 +1010,6 @@ public class StaticSourceHandler{
 							}
 						}
 					}	
-				
-					/*if(!router.design.getUsedPrimitiveSites().contains(site) && (site.getType().equals(PrimitiveType.SLICEL) || site.getType().equals(PrimitiveType.SLICEM))){
-						Instance returnMe = new Instance();
-						HashMap<String, Attribute> attributeMap = new HashMap<String, Attribute>();
-						attributeMap.put("_NO_USER_LOGIC", new Attribute("_NO_USER_LOGIC","",""));
-						if(sourceType.equals(NetType.VCC)){
-							attributeMap.put("_VCC_SOURCE", new Attribute("_VCC_SOURCE","",slicePin));	
-						}
-						else{
-							attributeMap.put("_GND_SOURCE", new Attribute("_GND_SOURCE","",slicePin));
-						}
-						
-						returnMe.place(site);
-						returnMe.setType(PrimitiveType.SLICEL);
-						returnMe.setAttributes(attributeMap);
-						returnMe.setName("XDL_DUMMY_" + returnMe.getTile() + "_" + site.getName());
-						return returnMe;
-					}*/
 				}
 			}
 		}
@@ -977,91 +1019,53 @@ public class StaticSourceHandler{
 	}
 	
 	/**
-	 * This method generates a set of wires that will require the TIEOFF HARD1 pin rather than
-	 * the KEEP1 pin.  
-	 * @param partName Name of the part to generate the set for.
-	 * @param we The wire enumerator corresponding to the supplied part.
-	 * @return A set of switch box wires the require a TIEOFF HARD1 pin connection based on the supplied part. 
+	 * Creates or updates the appropriate TIEOFF to act as a source for a given net.
+	 * @param net The net driven by the TIEOFF.
+	 * @param needHard1 Determines if the source should be a HARD1.
+	 * @return The created/updated TIEOFF.
 	 */
-	public static HashSet<Integer> getPinsNeedingHardPowerSource(String partName, WireEnumerator we){
-		HashSet<Integer> set = new HashSet<Integer>();
-		if(partName.startsWith("xc4v")){
-			for(int i = 0; i < 4; i++){
-				set.add(we.getWireEnum("SR_B" + i));
-				set.add(we.getWireEnum("CE_B" + i));
+	private Instance updateTIEOFF(Tile tile, Net net, boolean needHard1){
+		String tileSuffix = tile.getTileNameSuffix();
+		String instName = "XDL_DUMMY_INT" + tileSuffix + "_TIEOFF" + tileSuffix;
+		Instance currInst = router.design.getInstance(instName);
+		Attribute vccAttr = needHard1 ? hard1Attr : keep1Attr;
+		// Add the appropriate attribute if instance already exists
+		if(currInst != null){
+			if(net.getType().equals(NetType.VCC)){
+				// Add HARD1
+				if(!currInst.hasAttribute(vccAttr.getPhysicalName())){
+					currInst.addAttribute(vccAttr);
+				}
 			}
-			return set;
-		}
-		else if(partName.startsWith("xc5v")){
-			set.add(we.getWireEnum("CLK_B0"));
-			set.add(we.getWireEnum("CLK_B1"));
-			for(int i = 0; i < 8; i++){
-				set.add(we.getWireEnum("FAN_B" + i));				
+			else if(net.getType().equals(NetType.GND)){
+				if(!currInst.hasAttribute(keep0Attr.getPhysicalName())){
+					currInst.addAttribute(keep0Attr);
+				}
 			}
-			return set;
 		}
+		// Add the instance (it doesn't exist yet)
 		else{
-			MessageGenerator.briefErrorAndExit("Sorry, this architecture is not yet supported.");
-			return null;
-		}
-	}
-	
-	/**
-	 * This method generates a set of wires in a particular part switch box that require
-	 * a SLICE to supply the static source.  This is true of CLB_B wires in Virtex 4.
-	 * @param partName Name of the part to generate the set for.
-	 * @param we The wire enumerator corresponding to the supplied part.
-	 * @return The set of all switch matrix wires that require a SLICE to supply a static source.
-	 */
-	public static HashSet<Integer> getPinsNeedingNonTIEOFFSource(String partName, WireEnumerator we){
-		HashSet<Integer> set = new HashSet<Integer>();
-		if(we.getFamilyType().equals(FamilyType.VIRTEX4)){
-			for(int i = 0; i < 4; i++){
-				set.add(we.getWireEnum("CLK_B" + i));
+			currInst = new Instance();
+			currInst.place(router.dev.getPrimitiveSite("TIEOFF" + tileSuffix));
+			currInst.setType(PrimitiveType.TIEOFF);
+			currInst.setName(instName);
+			currInst.addAttribute(noUserLogicAttr);
+			if(net.getType().equals(NetType.VCC)){
+				// Add HARD1
+				currInst.addAttribute(vccAttr);
 			}
-			return set;
-		}
-		else if(we.getFamilyType().equals(FamilyType.VIRTEX5)){
-			return set;
-		}
-		MessageGenerator.briefErrorAndExit("Sorry, this architecture is not yet supported.");
-		return null;
-	}
-	
-	/**
-	 * This function makes sure that all the GND and VCC sources are grouped together
-	 * @param inputList The input static source net list
-	 * @return The grouped net list with GND nets first
-	 */
-	public ArrayList<Net> orderGNDNetsFirst(ArrayList<Net> inputList, ArrayList<Node> reserveForGND, ArrayList<Node> reserveForVCC){
-		ArrayList<Net> gndNets = new ArrayList<Net>();
-		ArrayList<Net> vccNets = new ArrayList<Net>();
-		
-		for(Net net : inputList){
-			if(net.getType().equals(NetType.GND)){
-				gndNets.add(net);
+			else if(net.getType().equals(NetType.GND)){
+				currInst.addAttribute(keep0Attr);
 			}
-			else if(net.getType().equals(NetType.VCC)){
-				vccNets.add(net);
-			}
-			else{
-				MessageGenerator.briefErrorAndExit("Error: found non-static net in static netlist.");
-			}
+			router.design.addInstance(currInst);
 		}
-		for(Node n : reserveForGND){
-			addReservedNode(n, gndNets.get(0));
-		}
-		for(Node n : reserveForVCC){
-			addReservedNode(n, vccNets.get(0));
-		}
-		gndNets.addAll(vccNets);
-		return gndNets;
-	}
-	
-	// This is to help remove routing conflicts
-	static {
+
+		return currInst;
+	}	
+	// This static information is used to help remove routing conflicts
+	static{
 		fanBounceMap = new HashMap<String, String[]>();
-		String[] array0 = {"FAN2", "FAN7", };
+		String[] array0 = {"FAN2", "FAN7"};
 		fanBounceMap.put("BYP_B0", array0);
 		String[] array1 = {"FAN2", "FAN7"};
 		fanBounceMap.put("BYP_B1", array1);
@@ -1257,7 +1261,5 @@ public class StaticSourceHandler{
 		v4BounceMap.put("IMUX_B7", "BOUNCE3");
 		v4BounceMap.put("IMUX_B8", "BOUNCE0");
 		v4BounceMap.put("IMUX_B9", "BOUNCE1");
-
-		
 	}
 }

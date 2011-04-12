@@ -24,9 +24,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 
-import edu.byu.ece.rapidSmith.design.Net;
 import edu.byu.ece.rapidSmith.design.NetType;
 import edu.byu.ece.rapidSmith.design.Pin;
+import edu.byu.ece.rapidSmith.device.WireEnumerator;
+import edu.byu.ece.rapidSmith.util.FamilyType;
+import edu.byu.ece.rapidSmith.util.MessageGenerator;
 
 
 /**
@@ -35,50 +37,74 @@ import edu.byu.ece.rapidSmith.design.Pin;
  * @author Chris Lavin
  * Created on: Jul 13, 2010
  */
-public class PinSorter{
+public abstract class PinSorter{
 	/** These are the pins that are the most needy of the TIEOFF source pins */
-	LinkedList<StaticSink> highPriorityForTIEOFF;
+	LinkedList<StaticSink> useTIEOFF;
 	/** These are pins that could be source by the TIEOFF, but not as necessary */
 	ArrayList<StaticSink> attemptTIEOFF;
 	/** These are pins that will be sourced by a slice */
 	ArrayList<StaticSink> useSLICE;
-		
+	/** This is a list of pin names that require a HARD1 if being driven by a TIEOFF */
+	static HashSet<String> needHARD1;
+	/** This is a list of pins that require a SLICE to source them */
+	static HashSet<String> needSLICESource;
+	/** Reference to the wire enumerator class */
+	static WireEnumerator we;
 	/**
-	 * Initializes data stuctures
+	 * Initializes data structures
 	 */
 	public PinSorter(){
-		highPriorityForTIEOFF = new LinkedList<StaticSink>();
+		useTIEOFF = new LinkedList<StaticSink>();
 		attemptTIEOFF = new ArrayList<StaticSink>();
 		useSLICE = new ArrayList<StaticSink>();
-		
 	}
-
+	
+	/**
+	 * Creates the proper PinSorter subclass based on the family type provided
+	 * @param type The family type to create a pin sorter for
+	 * @return A new PinSorter subclass, or null if unsupported.
+	 */
+	public static PinSorter createPinSorter(FamilyType type){
+		switch(type){
+			case VIRTEX4:
+				return new V4PinSorter();
+			case VIRTEX5:
+				return new V5PinSorter();
+			default:
+				MessageGenerator.briefError("Sorry, " +	type.name() + 
+					" is unsupported by the PinSorter class.");
+				return null;
+		}
+	}
+	
 	/**
 	 * This methods sorts the pins as they are added.
-	 * @param node The switch matrix sink node.
+	 * @param switchMatrixSink The switch matrix sink node.
 	 * @param pin The current sink pin being sorted.
 	 * @param net The current net.
 	 * @param needHard1 The set of wires that require a connection to HARD1 on the TIEOFF.
 	 * @param needSLICE The set of wires that require a slice to supply the static source.
 	 */
-	public void addPin(Node node, Pin pin, Net net, HashSet<Integer> needHard1, HashSet<Integer> needSLICE){
-		StaticSink ss = new StaticSink(node, pin, net);
-		if(needHard1.contains(node.wire)) {
-			highPriorityForTIEOFF.addFirst(ss);
+	public void addPin(Node switchMatrixSink, Pin pin){
+		StaticSink ss = new StaticSink(switchMatrixSink, pin);
+		String wireName = we.getWireName(switchMatrixSink.wire);
+		
+		if(needHARD1.contains(wireName)){
+			useTIEOFF.addFirst(ss);
 		}
-		else if(needSLICE.contains(node.wire)){
+		else if(needSLICESource.contains(wireName)){
 			useSLICE.add(ss);
 		}
-		else if(net.getType().equals(NetType.GND)){
-			highPriorityForTIEOFF.addLast(ss);
+		else if(pin.getNet().getType().equals(NetType.GND)){
+			useTIEOFF.addLast(ss);
 		}
 		else {
 			attemptTIEOFF.add(ss);
 		}
 	}
 	
-	public void addPinToSliceList(Node node, Pin pin, Net net){
-		StaticSink ss = new StaticSink(node, pin, net);
+	public void addPinToSliceList(Node node, Pin pin){
+		StaticSink ss = new StaticSink(node, pin);
 		useSLICE.add(ss);
 	}
 	
@@ -87,15 +113,14 @@ public class PinSorter{
 	 * @author Chris Lavin
 	 */
 	public class StaticSink{
-
-		public Node node;
+		public Node switchMatrixSink;
 		public Pin pin;
-		public Net net;
-		public Node reservedResource = null;
-		public StaticSink(Node node, Pin pin, Net net) {
-			this.node = node;
+		public StaticSink(Node switchMatrixSink, Pin pin){
+			this.switchMatrixSink = switchMatrixSink;
 			this.pin = pin;
-			this.net = net;
+		}
+		public String toString(WireEnumerator we){
+			return "["+switchMatrixSink.toString(we) + ", pin=" + pin.getName() + ", instance=" + pin.getInstanceName() +"]";
 		}
 	}
 }
