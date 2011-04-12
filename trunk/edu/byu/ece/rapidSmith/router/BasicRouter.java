@@ -289,7 +289,7 @@ public class BasicRouter extends AbstractRouter{
 			for (PIP pip : netPIPs){
 				setWireAsUsed(pip.getTile(), pip.getStartWire());
 				setWireAsUsed(pip.getTile(), pip.getEndWire());
-				checkForIntermediateUsedNodes(pip);
+				checkForIntermediateUsedNodes(pip, currNet);
 			}
 			// Let's add these PIPs to the actual net, to be included in the design
 			currNet.setPIPs(netPIPs);

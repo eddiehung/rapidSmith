@@ -48,7 +48,7 @@ public abstract class AbstractRouter{
 	/** This keeps track of all the used nodes in the chip during routing */
 	protected HashSet<Node> usedNodes;
 	/** Keeps track for each used node by which net it is used by */
-	protected HashMap<Node,LinkedList<Net>> usedNodesMap;
+	protected HashMap<Node,LinkedList<Net>> usedNodesMap; // TODO - Does this really need to have multiple values, resources can't be used by multiple nets
 	/** This keeps track of all the visited nodes in the chip during routing */
 	protected HashSet<Node> visitedNodes;
 	/** The current working net list */
@@ -121,6 +121,23 @@ public abstract class AbstractRouter{
 		return n;
 	}
 	
+	/**
+	 * This method allows a router to keep track of which nets use which
+	 * nodes.
+	 * @param net The net using node n.
+	 * @param n The node used by the given net
+	 */
+	protected void addUsedWireMapping(Net net, Node n){
+		LinkedList<Net> list = usedNodesMap.get(n);
+		if(list == null){ 
+			list = new LinkedList<Net>(); 
+		}
+		if(!list.contains(net)){ 
+			list.add(net);
+			usedNodesMap.put(n, list);
+		}
+	}
+	
 	public boolean isNodeUsed(Tile tile, int wire){
 		tempNode.setTileAndWire(tile, wire);
 		return usedNodes.contains(tempNode);
@@ -134,24 +151,27 @@ public abstract class AbstractRouter{
 	 * Checks each node in a PIP to see if there are other nodes that should be
 	 * marked as used. These are wires external to a tile such as
 	 * doubles/pents/hexes/longlines.
-	 * 
-	 * @param wire
+	 * @param pip The pip to check intermediate used nodes for
+	 * @param currentNet The net to associate with the intermediate nodes, null if 
+	 * the usedNodesMap should not be updated
 	 */
-	protected void checkForIntermediateUsedNodes(PIP wire){
-		WireConnection[] wires = wire.getTile().getWireConnections(wire.getEndWire());
+	protected void checkForIntermediateUsedNodes(PIP pip, Net currentNet){
+		WireConnection[] wires = pip.getTile().getWireConnections(pip.getEndWire());
 		if(wires != null && wires.length > 1){
 			for(WireConnection w : wires){
 				if(w.getRowOffset() != 0 || w.getColumnOffset() != 0){
-					setWireAsUsed(w.getTile(wire.getTile()), w.getWire());
+					Node tmp = setWireAsUsed(w.getTile(pip.getTile()), w.getWire());
+					if(currentNet != null) addUsedWireMapping(currentNet, tmp);
 				}
 			}
 		}
-		if(we.getWireType(wire.getStartWire()).equals(WireType.LONG) && we.getWireType(wire.getEndWire()).equals(WireType.LONG)){
-			wires = wire.getTile().getWireConnections(wire.getStartWire());
+		if(we.getWireType(pip.getStartWire()).equals(WireType.LONG) && we.getWireType(pip.getEndWire()).equals(WireType.LONG)){
+			wires = pip.getTile().getWireConnections(pip.getStartWire());
 			if(wires != null && wires.length > 1){
 				for(WireConnection w : wires){
 					if(w.getRowOffset() != 0 || w.getColumnOffset() != 0){
-						setWireAsUsed(w.getTile(wire.getTile()), w.getWire());
+						Node tmp = setWireAsUsed(w.getTile(pip.getTile()), w.getWire());
+						if(currentNet != null) addUsedWireMapping(currentNet, tmp);
 					}
 				}
 			}
