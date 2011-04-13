@@ -660,6 +660,36 @@ public class Module implements Serializable{
 	}
 	
 	
+	public String getPartNameFromModuleFile(String fileName){
+		FileInputStream fis = null;
+		BufferedInputStream bis = null;
+		Hessian2Input his = null;
+		try{
+			fis = new FileInputStream(fileName);
+			
+			bis = new BufferedInputStream(fis);
+			his = new Hessian2Input(bis);
+			Deflation dis = new Deflation();
+			his = dis.unwrap(his);
+			
+			String version = his.readString();
+			
+			if(version.equals(moduleFileVersion)){
+				String s = his.readString();
+				fis.close();
+				return s;
+			}
+			fis.close();
+			return null;
+			
+		} catch(FileNotFoundException e){
+			return null;
+		} catch (IOException e) {
+			return null;
+		}
+	}
+	
+	
 	/**
 	 * Loads the module from memory and is stored in this object.
 	 * 
