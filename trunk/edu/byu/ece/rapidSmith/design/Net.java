@@ -260,6 +260,11 @@ public class Net implements Comparable<Net>, Serializable {
 			fanOut--;
 		}
 		pin.setNet(null);
+		if(pips.size() > 0){
+			// TODO - Be smarter about unrouting only the resources 
+			// connected to the pin, such as unroute(Pin);
+			unroute();
+		}
 		return pins.remove(pin);
 	}
 	
