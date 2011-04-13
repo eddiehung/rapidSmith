@@ -257,13 +257,13 @@ public class Module implements Serializable{
 			return false;
 		}
 		for(Pin p : instance.getPins()){
-			// TODO - We can sort through PIPs to only remove those that need
-			// to be removed, we just need a method to do that
 			p.getNet().unroute(); 
 			if(p.getNet().getPins().size() == 1){
-				netMap.remove(p.getName());
+				netMap.remove(p.getNet().getName());
 			}
-			p.getNet().removePin(p);
+			else{
+				p.getNet().removePin(p);				
+			}
 		}
 		instanceMap.remove(instance.getName());
 		instance.setDesign(null);
@@ -421,8 +421,11 @@ public class Module implements Serializable{
 				stringPool.add(attr.getValue());
 			}
 		}
-		
-		instancePool.add(anchor);
+
+		if(anchor != null){
+			instancePool.add(anchor);			
+		}
+
 		
 		// Nets
 		for(Net net : netMap.values()){
@@ -537,7 +540,7 @@ public class Module implements Serializable{
 			
 			
 			// Instance anchor;
-			int blah = instancePool.getEnumerationValue(anchor);
+			int blah = anchor == null ? -1 : instancePool.getEnumerationValue(anchor);
 			hos.writeInt(blah);
 			
 			// ArrayList<Port> portList;
@@ -545,13 +548,6 @@ public class Module implements Serializable{
 			for(Port port : portList){
 				// String name;
 				hos.writeInt(stringPool.getEnumerationValue(port.getName()));
-				
-				//String instanceName
-				// Instance instance;
-				//TODO - On the next module version, take this out
-				//hos.writeInt(instancePool.getEnumerationValue(port.getInstance()));
-				
-				// String pinName;
 				// Pin pin;
 				hos.writeInt(pinPool.getEnumerationValue(port.getPin()));
 			}
@@ -786,7 +782,9 @@ public class Module implements Serializable{
 			}
 			this.setAttributes(attributes);
 			
-			this.setAnchor(instances[his.readInt()]);
+			int anchorIndex = his.readInt();
+			
+			this.setAnchor(anchorIndex == -1 ? null : instances[anchorIndex]);
 			
 			int portSize = his.readInt();
 			ArrayList<Port> portList = new ArrayList<Port>(portSize);
@@ -794,8 +792,6 @@ public class Module implements Serializable{
 				Port port = new Port();
 				
 				port.setName(strings[his.readInt()]);
-				//TODO - On the next module version, take this out
-				//his.readInt();
 				
 				port.setPin(pins[his.readInt()]);
 				
