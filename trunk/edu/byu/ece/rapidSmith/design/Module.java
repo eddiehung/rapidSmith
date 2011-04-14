@@ -840,7 +840,8 @@ public class Module implements Serializable{
 				
 				int temp = his.readInt();	
 				if(temp != -1){
-					net.replaceSource(pins[temp]);
+					pins[temp].setIsOutputPin(true);
+					net.setSource(pins[temp]);
 				}
 								
 				net.setModuleTemplate(this);
