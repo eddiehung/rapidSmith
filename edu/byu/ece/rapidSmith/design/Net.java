@@ -322,6 +322,10 @@ public class Net implements Comparable<Net>, Serializable {
 		this.source = null;
 	}
 	
+	protected void setSource(Pin source){
+		this.source = source;
+	}
+	
 	/**
 	 * Replaces the current source with the new source and
 	 * adds it to the pin list in the net.
