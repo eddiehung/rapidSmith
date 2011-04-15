@@ -890,7 +890,7 @@ public class Design implements Serializable{
 							if(mi.getAnchor() == null){
 								System.out.println("Anchor is null");
 							}
-							if(mi.getAnchor().isPlaced()){
+							if(mi.getAnchor() != null && mi.getAnchor().isPlaced()){
 								bw.write("placed " + mi.getAnchor().getTile() + " " +
 										mi.getAnchor().getPrimitiveSiteName() + " ;" + nl);
 							}
