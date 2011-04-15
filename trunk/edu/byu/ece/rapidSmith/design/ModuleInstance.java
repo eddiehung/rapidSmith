@@ -27,6 +27,8 @@ import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.Tile;
 import edu.byu.ece.rapidSmith.device.TileType;
+import edu.byu.ece.rapidSmith.device.WireConnection;
+import edu.byu.ece.rapidSmith.device.WireEnumerator;
 import edu.byu.ece.rapidSmith.util.MessageGenerator;
 
 /**
@@ -274,8 +276,10 @@ public class ModuleInstance{
 		//=======================================================//
 		/* Place net at new location                             */
 		//=======================================================//
-		int mCout = design.getWireEnumerator().getWireEnum("M_COUT");
-		int llCout = design.getWireEnumerator().getWireEnum("LL_COUT");
+		WireEnumerator we = design.getWireEnumerator(); 
+		int mCout = we.getWireEnum("M_COUT");
+		int llCout = we.getWireEnum("LL_COUT");
+		int wl5beg_s0 = we.getWireEnum("WL5BEG_S0");
 		for(Net net : nets){
 			net.getPIPs().clear();
 			Net templateNet = net.getModuleTemplateNet();
@@ -292,12 +296,31 @@ public class ModuleInstance{
 					return false;
 				}
 				net.addPIP(newPip);
+				// Special cases for Virtex 5
 				if(newPip.getStartWire() == mCout && newPipTile.getType().equals(TileType.CLBLL)){
 					newPip.setStartWire(llCout);
 				}
 				else if(newPip.getStartWire() == llCout && newPipTile.getType().equals(TileType.CLBLM)){
 					newPip.setStartWire(mCout);
 				}
+				else if(newPip.getEndWire() == wl5beg_s0){
+					TileType check = dev.getTile(newPipTile.getRow(), newPipTile.getColumn()-1).getType();
+					TileType check2 = dev.getTile(newPipTile.getRow(), newPipTile.getColumn()-2).getType();
+					if(check.equals(TileType.INT_BUFS_R) || check2.equals(TileType.INT_BUFS_R)){
+						int currWire = wl5beg_s0;
+						WireConnection[] wcs = newPipTile.getWireConnections(currWire);
+						Tile currTile = newPipTile;
+						while(wcs.length == 1){
+							if(wcs[0].isPIP()){
+								net.addPIP(new PIP(currTile, currWire, wcs[0].getWire()));
+							}
+							currTile = wcs[0].getTile(currTile);
+							currWire = wcs[0].getWire();
+							wcs = currTile.getWireConnections(currWire);
+						}
+					}
+				}
+				
 			}
 		}
 		return true;
