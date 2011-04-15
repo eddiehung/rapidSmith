@@ -827,6 +827,14 @@ public class Design implements Serializable{
 						bw.write("# MODULE of \""+moduleName+"\"" + nl);
 						bw.write("# ======================================================="+nl);
 					}
+					
+					if(module.getAnchor() == null){
+						if(addComments){
+							bw.write("# This module is a routing only block"+nl);
+						}
+						continue;
+					}
+					
 					bw.write("module "+"\""+moduleName+"\" "+"\""+module.getAnchor().getName()+"\" , cfg \"");
 					
 					for(Attribute attr : module.getAttributes()){
