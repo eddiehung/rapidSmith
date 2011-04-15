@@ -288,6 +288,9 @@ public class ModuleInstance{
 					return false;
 				}
 				PIP newPip = new PIP(newPipTile, pip.getStartWire(), pip.getEndWire());
+				if(!newPipTile.hasPIP(newPip)){
+					return false;
+				}
 				net.addPIP(newPip);
 				if(newPip.getStartWire() == mCout && newPipTile.getType().equals(TileType.CLBLL)){
 					newPip.setStartWire(llCout);

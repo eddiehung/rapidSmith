@@ -241,6 +241,29 @@ public class Tile implements Serializable{
 	}
 	
 	/**
+	 * Checks if this tile contains a pip with the same connection
+	 * as that provided.
+	 * @param pip The pip connection to look for.
+	 * @return True if the connection exists in this tile, false otherwise.
+	 */
+	public boolean hasPIP(PIP pip){
+		return hasConnection(pip.getStartWire(), pip.getEndWire());
+	}
+	
+	private boolean hasConnection(int startWire, int endWire){
+		WireConnection[] wireConns = wireConnections.get(startWire);
+		if(wireConns == null || wireConns.length == 0){
+			return false;
+		}
+		for(WireConnection wc : wireConns){
+			if(wc.getWire() == endWire && wc.isPIP()){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
 	 * Sets the name of the tile (XDL name, such as INT_X0Y5).
 	 * @param name The new name of the tile.
 	 */
