@@ -209,11 +209,11 @@ public class StaticSourceHandler{
 	 */
 	private void accomodateRoutedNet(Net net){
 		for(PIP p : net.getPIPs()){
-			Node tmp = router.setWireAsUsed(p.getTile(), p.getStartWire(), net);
-			router.addUsedWireMapping(net, tmp);
-			tmp = router.setWireAsUsed(p.getTile(), p.getEndWire(), net);
-			router.addUsedWireMapping(net, tmp);
-			router.checkForIntermediateUsedNodes(p, net);
+			router.setWireAsUsed(p.getTile(), p.getStartWire(), net);
+			//TODO router.addUsedWireMapping(net, tmp);
+			router.setWireAsUsed(p.getTile(), p.getEndWire(), net);
+			//router.addUsedWireMapping(net, tmp);
+			router.markIntermediateNodesAsUsed(p, net);
 		}
 	}
 	
@@ -237,6 +237,20 @@ public class StaticSourceHandler{
 		return -1;
 	}
 	
+	private void unRouteNetForCriticalNode(Node n){
+		LinkedList<Net> nets = new LinkedList<Net>(router.usedNodesMap.get(n));
+		for(Net net : nets){
+			for(PIP p : net.getPIPs()){
+				router.setWireAsUnused(p.getTile(), p.getStartWire(), net);
+				router.setWireAsUnused(p.getTile(), p.getEndWire(), net);
+				router.markIntermediateNodesAsUnused(p, net);
+			}
+			net.unroute();
+			MessageGenerator.briefError("Unrouting Net: " + net.getName());
+			MessageGenerator.briefError("  For Critical Resource: " + n.toString(we));
+		}
+	}
+	
 	/**
 	 * Reserves resources for nets which require specific routing resources
 	 * in order to complete a net.
@@ -253,18 +267,14 @@ public class StaticSourceHandler{
 			Node reserved = tempNode.getSwitchBoxSink(dev);
 			if(reserved.wire == -1) continue;
 			if(router.usedNodes.contains(reserved)){
-				MessageGenerator.briefError("Warning: Could not reserve " +
-					reserved.toString(we) + " for net: " + net.getName() +
-					" This is likely to cause a failure in routing.");
+				unRouteNetForCriticalNode(reserved);
 				continue;
 			}
 			int criticalResource = getCriticalResource(reserved.wire);
 			if(criticalResource != -1){
 				reserved.setWire(criticalResource);
 				if(router.usedNodes.contains(reserved)){
-					MessageGenerator.briefError("Warning: Could not reserve " +
-							reserved.toString(we) + " for net: " + net.getName() +
-							" This is likely to cause a failure in routing.");
+					unRouteNetForCriticalNode(reserved);
 				}
 				else{
 					reservedNodes.add(reserved);					
@@ -526,7 +536,10 @@ public class StaticSourceHandler{
 				}					
 				staticSourcedNets.add(net);
 			}
-			else{
+		}
+		
+		for(Net net : netList){
+			if(!net.hasPIPs() && !net.isStaticNet()){
 				//===========================================================//
 				// Reserve Nodes for Critical Input Pins on Nets
 				//===========================================================//				
