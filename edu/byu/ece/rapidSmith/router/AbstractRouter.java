@@ -111,21 +111,32 @@ public abstract class AbstractRouter{
 	}
 	
 	/**
-	 * Sets a wire as used for the given routing
-	 * @param t The tile in the node that is used
-	 * @param wire The wire in the node that is used
+	 * Sets a node (combined tile and wire) as used and maps 
+	 * the usage to the given net.
+	 * @param t The tile specifier for the node to be marked as used.
+	 * @param wire The wire specifier for the node to be marked as used.
+	 * @param net The net using the node.
+	 * @return The node that was set as used.
 	 */
 	protected Node setWireAsUsed(Tile t, int wire, Net net){
 		Node n = new Node(t, wire, null, 0);
 		usedNodes.add(n);
-		LinkedList<Net> list = usedNodesMap.get(n);
-		if(list == null){ 
-			list = new LinkedList<Net>(); 
-		}
-		if(!list.contains(net)){ 
-			list.add(net);
-			usedNodesMap.put(n, list);
-		}		
+		addUsedWireMapping(net, n);	
+		return n;
+	}
+	
+	/**
+	 * Sets a node (combined tile and wire) as unused and unmaps 
+	 * the usage to the given net.
+	 * @param t The tile specifier for the node to be marked as unused.
+	 * @param wire The wire specifier for the node to be marked as unused.
+	 * @param net The net currently using the node.
+	 * @return The node that was set as unused.
+	 */
+	protected Node setWireAsUnused(Tile t, int wire, Net net){
+		Node n = new Node(t, wire, null, 0);
+		usedNodes.remove(n);
+		removeUsedWireMapping(net, n);		
 		return n;
 	}
 	
@@ -146,6 +157,24 @@ public abstract class AbstractRouter{
 		}
 	}
 	
+	/**
+	 * This method removes a node usage mapping to a net when it is being
+	 * marked as unused.
+	 * @param net The net currently using the node.
+	 * @param n The node to be removed.
+	 */
+	protected void removeUsedWireMapping(Net net, Node n){
+		LinkedList<Net> list = usedNodesMap.get(n);
+		if(list == null){ 
+			return; 
+		}
+		if(list.remove(net)){
+			if(list.isEmpty()){
+				usedNodesMap.remove(n);
+			}
+		}
+	}
+	
 	public boolean isNodeUsed(Tile tile, int wire){
 		tempNode.setTileAndWire(tile, wire);
 		return usedNodes.contains(tempNode);
@@ -163,7 +192,7 @@ public abstract class AbstractRouter{
 	 * @param currentNet The net to associate with the intermediate nodes, null if 
 	 * the usedNodesMap should not be updated
 	 */
-	protected void checkForIntermediateUsedNodes(PIP pip, Net currentNet){
+	protected void markIntermediateNodesAsUsed(PIP pip, Net currentNet){
 		WireConnection[] wires = pip.getTile().getWireConnections(pip.getEndWire());
 		if(wires != null && wires.length > 1){
 			for(WireConnection w : wires){
@@ -185,4 +214,28 @@ public abstract class AbstractRouter{
 			}
 		}
 	}
+	
+	protected void markIntermediateNodesAsUnused(PIP pip, Net currentNet){
+		WireConnection[] wires = pip.getTile().getWireConnections(pip.getEndWire());
+		if(wires != null && wires.length > 1){
+			for(WireConnection w : wires){
+				if(w.getRowOffset() != 0 || w.getColumnOffset() != 0){
+					Node tmp = setWireAsUnused(w.getTile(pip.getTile()), w.getWire(), currentNet);
+					if(currentNet != null) removeUsedWireMapping(currentNet, tmp);
+				}
+			}
+		}
+		if(we.getWireType(pip.getStartWire()).equals(WireType.LONG) && we.getWireType(pip.getEndWire()).equals(WireType.LONG)){
+			wires = pip.getTile().getWireConnections(pip.getStartWire());
+			if(wires != null && wires.length > 1){
+				for(WireConnection w : wires){
+					if(w.getRowOffset() != 0 || w.getColumnOffset() != 0){
+						Node tmp = setWireAsUnused(w.getTile(pip.getTile()), w.getWire(), currentNet);
+						if(currentNet != null) removeUsedWireMapping(currentNet, tmp);
+					}
+				}
+			}
+		}
+	}
+	
 }
