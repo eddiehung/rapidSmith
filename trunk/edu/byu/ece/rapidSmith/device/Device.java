@@ -190,16 +190,17 @@ public class Device implements Serializable{
 	 * @return The wire enumeration of the internal pin on the instance primitive of pin.
 	 */
 	public Integer getPrimitiveExternalPin(Pin pin){
-		Integer extPin = pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getName());
-		if (extPin != null) {
-			return extPin;
-		}
-		
 		// Check the Pin Mapping patch for proper external pin name mapping
 		String extName = PinMappingPatch.getPinMapping(pin.getInstance().getType(), pin.getName());
 		if(extName != null){
 			return WireEnumerator.getInstance(getFamilyType()).getWireEnum(extName);
 		}
+		
+		Integer extPin = pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getName());
+		if(extPin != null){
+			return extPin;
+		}
+		
 		return null;
 	}
 	

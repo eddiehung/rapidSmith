@@ -36,7 +36,8 @@ class PinMappingPatch {
 	private static HashMap<PrimitiveType, HashMap<String, String>> patch;
 
 	public static String getPinMapping(PrimitiveType type, String internalName){
-		return patch.get(type).get(internalName);
+		HashMap<String, String> map = patch.get(type);
+		return map == null ? null : map.get(internalName);
 	}
 
 	static {
@@ -1288,6 +1289,7 @@ class PinMappingPatch {
 		map.put("REGCLKBL", "RAMBFIFO36_REGCLKBWRRCLKL");
 		map.put("REGCLKBU", "RAMBFIFO36_REGCLKBWRRCLKU");
 		map.put("SSRAL", "RAMBFIFO36_SSRAU");
+		map.put("SSRAU", "RAMBFIFO36_SSRARSTL"); // TODO Brad - I had to add this
 		map = new HashMap<String, String>();
 		patch.put(PrimitiveType.RAMBFIFO18, map);
 		map.put("ADDRA0", "RAMBFIFO36_ADDRAU0");
