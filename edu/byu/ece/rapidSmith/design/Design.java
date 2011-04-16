@@ -738,7 +738,21 @@ public class Design implements Serializable{
 		saveXDLFile(fileName, false);
 	}
 
-	
+	public float getMaxClkPeriodOfModuleInstances(){
+		float maxModulePeriod = 0.0f;
+		int missingClockRate = 0;
+		for(ModuleInstance mi : getModuleInstances()){
+			float currModuleClkPeriod = mi.getModule().getMinClkPeriod(); 
+			if(currModuleClkPeriod != Float.MAX_VALUE){
+				if(currModuleClkPeriod > maxModulePeriod)
+					maxModulePeriod = currModuleClkPeriod;
+			}
+			else{
+				missingClockRate++;
+			}
+		}
+		return maxModulePeriod;
+	}
 	
 	public String getMaxClkPeriodOfModuleInstancesReport(){
 		String nl = System.getProperty("line.separator");
