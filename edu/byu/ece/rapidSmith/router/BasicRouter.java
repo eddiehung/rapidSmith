@@ -287,8 +287,8 @@ public class BasicRouter extends AbstractRouter{
 			
 			// Mark these used PIPs as used in the data structures
 			for (PIP pip : netPIPs){
-				setWireAsUsed(pip.getTile(), pip.getStartWire());
-				setWireAsUsed(pip.getTile(), pip.getEndWire());
+				setWireAsUsed(pip.getTile(), pip.getStartWire(), currNet);
+				setWireAsUsed(pip.getTile(), pip.getEndWire(), currNet);
 				checkForIntermediateUsedNodes(pip, currNet);
 			}
 			// Let's add these PIPs to the actual net, to be included in the design

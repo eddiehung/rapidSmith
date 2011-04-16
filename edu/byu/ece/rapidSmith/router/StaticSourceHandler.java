@@ -208,13 +208,10 @@ public class StaticSourceHandler{
 	 * @param net The routed net to mark used nodes 
 	 */
 	private void accomodateRoutedNet(Net net){
-		for(PIP p : net.getPIPs()){					
-			addReservedNode(new Node(p.getTile(), p.getStartWire(), null, 0), net);
-			addReservedNode(new Node(p.getTile(), p.getEndWire(), null, 0), net);
-			
-			Node tmp = router.setWireAsUsed(p.getTile(), p.getStartWire());
+		for(PIP p : net.getPIPs()){
+			Node tmp = router.setWireAsUsed(p.getTile(), p.getStartWire(), net);
 			router.addUsedWireMapping(net, tmp);
-			tmp = router.setWireAsUsed(p.getTile(), p.getEndWire());
+			tmp = router.setWireAsUsed(p.getTile(), p.getEndWire(), net);
 			router.addUsedWireMapping(net, tmp);
 			router.checkForIntermediateUsedNodes(p, net);
 		}
@@ -264,7 +261,15 @@ public class StaticSourceHandler{
 			int criticalResource = getCriticalResource(reserved.wire);
 			if(criticalResource != -1){
 				reserved.setWire(criticalResource);
-				reservedNodes.add(reserved);
+				if(router.usedNodes.contains(reserved)){
+					MessageGenerator.briefError("Warning: Could not reserve " +
+							reserved.toString(we) + " for net: " + net.getName() +
+							" This is likely to cause a failure in routing.");
+				}
+				else{
+					reservedNodes.add(reserved);					
+				}
+
 			}
 		}
 		return reservedNodes;
@@ -542,7 +547,7 @@ public class StaticSourceHandler{
 		// Remove all static sourced nets from original netlist, to be 
 		// recombined later
 		netList.removeAll(staticSourcedNets);
-		
+
 		//===================================================================//
 		// Step 2: Find which static sourced inpins go to which switch 
 		//         matrices, sort pins to go into categories: useTIEOFF, 

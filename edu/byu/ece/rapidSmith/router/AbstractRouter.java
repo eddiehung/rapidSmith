@@ -115,9 +115,17 @@ public abstract class AbstractRouter{
 	 * @param t The tile in the node that is used
 	 * @param wire The wire in the node that is used
 	 */
-	protected Node setWireAsUsed(Tile t, int wire){
+	protected Node setWireAsUsed(Tile t, int wire, Net net){
 		Node n = new Node(t, wire, null, 0);
 		usedNodes.add(n);
+		LinkedList<Net> list = usedNodesMap.get(n);
+		if(list == null){ 
+			list = new LinkedList<Net>(); 
+		}
+		if(!list.contains(net)){ 
+			list.add(net);
+			usedNodesMap.put(n, list);
+		}		
 		return n;
 	}
 	
@@ -160,7 +168,7 @@ public abstract class AbstractRouter{
 		if(wires != null && wires.length > 1){
 			for(WireConnection w : wires){
 				if(w.getRowOffset() != 0 || w.getColumnOffset() != 0){
-					Node tmp = setWireAsUsed(w.getTile(pip.getTile()), w.getWire());
+					Node tmp = setWireAsUsed(w.getTile(pip.getTile()), w.getWire(), currentNet);
 					if(currentNet != null) addUsedWireMapping(currentNet, tmp);
 				}
 			}
@@ -170,7 +178,7 @@ public abstract class AbstractRouter{
 			if(wires != null && wires.length > 1){
 				for(WireConnection w : wires){
 					if(w.getRowOffset() != 0 || w.getColumnOffset() != 0){
-						Node tmp = setWireAsUsed(w.getTile(pip.getTile()), w.getWire());
+						Node tmp = setWireAsUsed(w.getTile(pip.getTile()), w.getWire(), currentNet);
 						if(currentNet != null) addUsedWireMapping(currentNet, tmp);
 					}
 				}
