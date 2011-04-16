@@ -22,6 +22,8 @@ package edu.byu.ece.rapidSmith.util;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -121,6 +123,54 @@ public class RunXilinxTools {
 		return true;
 	}
 
+	/**
+	 * Convenient method to get the minimum clock period for a given NCD file.
+	 * This method assumes single clock domain.
+	 * @param ncdFileName Name of the existing NCD file to get the clock period
+	 * from.
+	 * @return The minimum clock period in nanoseconds, or Float.MAX_VALUE if 
+	 * none is found.
+	 */
+	public static float getMinClkPeriodFromTRCE(String ncdFileName){
+		String twrFileName = ncdFileName.replace(".ncd", ".twr");
+		String cmd = "trce " + ncdFileName + " -o " + twrFileName;
+		int returnValue = runCommand(cmd, false);
+		if(returnValue != 0){
+			MessageGenerator.briefError("trce command failed: " + cmd);
+			return Float.MAX_VALUE;
+		}
+		boolean nextLine = false;
+		boolean secondLine = false;
+		BufferedReader br;
+		try {
+			br = new BufferedReader(new FileReader(twrFileName));
+			String line = null;
+			while((line = br.readLine()) != null){
+				if(secondLine){
+					String[] parts = line.split("\\s+");
+					br.close();
+					return Float.parseFloat(parts[2].substring(0, parts[2].length() - 2));				
+				}
+				if(nextLine){
+					secondLine = true;
+					nextLine = false;
+				}
+				if(line.contains("Source Clock   |Dest:Rise")){
+					nextLine = true;
+				}
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (NumberFormatException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		
+		return Float.MAX_VALUE;
+	}
+	
 	/**
 	 * A generic method to run a command from the system command line.
 	 * @param command The command to execute.  This method blocks until the command finishes.
