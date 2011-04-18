@@ -1289,7 +1289,7 @@ class PinMappingPatch {
 		map.put("REGCLKBL", "RAMBFIFO36_REGCLKBWRRCLKL");
 		map.put("REGCLKBU", "RAMBFIFO36_REGCLKBWRRCLKU");
 		map.put("SSRAL", "RAMBFIFO36_SSRAU");
-		map.put("SSRAU", "RAMBFIFO36_SSRARSTL"); // TODO Brad - I had to add this
+		map.put("SSRAU", "RAMBFIFO36_SSRARSTL"); // TODO Brad - Check for any more missed mappings
 		map = new HashMap<String, String>();
 		patch.put(PrimitiveType.RAMBFIFO18, map);
 		map.put("ADDRA0", "RAMBFIFO36_ADDRAU0");
