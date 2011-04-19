@@ -1326,13 +1326,15 @@ public class HardMacroGenerator {
 			vhd.write("architecture behavioral of " + designName.replace("_HARD_MACRO", "") + " is" + newLine + newLine); // Add entity name
 			vhd.write("component " + hardMacro.getName() + newLine);
 			vhd.write("port(" + newLine);
+			int portCounter = hardMacro.getPorts().size();
 			for(Port port : hardMacro.getPorts()){
 				
 				vhd.write("  " + port.getName() + " :\t" +
 						(port.getName().contains("_inport") ? "in" : "out") +
 						" std_logic");
 				
-				if(port.equals(hardMacro.getPorts().get(hardMacro.getPorts().size()-1))){
+				portCounter--;
+				if(portCounter == 0){
 					vhd.write(newLine);
 				}
 				else{
@@ -1371,6 +1373,7 @@ public class HardMacroGenerator {
 			vhd.write("instance0 : " + hardMacro.getName() + newLine);
 			vhd.write("  port map(" + newLine);
 			multiCount = 0;
+			portCounter = hardMacro.getPorts().size();
 			for(Port port : hardMacro.getPorts()){
 				
 				vhd.write("  " + port.getName() + " => ");
@@ -1391,8 +1394,8 @@ public class HardMacroGenerator {
 					vhd.write(port.getName().substring(0, port.getName().lastIndexOf("_")));
 				}
 				
-				
-				if(port.equals(hardMacro.getPorts().get(hardMacro.getPorts().size()-1))){
+				portCounter--;
+				if(portCounter == 0){
 					vhd.write(newLine);
 				}
 				else{

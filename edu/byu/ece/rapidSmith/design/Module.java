@@ -63,7 +63,7 @@ public class Module implements Serializable{
 	/** This is the anchor of the module */
 	private Instance anchor;
 	/** Ports on the module */
-	private ArrayList<Port> portList;
+	private HashMap<String, Port> portMap;
 	/** Instances which are part of the module */
 	private HashMap<String,Instance> instanceMap;
 	/** Nets of the module */
@@ -79,7 +79,7 @@ public class Module implements Serializable{
 		name = null;
 		anchor = null;
 		attributes = new ArrayList<Attribute>();
-		portList = new ArrayList<Port>();
+		portMap = new HashMap<String, Port>();
 		instanceMap = new HashMap<String,Instance>();
 		netMap = new HashMap<String,Net>();
 	}
@@ -286,16 +286,8 @@ public class Module implements Serializable{
 	 * Gets and returns the port list for this module.
 	 * @return The port list for this module.
 	 */
-	public ArrayList<Port> getPorts(){
-		return portList;
-	}
-	
-	/**
-	 * Sets the port list for this module.
-	 * @param portList The new port list to be set for this module.
-	 */
-	public void setPortList(ArrayList<Port> portList){
-		this.portList = portList;
+	public Collection<Port> getPorts(){
+		return portMap.values();
 	}
 
 	/**
@@ -303,7 +295,10 @@ public class Module implements Serializable{
 	 * @param portList The new port list to be set for this module.
 	 */
 	public void setPorts(ArrayList<Port> portList){
-		this.portList = portList;
+		portMap.clear();
+		for(Port p: portList){
+			addPort(p);
+		}
 	}
 	
 	/**
@@ -311,7 +306,16 @@ public class Module implements Serializable{
 	 * @param port The new port to add.
 	 */
 	public void addPort(Port port){
-		this.portList.add(port);
+		this.portMap.put(port.getName(), port);
+	}
+	
+	/**
+	 * Returns the port with the given name.
+	 * @param name the port's name
+	 * @return the port
+	 */
+	public Port getPort(String name){
+		return this.portMap.get(name);
 	}
 	
 	/**
@@ -390,7 +394,7 @@ public class Module implements Serializable{
 			stringPool.add(attr.getLogicalName());
 			stringPool.add(attr.getValue());
 		}
-		for(Port p : portList){
+		for(Port p : portMap.values()){
 			// Populating Pin pool
 			pinPool.add(p.getPin());
 			
@@ -536,8 +540,8 @@ public class Module implements Serializable{
 			hos.writeInt(blah);
 			
 			// ArrayList<Port> portList;
-			hos.writeInt(portList.size());
-			for(Port port : portList){
+			hos.writeInt(portMap.size());
+			for(Port port : portMap.values()){
 				// String name;
 				hos.writeInt(stringPool.getEnumerationValue(port.getName()));
 				// Pin pin;
@@ -789,7 +793,7 @@ public class Module implements Serializable{
 				
 				portList.add(port);
 			}
-			this.setPortList(portList);
+			this.setPorts(portList);
 			
 			NetType[] type = NetType.values();
 			int netSize = his.readInt();
