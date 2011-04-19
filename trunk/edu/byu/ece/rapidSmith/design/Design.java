@@ -1151,9 +1151,10 @@ public class Design implements Serializable{
 					bw.write("\";" + nl);
 					
 					String[] ports = new String[module.getPorts().size()];
-					for(int i = 0; i < ports.length; i++){
-						Port port = module.getPorts().get(i); 
-						ports[i] = "  port \"" + port.getName() +"\" \"" + port.getInstanceName() +"\" \"" + port.getPinName()+"\";" + nl;
+					int portNum = 0;
+					for(Port port : module.getPorts()){
+						ports[portNum] = "  port \"" + port.getName() +"\" \"" + port.getInstanceName() +"\" \"" + port.getPinName()+"\";" + nl;
+						portNum++;
 					}
 					Arrays.sort(ports);
 					
