@@ -82,9 +82,9 @@ public class DesignCompare{
 						}
 					}
 					//check portList
-					for(Port port1:module1.getPortList()){
+					for(Port port1:module1.getPorts()){
 						identical = false;
-						for(Port port2:module2.getPortList()){
+						for(Port port2:module2.getPorts()){
 							if(port1.toString().compareTo(port2.toString()) == 0){
 								identical = true;
 								break;
