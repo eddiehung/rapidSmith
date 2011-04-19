@@ -420,7 +420,7 @@ public class HardMacroGenerator {
 					}
 					
 					Port newPort = new Port(clkname +"_inport",port);
-					hardMacro.getPortList().add(newPort);
+					hardMacro.getPorts().add(newPort);
 					port.setPort(newPort);
 					
 				}
@@ -491,7 +491,7 @@ public class HardMacroGenerator {
 							Port newPort = null;
 							if(net.getName().startsWith("GLOBAL_LOGIC")){
 								newPort = new Port(net.getName()+"_inport" + num,p);
-								hardMacro.getPortList().add(newPort);
+								hardMacro.getPorts().add(newPort);
 							}
 							else{
 								String type = "0";
@@ -499,7 +499,7 @@ public class HardMacroGenerator {
 									type = "1";
 								}
 								newPort = new Port("GLOBAL_LOGIC"+type+"_"+(uniqueGL++)+"_inport" + num,p);
-								hardMacro.getPortList().add(newPort);
+								hardMacro.getPorts().add(newPort);
 							}
 							
 							// Create a new net for each pin created
@@ -578,7 +578,7 @@ public class HardMacroGenerator {
 				System.out.println("ERROR: Two instances placed at same location: " + inst.getName() + " " + inst.getPrimitiveSiteName());
 			}
 		}
- 		for(Port port : hardMacro.getPortList()){
+ 		for(Port port : hardMacro.getPorts()){
  			// Check for unique port names
 			if(!portNames.contains(port.getName())){
 				portNames.add(port.getName());
@@ -731,7 +731,7 @@ public class HardMacroGenerator {
 				}	
 				net.getPIPs().clear();
 				Port newPort = new Port(outputNames+"_outport",net.getSource());
-				hardMacro.getPortList().add(newPort);
+				hardMacro.getPorts().add(newPort);
 				net.getSource().setPort(newPort);
 			}
 			else{
@@ -770,7 +770,7 @@ public class HardMacroGenerator {
 					netsToAdd.add(newNet);
 					instancesToAdd.add(inst);
 					Port newPort = new Port(pin.getInstance().getName()+"_outport",newPin);
-					hardMacro.getPortList().add(newPort);
+					hardMacro.getPorts().add(newPort);
 					newPin.setPort(newPort);
 				}
 			}
@@ -801,7 +801,7 @@ public class HardMacroGenerator {
 				Pin p = net.getPins().get(0);
 				//XDL_Pin p = pins.get(0); -- This is wrong here because we already removed this pin
 				Port newPort = new Port(pin.getInstance().getName()+"_inport",p);
-				hardMacro.getPortList().add(newPort);
+				hardMacro.getPorts().add(newPort);
 				p.setPort(newPort);
 			}
 			else{
@@ -830,7 +830,7 @@ public class HardMacroGenerator {
 					netsToAdd.add(newNet);
 					instancesToAdd.add(inst);
 					Port newPort = new Port(pin.getInstance().getName()+"_outport",newPin);
-					hardMacro.getPortList().add(newPort);
+					hardMacro.getPorts().add(newPort);
 					newPin.setPort(newPort);
 				}
 				else{
@@ -839,7 +839,7 @@ public class HardMacroGenerator {
 					// CASE 4:
 					Pin p = net.getSource();
 					Port newPort = new Port(pin.getInstance().getName()+"_outport",p);
-					hardMacro.getPortList().add(newPort);
+					hardMacro.getPorts().add(newPort);
 					p.setPort(newPort);
 				}
 			}
@@ -883,7 +883,7 @@ public class HardMacroGenerator {
 				net.getPins().add(newPin);
 				Port newPort = new Port(pin.getInstance().getName()+"_outport",
 						newLUTPin);
-				hardMacro.getPortList().add(newPort);
+				hardMacro.getPorts().add(newPort);
 				newLUTPin.setPort(newPort);
 			}
 			else{
@@ -908,7 +908,7 @@ public class HardMacroGenerator {
 		if(!containsBUFG){
 			Port newPort = new Port(inPin.getInstance().getName()+"_inport",
 					net.getPins().get(0));
-			hardMacro.getPortList().add(newPort);
+			hardMacro.getPorts().add(newPort);
 			net.getPins().get(0).setPort(newPort);
 				
 		}
@@ -1095,7 +1095,7 @@ public class HardMacroGenerator {
 		
 		HashMap<String,String[]> signalMap = null;
 		
-		for(Port port : hardMacro.getPortList()){
+		for(Port port : hardMacro.getPorts()){
 			String portName = port.getName();
 			String busName;
 			Integer bitNumber = -1;
@@ -1147,7 +1147,7 @@ public class HardMacroGenerator {
 			}
 		}
 		
-		for(Port port : hardMacro.getPortList()){
+		for(Port port : hardMacro.getPorts()){
 			String portName = port.getName();
 			
 			// Replace invalid VHDL identifier characters
@@ -1326,13 +1326,13 @@ public class HardMacroGenerator {
 			vhd.write("architecture behavioral of " + designName.replace("_HARD_MACRO", "") + " is" + newLine + newLine); // Add entity name
 			vhd.write("component " + hardMacro.getName() + newLine);
 			vhd.write("port(" + newLine);
-			for(Port port : hardMacro.getPortList()){
+			for(Port port : hardMacro.getPorts()){
 				
 				vhd.write("  " + port.getName() + " :\t" +
 						(port.getName().contains("_inport") ? "in" : "out") +
 						" std_logic");
 				
-				if(port.equals(hardMacro.getPortList().get(hardMacro.getPortList().size()-1))){
+				if(port.equals(hardMacro.getPorts().get(hardMacro.getPorts().size()-1))){
 					vhd.write(newLine);
 				}
 				else{
@@ -1343,7 +1343,7 @@ public class HardMacroGenerator {
 			vhd.write("end component;" + newLine + newLine);
 			
 			multiCount = 0;
-			for(Port port : hardMacro.getPortList()){
+			for(Port port : hardMacro.getPorts()){
 				if(port.getName().startsWith("MULTI_OUTPUT_PORT")){
 					vhd.write("signal multipleOutput_" + multiCount + " : std_logic;" + newLine);
 					multiCount++;
@@ -1371,7 +1371,7 @@ public class HardMacroGenerator {
 			vhd.write("instance0 : " + hardMacro.getName() + newLine);
 			vhd.write("  port map(" + newLine);
 			multiCount = 0;
-			for(Port port : hardMacro.getPortList()){
+			for(Port port : hardMacro.getPorts()){
 				
 				vhd.write("  " + port.getName() + " => ");
 				if(port.getName().startsWith("GLOBAL_LOGIC0")){
@@ -1392,7 +1392,7 @@ public class HardMacroGenerator {
 				}
 				
 				
-				if(port.equals(hardMacro.getPortList().get(hardMacro.getPortList().size()-1))){
+				if(port.equals(hardMacro.getPorts().get(hardMacro.getPorts().size()-1))){
 					vhd.write(newLine);
 				}
 				else{

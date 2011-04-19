@@ -286,14 +286,6 @@ public class Module implements Serializable{
 	 * Gets and returns the port list for this module.
 	 * @return The port list for this module.
 	 */
-	public ArrayList<Port> getPortList(){
-		return portList;
-	}
-	
-	/**
-	 * Gets and returns the port list for this module.
-	 * @return The port list for this module.
-	 */
 	public ArrayList<Port> getPorts(){
 		return portList;
 	}

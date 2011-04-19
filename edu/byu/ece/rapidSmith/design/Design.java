@@ -237,7 +237,7 @@ public class Design implements Serializable{
 		}
 		
 		HashMap<Pin,Port> pinToPortMap = new HashMap<Pin,Port>();
-		for(Port port : module.getPortList()){
+		for(Port port : module.getPorts()){
 			pinToPortMap.put(port.getPin(),port);
 		}
 		
@@ -855,7 +855,7 @@ public class Design implements Serializable{
 						bw.write(attr.toString()+" ");
 					}
 					bw.write("\";" + nl);
-					for(Port port : module.getPortList()){
+					for(Port port : module.getPorts()){
 						bw.write("  port \"" + port.getName() +"\" \"" + port.getInstanceName() +"\" \"" + port.getPinName()+"\";" + nl);
 					}
 					for(Instance inst : module.getInstances()){
@@ -1069,7 +1069,7 @@ public class Design implements Serializable{
 					for(PrimitiveType type : instTypeCount.keySet()){
 						bw.write("#   Number of " + type.toString() + "s: " + instTypeCount.get(type) + nl);
 					}
-					bw.write("# Number of Module Ports: " + mod.getPortList().size() + nl);
+					bw.write("# Number of Module Ports: " + mod.getPorts().size() + nl);
 					bw.write("# Number of Module Nets: "+ mod.getNets().size() +nl);
 					bw.write("# ======================================================="+nl+nl+nl);
 				}
@@ -1150,9 +1150,9 @@ public class Design implements Serializable{
 					}
 					bw.write("\";" + nl);
 					
-					String[] ports = new String[module.getPortList().size()];
+					String[] ports = new String[module.getPorts().size()];
 					for(int i = 0; i < ports.length; i++){
-						Port port = module.getPortList().get(i); 
+						Port port = module.getPorts().get(i); 
 						ports[i] = "  port \"" + port.getName() +"\" \"" + port.getInstanceName() +"\" \"" + port.getPinName()+"\";" + nl;
 					}
 					Arrays.sort(ports);
@@ -1471,7 +1471,7 @@ public class Design implements Serializable{
 				for(PrimitiveType type : instTypeCount.keySet()){
 					bw.write("#   Number of " + type.toString() + "s: " + instTypeCount.get(type) + nl);
 				}
-				bw.write("# Number of Module Ports: " + mod.getPortList().size() + nl);
+				bw.write("# Number of Module Ports: " + mod.getPorts().size() + nl);
 				bw.write("# Number of Module Nets: "+ mod.getNets().size() +nl);
 				bw.write("# ======================================================="+nl+nl+nl);
 			}
