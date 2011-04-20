@@ -139,6 +139,17 @@ public class RunXilinxTools {
 			MessageGenerator.briefError("trce command failed: " + cmd);
 			return Float.MAX_VALUE;
 		}
+		return getMinClkPeriodFromTWRFile(twrFileName);
+	}
+	
+	/**
+	 * Parses a TWR file to get the minimum clock period.  Assumes
+	 * a single clock domain.
+	 * @param twrFileName Name of the TWR file to parse.
+	 * @return The number of nanoseconds of the minimum clock period
+	 * or Float.MAX_VALUE if none found.
+	 */
+	public static float getMinClkPeriodFromTWRFile(String twrFileName){
 		boolean nextLine = false;
 		boolean secondLine = false;
 		BufferedReader br;
@@ -159,17 +170,18 @@ public class RunXilinxTools {
 					nextLine = true;
 				}
 			}
+			br.close();
 		} catch (FileNotFoundException e) {
+			MessageGenerator.briefError("Could not find file: " + twrFileName);
 			e.printStackTrace();
 		} catch (NumberFormatException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-		
 		return Float.MAX_VALUE;
 	}
+	
 	
 	/**
 	 * A generic method to run a command from the system command line.
