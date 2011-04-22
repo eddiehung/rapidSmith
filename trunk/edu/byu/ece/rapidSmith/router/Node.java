@@ -68,6 +68,18 @@ public class Node implements Comparable<Node>{
 	}
 	
 	/**
+	 * A quick population constructor, parent is set to null, and the level is 0.
+	 * @param tile The tile of the new node.
+	 * @param wire The wire of the new node.
+	 */
+	public Node(Tile tile, int wire){
+		setTile(tile);
+		setWire(wire);
+		setParent(null);
+		setLevel(0);
+	}
+	
+	/**
 	 * A quick population constructor.
 	 * @param tile The tile of the new node.
 	 * @param wire The wire of the new node.

@@ -103,10 +103,10 @@ public class StaticSourceHandler{
 		finalStaticNets = new ArrayList<Net>();
 		tempNode = new Node();
 		reservedGNDVCCResources = new HashMap<Node, Pin>();
-		if(router.dev.getPartName().startsWith("xc5v")){
+		if(dev.getFamilyType().equals(FamilyType.VIRTEX5)){
 			slicePin = "B";
 		}
-		else if(router.dev.getPartName().startsWith("xc4v")){
+		else if(dev.getFamilyType().equals(FamilyType.VIRTEX4)){
 			slicePin = "Y";
 		}
 		else{
@@ -210,9 +210,7 @@ public class StaticSourceHandler{
 	private void accomodateRoutedNet(Net net){
 		for(PIP p : net.getPIPs()){
 			router.setWireAsUsed(p.getTile(), p.getStartWire(), net);
-			//TODO router.addUsedWireMapping(net, tmp);
 			router.setWireAsUsed(p.getTile(), p.getEndWire(), net);
-			//router.addUsedWireMapping(net, tmp);
 			router.markIntermediateNodesAsUsed(p, net);
 		}
 	}
@@ -341,8 +339,10 @@ public class StaticSourceHandler{
 							}
 							newNode = new Node(node.tile, we.getWireEnum(v4TopOmuxs[reservedTop]), null, 0);
 						}
-						addReservedNode(newNode, n);
-						reservedTop++;									
+						if(!router.usedNodes.contains(newNode)){
+							addReservedNode(newNode, n);
+							reservedTop++;																
+						}
 					}
 					else if(wireName.contains("BOT")){
 						if(reservedBot > 7){
@@ -356,8 +356,10 @@ public class StaticSourceHandler{
 							}
 							newNode = new Node(node.tile, we.getWireEnum(v4BottomOmuxs[reservedBot]), null, 0);
 						}
-						addReservedNode(newNode, n);
-						reservedBot++;
+						if(!router.usedNodes.contains(newNode)){
+							addReservedNode(newNode, n);
+							reservedBot++;
+						}
 					}
 				}
 				else if(wireName.startsWith("SECONDARY")){
@@ -374,8 +376,10 @@ public class StaticSourceHandler{
 						if(reservedTop > 7) break;
 						newNode = new Node(node.tile, we.getWireEnum(v4TopOmuxs[reservedTop]), null, 0);
 					}
-					addReservedNode(newNode, n);
-					reservedTop++;						
+					if(!router.usedNodes.contains(newNode)){
+						addReservedNode(newNode, n);
+						reservedTop++;						
+					}
 				}
 				else if(reservedBot < 8){
 					Node newNode = new Node(node.tile, we.getWireEnum(v4BottomOmuxs[reservedBot]), null, 0);
@@ -386,8 +390,10 @@ public class StaticSourceHandler{
 						}
 						newNode = new Node(node.tile, we.getWireEnum(v4BottomOmuxs[reservedBot]), null, 0);
 					}
-					addReservedNode(newNode, n);							
-					reservedBot++;												
+					if(!router.usedNodes.contains(newNode)){
+						addReservedNode(newNode, n);							
+						reservedBot++;							
+					}
 				}
 				else{
 					break;
@@ -508,10 +514,6 @@ public class StaticSourceHandler{
 		ArrayList<Net> netList = router.netList;
 		ArrayList<Net> staticSourcedNets = new ArrayList<Net>();
 		
-		if(familyType.equals(FamilyType.VIRTEX4)){
-			reserveVirtex4SpecificResources(netList);
-		}
-		
 		//===================================================================//
 		// Step 1: Separate static sourced nets, re-entrant routing stuff, 
 		//         and reserve nodes for critical inpins on nets
@@ -556,7 +558,11 @@ public class StaticSourceHandler{
 				}
 			}
 		}
-			
+		
+		if(familyType.equals(FamilyType.VIRTEX4)){
+			reserveVirtex4SpecificResources(netList);
+		}
+		
 		// Remove all static sourced nets from original netlist, to be 
 		// recombined later
 		netList.removeAll(staticSourcedNets);
