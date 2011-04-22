@@ -214,7 +214,7 @@ public class BasicRouter extends AbstractRouter{
 			}
 			else{
 				// Add starting point sources taken from previous routings to begin the route 
-				getSourcesFromPIPs(pipList, sources);
+				sources = getSourcesFromPIPs(pipList);
 			}
 
 			// Route the current sink node
@@ -232,18 +232,6 @@ public class BasicRouter extends AbstractRouter{
                    " (" + we.getWireName(currSink.wire) + ") on instance: " + currSinkPin.getInstanceName());				
 			}
 			firstConnection = false;
-		}
-	}
-	
-	/**
-     * Creates sources from a list of PIPs
-	 * @param pips The pips of the net to examine.
-	 * @param sources An empty list that will be populated by this method.
-	 */
-	private void getSourcesFromPIPs(ArrayList<PIP> pips, ArrayList<Node> sources){
-		for(PIP pip : pips){
-			sources.add(new Node(pip.getTile(), pip.getStartWire(), null, 0));
-			sources.add(new Node(pip.getTile(), pip.getEndWire(), null, 0));
 		}
 	}
 	

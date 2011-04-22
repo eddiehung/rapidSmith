@@ -56,7 +56,7 @@ public abstract class AbstractRouter{
 	/** A Priority Queue for nodes to be processed */
 	protected PriorityQueue<Node> queue;
 	/** Some nodes are reserved for particular routes to minimize routing conflicts later */
-	HashMap<Net,ArrayList<Node>> reservedNodes;
+	protected HashMap<Net,ArrayList<Node>> reservedNodes;
 
 	/** PIPs that are part of the most recently routed connection */
 	protected ArrayList<PIP> pipList;
@@ -175,6 +175,23 @@ public abstract class AbstractRouter{
 		}
 	}
 	
+	/**
+	 * @return the reserved Nodes Map
+	 */
+	public HashMap<Net, ArrayList<Node>> getReservedNodes() {
+		return reservedNodes;
+	}
+
+	/**
+	 * Gets are returns a list of reserved nodes for the provide net.
+	 * @param net The net to get reserved nodes for.
+	 * @return A list of reserved nodes for the net, or null if no 
+	 * nodes are reserved.
+	 */
+	public ArrayList<Node> getReservedNodesForNet(Net net){
+		return reservedNodes.get(net);
+	}
+	
 	public boolean isNodeUsed(Tile tile, int wire){
 		tempNode.setTileAndWire(tile, wire);
 		return usedNodes.contains(tempNode);
@@ -182,6 +199,33 @@ public abstract class AbstractRouter{
 	
 	public boolean isNodeUsed(Node node){
 		return usedNodes.contains(node);
+	}
+	
+	/**
+	 * Examines the pips in the list and marks all of the resources
+	 * as used.
+	 * @param pips The PIPs to mark as used.
+	 */
+	public void markPIPsAsUsed(ArrayList<PIP> pips){
+		for (PIP pip : pips){
+			setWireAsUsed(pip.getTile(), pip.getStartWire(), currNet);
+			setWireAsUsed(pip.getTile(), pip.getEndWire(), currNet);
+			markIntermediateNodesAsUsed(pip, currNet);
+		}
+	}
+	
+	/**
+     * Creates sources from a list of PIPs
+	 * @param pips The pips of the net to examine.
+	 * @param sources An empty list that will be populated by this method.
+	 */
+	public ArrayList<Node> getSourcesFromPIPs(ArrayList<PIP> pips){
+		ArrayList<Node> sources = new ArrayList<Node>(pips.size()*2);
+		for(PIP pip : pips){
+			sources.add(new Node(pip.getTile(), pip.getStartWire(), null, 0));
+			sources.add(new Node(pip.getTile(), pip.getEndWire(), null, 0));
+		}
+		return sources;
 	}
 	
 	/**
