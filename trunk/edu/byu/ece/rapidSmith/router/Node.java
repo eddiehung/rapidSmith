@@ -180,6 +180,20 @@ public class Node implements Comparable<Node>{
 		this.wires = tile.getWireConnections(wire);
 	}
 
+	/**
+	 * @return the history
+	 */
+	public int getHistory() {
+		return history;
+	}
+
+	/**
+	 * @param history the history to set
+	 */
+	public void setHistory(int history) {
+		this.history = history;
+	}
+
 	public SinkPin getSinkPin(){
 		return tile.getSinkPin(wire);
 	}
