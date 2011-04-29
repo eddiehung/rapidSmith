@@ -66,7 +66,7 @@ public class Device implements Serializable{
 	/** Serializable Version */
 	private static final long serialVersionUID = 6336619462392618775L;
 	/** The current release of the tools */
-	public static final String rapidSmithVersion = "0.5.0";
+	public static final String rapidSmithVersion = "0.5.1";
 	/** This is the current device file version (saved in file to ensure proper compatibility) */
 	public static final String deviceFileVersion = "0.4";
 	

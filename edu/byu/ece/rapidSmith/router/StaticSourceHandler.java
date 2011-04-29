@@ -876,7 +876,7 @@ public class StaticSourceHandler{
 	
 	/**
 	 * Creates a new net based on the staticNet and will contain the newPinList
-	 * @param staticNet Parent net to create new net from
+	 * @param type NetType to create new net from
 	 * @param newPinList The new set of pins for the new net
 	 * @return The newly created net
 	 */

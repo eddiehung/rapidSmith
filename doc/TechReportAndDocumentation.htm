@@ -1110,9 +1110,9 @@ is based on the Xilinx Design Language (XDL) which provides a human-readable
 file format equivalent to the Xilinx proprietary Netlist Circuit Description
 (NCD).  With RapidSmith, researchers are able to import XDL/NCD, manipulate,
 place, route and export designs among a variety of design transformations.  The
-RapidSmith project makes an excellent test bed to try out new ideas and algorithms
-for FPGA CAD research as code can quickly be written to take advantage of the
-APIs available.  </p>
+RapidSmith project makes an excellent test bed to try out new ideas and
+algorithms for FPGA CAD research as code can quickly be written to take
+advantage of the APIs available.  </p>
 
 <p class=MsoNormal>&nbsp;</p>
 
@@ -1152,14 +1152,14 @@ data.   </p>
 
 <p class=MsoNormal>&nbsp;</p>
 
-<p class=MsoNormal>RapidSmith takes care of all of the parsing and detailed
-FPGA part information that can be cumbersome to use—alleviating the need to
-build such parsing tools by the researcher.  RapidSmith creates special part
-files from these device files created by the ISE tools which can then be used
-by RapidSmith for design manipulation.  This project provides researchers the
-ability to leverage all of the XDL work previously done and avoid duplicate
-work.  This will enable researchers to have more time to focus on what matters
-most: their research of new ideas and algorithms.</p>
+<p class=MsoNormal>RapidSmith takes care of all of the parsing and detailed FPGA
+part information that can be cumbersome to use—alleviating the need to build
+such parsing tools by the researcher.  RapidSmith creates special part files
+from these device files created by the ISE tools which can then be used by RapidSmith
+for design manipulation.  This project provides researchers the ability to
+leverage all of the XDL work previously done and avoid duplicate work.  This
+will enable researchers to have more time to focus on what matters most: their
+research of new ideas and algorithms.</p>
 
 <h2><a name="_Toc289261233">Which Xilinx Parts does RapidSmith Support?</a></h2>
 
@@ -1766,7 +1766,8 @@ font-family:"Courier New"'>   as published by the Free Software Foundation,
 either version 2 of</span></p>
 
 <p class=MsoNormal style='text-autospace:none'><span style='font-size:10.0pt;
-font-family:"Courier New"'>   the License, or (at your option) any later version.</span></p>
+font-family:"Courier New"'>   the License, or (at your option) any later
+version.</span></p>
 
 <p class=MsoNormal style='text-autospace:none'><span style='font-size:10.0pt;
 font-family:"Courier New"'>   </span></p>
@@ -1931,7 +1932,14 @@ rapidsmith</span></span></p>
 <p class=MsoNormal><span class=apple-style-span>This repository contains all
 the files you need (including supporting JAR files).  If you are using Eclipse
 as your IDE, it contains project files to get the project up and running with
-minimal effort.</span></p>
+minimal effort. If you downloaded the distribution, just extract the files into
+your workspace (eg: ~/workspace/rapidSmith).  Then, in Eclipse, you can import
+the project by going to File-&gt;Import, then choose &quot;General/Existing
+Projects into Workspace&quot;.  On the next screen, choose &quot;Select root
+directory&quot; and choose the newly created folder &quot;rapidSmith&quot;.
+Then click finish.  This should load up the project in your workspace.  Then
+follow the steps below to complete the installation.  You may have to restart
+Eclipse after setting the environment variables to get things to work.</span></p>
 
 <h3><a name="_Toc289261242">Requirements for Installation</a></h3>
 
@@ -2099,9 +2107,9 @@ Notes for Mac OS X Installation</h3>
 
 <p class=MsoListParagraphCxSpFirst style='text-indent:-.25in'><span
 style='font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</span></span>The Xilinx tools do not run under Mac OS X and therefore, the installer
-would have to generate the files on Linux or Windows.  However, once the files
-are created, they could be moved to a Mac OS X installation.</p>
+</span></span>The Xilinx tools do not run under Mac OS X and therefore, the
+installer would have to generate the files on Linux or Windows.  However, once
+the files are created, they could be moved to a Mac OS X installation.</p>
 
 <p class=MsoListParagraphCxSpLast style='text-indent:-.25in'><span
 style='font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -2341,8 +2349,8 @@ are prefixed with “edu.byu.ece.rapidSmith”):<br>
   <td width=319 valign=top style='width:239.4pt;border-top:none;border-left:
   none;border-bottom:solid #404040 1.0pt;border-right:solid #404040 1.0pt;
   background:silver;padding:0in 5.4pt 0in 5.4pt'>
-  <p class=MsoNormal>A JavaCC-based parser for XDL files which populate an instance
-  of the Design class in the design package.</p>
+  <p class=MsoNormal>A JavaCC-based parser for XDL files which populate an
+  instance of the Design class in the design package.</p>
   </td>
  </tr>
  <tr>
@@ -2917,8 +2925,7 @@ example of a very simple program.  </p>
   font-family:"Courier New";color:black'>              HashMap&lt;String,
   PrimitiveSite&gt; primitiveSites = </span></p>
   <p class=MsoNormal style='text-autospace:none'><span style='font-size:9.0pt;
-  font-family:"Courier New";color:black'>                                          
-  design.getDevice().getPrimitiveSites();</span></p>
+  font-family:"Courier New";color:black'>                                           design.getDevice().getPrimitiveSites();</span></p>
   <p class=MsoNormal style='text-autospace:none'><span style='font-size:9.0pt;
   font-family:"Courier New";color:black'>              </span><b><span
   style='font-size:9.0pt;font-family:"Courier New";color:#7F0055'>for</span></b><span
@@ -3112,7 +3119,7 @@ example of a very simple program.  </p>
   style='font-size:9.0pt;font-family:"Courier New";color:#3F7F5F'>// Add the
   IOB pin as an output pin or the source of the net</span></p>
   <p class=MsoNormal style='text-autospace:none'><span style='font-size:9.0pt;
-  font-family:"Courier New";color:black'>              fred.addPin(</span><b><span
+  font-family:"Courier New";color:black'>              fred.addPin(</span><b><span
   style='font-size:9.0pt;font-family:"Courier New";color:#7F0055'>new</span></b><span
   style='font-size:9.0pt;font-family:"Courier New";color:black'> Pin(</span><b><span
   style='font-size:9.0pt;font-family:"Courier New";color:#7F0055'>true</span></b><span
@@ -3398,10 +3405,10 @@ XDLRC Files</h2>
 
 <p class=MsoNormal>XDLRC files are report files generated by the Xilinx <span
 style='font-family:"Courier New"'>xdl</span> executable.  During installation,
-RapidSmith will create XDLRC files and parse them for their pertinent information
-and then pack it into small device files that can be used later with the tool. 
-Each construct found in XDLRC files and the corresponding RapidSmith
-representation is described in the remainder of this subsection.</p>
+RapidSmith will create XDLRC files and parse them for their pertinent
+information and then pack it into small device files that can be used later
+with the tool.  Each construct found in XDLRC files and the corresponding
+RapidSmith representation is described in the remainder of this subsection.</p>
 
 <h3><a name="_Toc289261272">Tiles</a></h3>
 
@@ -3540,8 +3547,8 @@ style='font-family:"Courier New"'>E2BEG0</span>, …) are enumerated into
 integers or Java primitive <span style='font-family:"Courier New"'>int</span>
 data types using the <span style='font-family:"Courier New"'>device.WireEnumerator</span>
 class.  The <span style='font-family:"Courier New"'>WireEnumerator</span> class
-keeps track of what integer value goes with each wire name and allows for significant
-compaction of the FPGA routing description.</p>
+keeps track of what integer value goes with each wire name and allows for
+significant compaction of the FPGA routing description.</p>
 
 <p class=MsoNormal>&nbsp;</p>
 
@@ -3621,14 +3628,14 @@ section on understanding XDL</a>.</p>
 
 <h3><a name="_Toc289261279">Loading Designs</a></h3>
 
-<p class=MsoNormal>There is typically only one way to load a design with RapidSmith
-and that is to create a new design and call the method <span style='font-family:
-"Courier New"'>loadXDLDesign(String fileName)</span> on that instance of the
-design.  An NCD file can also be loaded indirectly by using methods in the <span
-style='font-family:"Courier New"'>util.FileConverter</span> class which enables
-the conversion of an existing NCD file to XDL by calling the Xilinx <span
-style='font-family:"Courier New"'>xdl</span> executable.  Example code of how
-this could be done is shown below:</p>
+<p class=MsoNormal>There is typically only one way to load a design with
+RapidSmith and that is to create a new design and call the method <span
+style='font-family:"Courier New"'>loadXDLDesign(String fileName)</span> on that
+instance of the design.  An NCD file can also be loaded indirectly by using
+methods in the <span style='font-family:"Courier New"'>util.FileConverter</span>
+class which enables the conversion of an existing NCD file to XDL by calling
+the Xilinx <span style='font-family:"Courier New"'>xdl</span> executable. 
+Example code of how this could be done is shown below:</p>
 
 <table class=MsoTableGrid border=1 cellspacing=0 cellpadding=0
  style='border-collapse:collapse;border:none'>
@@ -3704,7 +3711,7 @@ class.</p>
 <h3><a name="_Toc289261280">Saving Designs</a></h3>
 
 <p class=MsoNormal>RapidSmith also has a method to save designs in the XDL
-format similar to the method for loading them.  In a similar manner, the saved
+format similar to the method for loading them.  In a similar manner, the saved
 XDL file can be converted to NCD using the <span style='font-family:"Courier New"'>FileConverter</span>
 class.  Very little error checking is made when loading and saving XDL designs,
 but a good test would be the conversion to NCD as Xilinx runs several DRCs when
@@ -3713,10 +3720,10 @@ the design is converted.</p>
 <h2><a name="_Toc289261281">A RapidSmith Device</a></h2>
 
 <p class=MsoNormal>A device is defined in RapidSmith as a unique Xilinx FPGA
-part that includes package information but not speed grade (such as xc4vfx12ff668). 
-Each device contains specific information concerning its primitive sites,
-tiles, wires, IOBs, and PIPs that are available to realize designs.  This
-information is made available through the Xilinx executable <span
+part that includes package information but not speed grade (such as
+xc4vfx12ff668).  Each device contains specific information concerning its
+primitive sites, tiles, wires, IOBs, and PIPs that are available to realize
+designs.  This information is made available through the Xilinx executable <span
 style='font-family:"Courier New"'>xdl</span> in <span style='font-family:"Courier New"'>-report</span>
 mode. See the <a href="#_Basic_Syntax_of">previous section</a> on XDLRC for
 more details on these device resources.</p>
@@ -3726,9 +3733,9 @@ more details on these device resources.</p>
 <p class=MsoNormal>During the initial setup of RapidSmith, the Installer
 creates fully verbose XDLRC files (<span style='font-family:"Courier New"'>$xdl
 –report –pips –all_conns &lt;partName&gt;</span>) for each device specified as
-command line parameters.  After the creation of each XDLRC file, they are
-parsed, compacted by the Installer, and a device file is generated for later
-use.  These device files are placed in <span style='font-family:"Courier New"'>$(RAPIDSMITH_PATH)/devices/familyName/partName_db.dat</span>
+command line parameters.  After the creation of each XDLRC file, they are parsed,
+compacted by the Installer, and a device file is generated for later use. 
+These device files are placed in <span style='font-family:"Courier New"'>$(RAPIDSMITH_PATH)/devices/familyName/partName_db.dat</span>
 and then the corresponding XDLRC file is deleted as they can be several
 gigabytes in size.  These device files make accessing device information about
 a specific FPGA part much more convenient than a gigantic text file.  Most of
@@ -4332,8 +4339,8 @@ href="#_Appendix_C:_Memory">Appendix</a>.</p>
   border-left:none;border-bottom:solid black 1.0pt;border-right:solid #404040 1.0pt;
   background:black;padding:0in 5.4pt 0in 5.4pt;height:15.0pt'>
   <p class=MsoNormal align=center style='text-align:center'><b><span
-  style='font-size:11.0pt;font-family:"Calibri","sans-serif";color:white'>Load Time
-  from Disk</span></b></p>
+  style='font-size:11.0pt;font-family:"Calibri","sans-serif";color:white'>Load
+  Time from Disk</span></b></p>
   </td>
  </tr>
  <tr style='height:15.0pt'>
@@ -4450,7 +4457,7 @@ text-transform:uppercase'>Placement in RapidSmith</span></a></h1>
 </div>
 
 <p class=MsoNormal>This chapter is intended to help users of RapidSmith
-understand how placement works in RapidSmith and in XDL.  </p>
+understand how placement works in RapidSmith and in XDL.  </p>
 
 <h2><a name="_Toc289261288">Primitive Resources in RapidSmith</a></h2>
 
@@ -4538,8 +4545,8 @@ declaration found in an XDLRC report for a Virtex 4:</p>
 
 <p class=MsoNormal>This declaration is found inside of a tile declaration in
 XDLRC reports which denotes where the primitive site is located on the FPGA.  Every
-primitive site belongs to a tile.  If you open the Virtex 4 FX12 part in the Device
-Browser, you could find the primitive site SLICE_X1Y121 as shown in the
+primitive site belongs to a tile.  If you open the Virtex 4 FX12 part in the
+Device Browser, you could find the primitive site SLICE_X1Y121 as shown in the
 screenshot below.  You would find that it belongs to the tile CLB_X1Y60.</p>
 
 <p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
@@ -4567,9 +4574,9 @@ style='font-family:"Courier New"'>device.PrimitiveType</span> enum.  </p>
 <p class=MsoNormal>Each Xilinx FPGA family has a list of primitive definitions
 which appear at the end of every XDLRC report in the <span style='font-family:
 "Courier New"'>primitive_defs</span> declaration.   A list of <span
-style='font-family:"Courier New"'>primitive_def</span> declarations are
-contained in this declaration, each detailing the inputs, outputs, elements,
-and configurations of each primitive.  Theses definitions are stored in the <a
+style='font-family:"Courier New"'>primitive_def</span> declarations are contained
+in this declaration, each detailing the inputs, outputs, elements, and
+configurations of each primitive.  Theses definitions are stored in the <a
 href="#_primitiveDefs_Package"><span style='font-family:"Courier New"'>primitiveDefs</span></a>
 package found in RapidSmith and are easily accessible using the data structures
 created.  The names of each of the primitive definitions are called primitive
@@ -4585,10 +4592,10 @@ instantiation of a primitive definition and is the same instance as declared in
 XDL “inst” constructs.  These instances are represented in the design package
 using the <span style='font-family:"Courier New"'>Instance</span> class. Each
 instance has a unique name and primitive type associated with it and can be
-placed or unplaced in an XDL design.  When an instance is unplaced, it will
-have the keyword “unplaced” in its declaration.  When an instance is placed, it
-will have the keyword placed followed by a tile name and a primitive site name
-(such as CLB_X1Y60 SLICE_X1Y121).  An example of the first part of an instance
+placed or unplaced in an XDL design.  When an instance is unplaced, it will have
+the keyword “unplaced” in its declaration.  When an instance is placed, it will
+have the keyword placed followed by a tile name and a primitive site name (such
+as CLB_X1Y60 SLICE_X1Y121).  An example of the first part of an instance
 declaration is shown below:</p>
 
 <p class=MsoNormal>&nbsp;</p>
@@ -4760,9 +4767,9 @@ example of this layout is given in Figure 7.</p>
 border=0 width=524 height=149 id="Picture 13"
 src="TechReportAndDocumentation_files/image017.png"></p>
 
-<h5><a name="_Toc286402931">Figure </a>12 - A DOUBLE line in an FPGA
-illustrating how each part of the wire has a different name depending on the
-tile it is located in.</h5>
+<h5><a name="_Toc286402931">Figure </a>12 - A DOUBLE line in an FPGA illustrating
+how each part of the wire has a different name depending on the tile it is
+located in.</h5>
 
 <p class=MsoNormal>In this example, we see a wire that can be driven by one point,
 <span style='font-family:"Courier New"'>E2BEG4</span>, and can drive either <span
@@ -4822,8 +4829,8 @@ exposes the wire segments:</p>
   style='font-size:10.0pt;font-family:"Courier New";color:black'>; </span></p>
   <p class=MsoNormal style='text-autospace:none'><span style='font-size:10.0pt;
   font-family:"Courier New";color:black'>            </span><span
-  style='font-size:10.0pt;font-family:"Courier New";color:#3F7F5F'>// Here we get
-  the integer enum value for that wire name</span></p>
+  style='font-size:10.0pt;font-family:"Courier New";color:#3F7F5F'>// Here we
+  get the integer enum value for that wire name</span></p>
   <p class=MsoNormal style='text-autospace:none'><span style='font-size:10.0pt;
   font-family:"Courier New";color:black'>            </span><b><span
   style='font-size:10.0pt;font-family:"Courier New";color:#7F0055'>int</span></b><span
@@ -4834,7 +4841,7 @@ exposes the wire segments:</p>
   style='font-size:10.0pt;font-family:"Courier New";color:#3F7F5F'>// The wire
   enumerator also keeps information about these wire segments </span></p>
   <p class=MsoNormal style='text-autospace:none'><span style='font-size:10.0pt;
-  font-family:"Courier New";color:black'>            </span><span
+  font-family:"Courier New";color:black'>            </span><span
   style='font-size:10.0pt;font-family:"Courier New";color:#3F7F5F'>// such as
   wire direction and type</span></p>
   <p class=MsoNormal style='text-autospace:none'><span style='font-size:10.0pt;
@@ -5103,8 +5110,8 @@ template as it may not meet everyone’s needs and/or requirements.</p>
 
 <p class=MsoNormal>An example <span style='font-family:"Courier New"'>BasicRouter</span>
 class has also been provided to illustrate how a router can be constructed
-easily.  The <span style='font-family:"Courier New"'>BasicRouter </span>class is
-~400 lines of code.  It is very simple and does not do any routing conflict
+easily.  The <span style='font-family:"Courier New"'>BasicRouter </span>class
+is ~400 lines of code.  It is very simple and does not do any routing conflict
 resolution (it is a basic Maze router implementation) and it will commonly be
 unable to route certain connections in a design.  Also, because the timing
 information for Xilinx parts is not publicly available, the router must use
@@ -5227,9 +5234,9 @@ routed to the appropriate clock tree routing resources.  The best current
 method to determine this is based on the <span style='font-family:"Courier New"'>WireDirection</span>
 (the type CLK was placed in <span style='font-family:"Courier New"'>WireDirection</span>
 because there are certain CLK wires that also fell into certain <span
-style='font-family:"Courier New"'>WireType</span> categories).  The cost function
-for determining node position in the priority queue take into account clock
-wires and significantly reduces their cost when routing clock nets.</p>
+style='font-family:"Courier New"'>WireType</span> categories).  The cost
+function for determining node position in the priority queue take into account
+clock wires and significantly reduces their cost when routing clock nets.</p>
 
 <h3><a name="_Toc289261301">Internal Pin Names and External Pin Names</a></h3>
 
@@ -5279,14 +5286,14 @@ instance it would be ambiguous because the Y pin belongs to a slice.  Since
 PIPs declare routing resources at the tile level, the pin Y would have to be
 unique to the tile, however, there are actually multiple slices in a CLB tile
 making the reference “Y” ambiguous.  To eliminate the ambiguity, Xilinx
-developed what we call an internal pin name and external pin name.  The internal
-pin name (Y and RST in the example) is used when talking about a pin on an
-instance, however, to route to/from that pin the external name is used.  In the
-PIP list of the example net above, the first PIP contains the external name
+developed what we call an internal pin name and external pin name.  The
+internal pin name (Y and RST in the example) is used when talking about a pin
+on an instance, however, to route to/from that pin the external name is used.  In
+the PIP list of the example net above, the first PIP contains the external name
 “Y_PINWIRE1” of pin Y on “fred” and the second PIP contains that external name
 “DCM_ADV_RST” of the pin RST.  In the Virtex 4 architecture, there are 4 slices
 in each CLB, so the Y pin on each slice is named Y_PINWIRE0, Y_PINWIRE1,
-Y_PINWIRE2 and Y_PINWIRE3 respectively.  The mapping of an internal pin name to
+Y_PINWIRE2 and Y_PINWIRE3 respectively.  The mapping of an internal pin name to
 an external pin name is found in the primitive_site declaration in an XDLRC
 report.</p>
 
@@ -5393,7 +5400,7 @@ font-family:"Courier New";color:#3F5FBF'>       * Gets the external wire
 enumeration of the name of the wire corresponding to the </span></p>
 
 <p class=MsoNormal style='text-autospace:none'><span style='font-size:10.0pt;
-font-family:"Courier New";color:#3F5FBF'>       * internal wire name.</span></p>
+font-family:"Courier New";color:#3F5FBF'>       * internal wire name.</span></p>
 
 <p class=MsoNormal style='text-autospace:none'><span style='font-size:10.0pt;
 font-family:"Courier New";color:#3F5FBF'>       * </span><b><span
@@ -5474,10 +5481,10 @@ biggest example of this is in the Virtex 5 which has 9 different primitive
 types which all use the same primitive site type (RAMBFIFO36).  Because the
 RAMBFIFO36 site is declared several times in the Virtex 5 devices, all of the
 internal-to-external pin mappings are available.  However, 8 other sets of
-mappings are not present.  The lack of mappings makes routing designs which
-contain these primitives impossible.  The solution to this problem is to apply
-a patch with the proper mappings.  A complete patch will be included with
-RapidSmith in a future release.</p>
+mappings are not present.  The lack of mappings makes routing designs which contain
+these primitives impossible.  The solution to this problem is to apply a patch
+with the proper mappings.  A complete patch will be included with RapidSmith in
+a future release.</p>
 
 <div style='border:none;border-bottom:solid windowtext 3.0pt;padding:0in 0in 1.0pt 0in'>
 
@@ -5533,10 +5540,10 @@ applied to the other architecture families.</p>
 <p class=MsoNormal>&nbsp;</p>
 
 <p class=MsoNormal>RapidSmith has a bitstream parser which is capable of
-importing bitstream files into the bitstream data structure.  This data
-structure can also export bitstreams after modification to a bitstream file
-and/or an MCS PROM file.  For more details on the bitstream import and export
-capabilities see the <span style='font-family:"Courier New"'>bitstreamTools.bitstream.BitstreamParser</span>
+importing bitstream files into the bitstream data structure.  This data structure
+can also export bitstreams after modification to a bitstream file and/or an MCS
+PROM file.  For more details on the bitstream import and export capabilities
+see the <span style='font-family:"Courier New"'>bitstreamTools.bitstream.BitstreamParser</span>
 class and <span style='font-family:"Courier New"'>bitstreamTools.bitstream.Bitstream</span>
 class.</p>
 
@@ -5579,9 +5586,8 @@ package.</span></p>
 
 <p class=MsoNormal>The entire package <span style='font-family:"Courier New"'>bitstreamTools.bitstream.*</span>
 is dedicated to the representation of bitstream files. A bitstream file
-contains everything the configuration logic needs to setup the FPGA in
-preparation for configuration as well as containing all of the configuration
-data itself.  </p>
+contains everything the configuration logic needs to setup the FPGA in preparation
+for configuration as well as containing all of the configuration data itself.  </p>
 
 <h3><a name="_Toc289261304">Bitstream Header</a></h3>
 
@@ -5722,8 +5728,8 @@ register or FAR for short, it is represented in RapidSmith as the <span
 style='font-family:"Courier New"'>bitstreamTools.configuration.FrameAddressRegister</span>
 class.  The FAR is one of the configuration registers found in the
 configuration logic.  Like all configuration registers, the FAR is 32 bits and
-although the bits are laid out in a different order for different architectures,
-they all contain the same fields:</p>
+although the bits are laid out in a different order for different
+architectures, they all contain the same fields:</p>
 
 <p class=MsoNormal>&nbsp;</p>
 
@@ -5944,10 +5950,10 @@ configuration block.</p>
 <h3><a name="_Toc289261312">Configuration Block</a></h3>
 
 <p class=MsoNormal>Frames are grouped into groups called configuration blocks. 
-Although there is no explicit class to represent a configuration block in
-RapidSmith, it is heavily used concept.  A configuration block can be defined as
-the grouping of frames that have the same top/bottom-bit, row address and
-column address in a frame’s address (also as indicated in the frame address
+Although there is no explicit class to represent a configuration block in RapidSmith,
+it is heavily used concept.  A configuration block can be defined as the
+grouping of frames that have the same top/bottom-bit, row address and column
+address in a frame’s address (also as indicated in the frame address
 register).  Configuration blocks come in different types, and each type has a
 subtype.  Block types and subtypes are represented in the <span
 style='font-family:"Courier New"'>bitstreamTools.configurationSpecification.BlockType</span>
@@ -6406,7 +6412,7 @@ style='font-family:"Courier New"'>F:mySignal2:#LUT:D=~A4</span></p>
 style='font-family:"Courier New"'>G:mySignal3:#LUT:D=(A4+(A1+(A2+A3)))</span></p>
 
 <p class=MsoNormal>Notice that the value also contains the colon (‘<span
-style='font-family:"Courier New"'>:</span>’).  RapidSmith defines the
+style='font-family:"Courier New"'>:</span>’).  RapidSmith defines the
 separation of the three components of an attribute as the first and second
 colons, any colons found after the second colon is part of the attribute value.</p>
 
@@ -6514,12 +6520,12 @@ edu.byu.ece.rapidSmith.util.HardMacroGenerator &lt;input.xdl | input.ncd&gt;
 
 <p class=MsoNormal>The hard macro generator has to remove TIEOFFs (which supply
 GND and VCC) because they are not legal primitives in hard macros.  Therefore,
-the hard macro generator creates input ports accordingly.  It also renames ports
-according to primitive instance names of the IOBs and will attempt to name them
-as they were found in the original HDL.  However, it only can guess, and for a
-more complete naming, the top level VHDL file can optionally be provided as a
-parameter to help the generator get the port names correctly.  Unfortunately,
-the generator cannot parse Verilog.</p>
+the hard macro generator creates input ports accordingly.  It also renames
+ports according to primitive instance names of the IOBs and will attempt to
+name them as they were found in the original HDL.  However, it only can guess,
+and for a more complete naming, the top level VHDL file can optionally be
+provided as a parameter to help the generator get the port names correctly. 
+Unfortunately, the generator cannot parse Verilog.</p>
 
 <h2><a name="_Toc289261321">Appendix C: Xilinx Family Names and Part Names</a></h2>
 
@@ -6535,8 +6541,8 @@ package. </p>
 Xilinx partgen tool.  These part names start with ‘X’ for Xilinx and are then
 often followed by a ‘C’ for commercial parts, ‘A’ for automotive parts, ‘Q’ for
 military grade parts, and ‘QR’ for space grade parts.  The part names also
-include the package, however, because RapidSmith does not have any timing information,
-the speed grade is optional.  Some examples are shown below:</p>
+include the package, however, because RapidSmith does not have any timing
+information, the speed grade is optional.  Some examples are shown below:</p>
 
 <p class=MsoNormal>&nbsp;</p>
 

@@ -100,7 +100,7 @@ public class BitstreamHeader {
      *    
      * This method does NOT generate the sync word.
      * 
-     * @param bitstreamLength The length of the current bitstream header.
+     * @param length The length of the current bitstream header.
      * @return The list of bytes corresponding to the header.
      */
     public List<Byte> getHeaderBytes(int length) {

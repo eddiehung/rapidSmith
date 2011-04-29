@@ -81,9 +81,6 @@ public abstract class PinSorter{
 	 * This methods sorts the pins as they are added.
 	 * @param switchMatrixSink The switch matrix sink node.
 	 * @param pin The current sink pin being sorted.
-	 * @param net The current net.
-	 * @param needHard1 The set of wires that require a connection to HARD1 on the TIEOFF.
-	 * @param needSLICE The set of wires that require a slice to supply the static source.
 	 */
 	public void addPin(Node switchMatrixSink, Pin pin){
 		StaticSink ss = new StaticSink(switchMatrixSink, pin);
