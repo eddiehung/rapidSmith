@@ -1,4 +1,14 @@
 Release Notes for BYU RapidSmith Tools
+=== Version 0.5.1 (29 APR 2011) ===
+ + Added new methods to the design package for more convenient handling of XDL 
+   designs.
+ + Added a hashmap for attributes in Instances to facilitate access to 
+   attributes.
+ + Added a net reference in the Pin class.
+ + Rewrote some of the router infrastructure.
+ + Several other bugs were fixed.  See SVN commit log for more details.
+
+ 
 === Version 0.5.0 (30 MAR 2011) ===
  + Device database files are now included for all supported Xilinx parts! Users
    no longer have to go through the lengthy compile themselves. 

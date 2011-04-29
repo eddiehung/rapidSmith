@@ -96,7 +96,6 @@ public enum PacketType {
 	/**
 	 * Gets the number of words base on bits 10:0 for a type 1 packet or bits 26:0 for a type 2 packet.
 	 * @param header The integer version of the packet.
-	 * @param type Type of the packet (ONE or TWO)
 	 * @return The number of words in the packet.
 	 */
 	public int getNumWords(int header) {

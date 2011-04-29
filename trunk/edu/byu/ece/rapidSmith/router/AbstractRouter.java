@@ -217,7 +217,7 @@ public abstract class AbstractRouter{
 	/**
      * Creates sources from a list of PIPs
 	 * @param pips The pips of the net to examine.
-	 * @param sources An empty list that will be populated by this method.
+	 * @return The list of sources gathered from the pips list.
 	 */
 	public ArrayList<Node> getSourcesFromPIPs(ArrayList<PIP> pips){
 		ArrayList<Node> sources = new ArrayList<Node>(pips.size()*2);

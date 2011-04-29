@@ -237,7 +237,7 @@ public class Module implements Serializable{
 	 * pins and possibly nets.  Nets are only removed if they are empty
 	 * after removal of the instance's pins. This method CANNOT remove 
 	 * instances that are part of a ModuleInstance.
-	 * @param instance The instance in the design to remove.
+	 * @param name The instance name in the module to remove.
 	 * @return True if the operation was successful, false otherwise.
 	 */
 	public boolean removeInstance(String name){
