@@ -713,6 +713,7 @@ public class FileTools {
 			inChannel.transferTo(0, inChannel.size(), outChannel);
 		} 
 		catch (FileNotFoundException e){
+			e.printStackTrace();
 			MessageGenerator.briefError("ERROR could not find/access file(s): " + src + " and/or " + dst);
 			return false;
 		} 
@@ -789,7 +790,7 @@ public class FileTools {
 			}
 			for(File file : srcDirectory.listFiles()){
 				if(!file.isDirectory()){
-					if(!copyFile(file.getAbsolutePath(), dstDirectory.getAbsolutePath())){
+					if(!copyFile(file.getAbsolutePath(), dstDirectory.getAbsolutePath() + File.separator + file.getName())){
 						return false;
 					}
 				}
