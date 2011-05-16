@@ -21,8 +21,6 @@
 package edu.byu.ece.rapidSmith.design;
 
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * The Attribute object in XDL is used in several places, Design, Instance, Net 
