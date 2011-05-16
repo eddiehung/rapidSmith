@@ -142,7 +142,7 @@ public class Attribute implements Serializable{
 	 * String which is the same as this.value.
 	 */
 	public String[] getMultiValueValues() {		
-		return value.split(Attribute.multiValueSeparator);
+		return value.split(Attribute.multiValueSeparator, -1);
 	}
 	
 	/**
@@ -152,7 +152,7 @@ public class Attribute implements Serializable{
 	 * String which is the same as this.logicalName.
 	 */
 	public String[] getMultiValueLogicalNames() {		
-		return logicalName.split(Attribute.multiValueSeparator);
+		return logicalName.split(Attribute.multiValueSeparator, -1);
 	}
 
 	/**
