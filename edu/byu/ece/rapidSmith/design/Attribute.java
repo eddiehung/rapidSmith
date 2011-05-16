@@ -21,16 +21,22 @@
 package edu.byu.ece.rapidSmith.design;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * The Attribute object in XDL is used in several places, Design, Instance, Net 
  * and Module.  Each are generally a list of attributes.  An attribute in XDL consists
  * of a triplet of Strings separated by colons: "Physical Name":"Logical Name":"Value".
- * This class captures these elements of an attribute. One must also note, that in XDL,
- * the physical name of an attribute can have multiple logical names and/or values.  To
- * Make this work in a typical hashmap (as used in the Instance class), the multiple 
- * logical and value strings are separated by the multiValueSeparator char found in this
- * class.  
+ * This class captures these elements of an attribute. 
+ * 
+ * In XDL, the physical name of an attribute can have multiple logical names and/or values
+ * for a single "physical name". To represent multiple logical names and values 
+ * in a standard Map, the multiple logical and value strings are stored in a single
+ * string and are separated by the final multiValueSeparator character. A variety
+ * of methods are available for determining whether the attribute is multi-valued
+ * and accesing the multi-value fields.
+ * 
  * @author Chris Lavin
  * Created on: Jun 22, 2010
  */
@@ -120,6 +126,36 @@ public class Attribute implements Serializable{
 	}
 	
 	/**
+	 * Some physical name attributes have multiple values. This method indicates whether
+	 * this attribute is a multiple value attribute or not. If this attribute is
+	 * a multi-value attribute, additional methods are available to access the
+	 * multiple logical and value strings.
+	 */
+	public boolean isMultiValueAttribute() {
+		return (getLogicalName().contains(Attribute.multiValueSeparator));
+	}
+	
+	/**
+	 * If this attribute is a multiple value attribute, this method returns
+	 * a set of Strings that correspond to the "values" of the attribute.
+	 * If this attribute is a single value attribute, it returns a set of one
+	 * String which is the same as this.value.
+	 */
+	public String[] getMultiValueValues() {		
+		return value.split(Attribute.multiValueSeparator);
+	}
+	
+	/**
+	 * If this attribute is a multiple value attribute, this method returns
+	 * a set of Strings that correspond to the "logical names" of the attribute.
+	 * If this attribute is a single value attribute, it returns a set of one
+	 * String which is the same as this.logicalName.
+	 */
+	public String[] getMultiValueLogicalNames() {		
+		return logicalName.split(Attribute.multiValueSeparator);
+	}
+
+	/**
 	 * Creates a string representation of the attribute that follows 
 	 * how it would appear in and XDL file.
 	 */
@@ -127,8 +163,8 @@ public class Attribute implements Serializable{
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		if(logicalName.contains(multiValueSeparator)){
-			String[] logicalNames = logicalName.split(multiValueSeparator, -1);
-			String[] values = value.split(multiValueSeparator, -1);
+			String[] logicalNames = getMultiValueLogicalNames();
+			String[] values = getMultiValueValues();
 			for (int i = 0; i < values.length; i++) {
 				sb.append(physicalName);
 				sb.append(":");
