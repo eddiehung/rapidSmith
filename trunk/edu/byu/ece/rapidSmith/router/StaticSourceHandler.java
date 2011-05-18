@@ -266,6 +266,7 @@ public class StaticSourceHandler{
 			if(reserved.wire == -1) continue;
 			if(router.usedNodes.contains(reserved)){
 				unRouteNetForCriticalNode(reserved);
+				addReservedNode(reserved, net);
 				continue;
 			}
 			int criticalResource = getCriticalResource(reserved.wire);
@@ -273,6 +274,7 @@ public class StaticSourceHandler{
 				reserved.setWire(criticalResource);
 				if(router.usedNodes.contains(reserved)){
 					unRouteNetForCriticalNode(reserved);
+					addReservedNode(reserved, net);
 				}
 				else{
 					reservedNodes.add(reserved);					
@@ -545,7 +547,8 @@ public class StaticSourceHandler{
 				//===========================================================//
 				// Reserve Nodes for Critical Input Pins on Nets
 				//===========================================================//				
-				ArrayList<Node> reservedNodes = reserveCriticalNodes(net);				
+				ArrayList<Node> reservedNodes = reserveCriticalNodes(net);
+
 				if(!reservedNodes.isEmpty()){
 					ArrayList<Node> nodes = router.reservedNodes.get(net);
 					if(nodes == null){
