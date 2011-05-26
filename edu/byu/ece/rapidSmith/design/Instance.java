@@ -591,4 +591,48 @@ public class Instance implements Serializable{
 		
 		return sb.toString();
 	}
+	
+	/**
+	 * Checks the instance type to see if it is a slice.
+	 * @return True if this instance is a slice, false otherwise.
+	 */
+	public boolean isSLICE(){
+		if(Design.sliceTypes.contains(getType())){
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Checks the instance type to see if it is a DSP.
+	 * @return True if this instance is a DSP, false otherwise.
+	 */
+	public boolean isDSP(){
+		if(Design.dspTypes.contains(getType())){
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Checks the instance type to see if it is a BRAM.
+	 * @return True if this instance is a BRAM, false otherwise.
+	 */
+	public boolean isBRAM(){
+		if(Design.bramTypes.contains(getType())){
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Checks the instance type to see if it is a IOB.
+	 * @return True if this instance is a IOB, false otherwise.
+	 */
+	public boolean isIOB(){
+		if(Design.iobTypes.contains(getType())){
+			return true;
+		}
+		return false;
+	}
 }

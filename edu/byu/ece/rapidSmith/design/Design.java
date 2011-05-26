@@ -89,7 +89,8 @@ public class Design implements Serializable{
 	public static HashSet<PrimitiveType> dspTypes;
 	/** Keeps track of all BRAM primitive types, initialized statically  */
 	public static HashSet<PrimitiveType> bramTypes;
-	
+	/** Keeps track of all IOB primitive types, initialized statically  */
+	public static HashSet<PrimitiveType> iobTypes;
 	/**
 	 * Constructor which initializes all member data structures. Sets partName to null.
 	 * NCDVersion is set to null. isHardMacro is set to false.
@@ -1491,7 +1492,6 @@ public class Design implements Serializable{
 		sliceTypes.add(PrimitiveType.SLICEL);
 		sliceTypes.add(PrimitiveType.SLICEM);
 		sliceTypes.add(PrimitiveType.SLICEX);
-
 		
 		dspTypes = new HashSet<PrimitiveType>();
 		dspTypes.add(PrimitiveType.DSP48);
@@ -1523,5 +1523,57 @@ public class Design implements Serializable{
 		bramTypes.add(PrimitiveType.RAMBFIFO18_36);
 		bramTypes.add(PrimitiveType.RAMBFIFO36);
 		bramTypes.add(PrimitiveType.RAMBFIFO36E1);
+		
+		iobTypes = new HashSet<PrimitiveType>();
+		iobTypes.add(PrimitiveType.IOB);
+		iobTypes.add(PrimitiveType.IOB18);
+		iobTypes.add(PrimitiveType.IOB18M);
+		iobTypes.add(PrimitiveType.IOB18S);
+		iobTypes.add(PrimitiveType.IOB33);
+		iobTypes.add(PrimitiveType.IOB33M);
+		iobTypes.add(PrimitiveType.IOB33S);
+		iobTypes.add(PrimitiveType.IOB_USB);
+		iobTypes.add(PrimitiveType.IOBLR);
+		iobTypes.add(PrimitiveType.IOBM);
+		iobTypes.add(PrimitiveType.IOBS);
+		iobTypes.add(PrimitiveType.LOWCAPIOB);
+	}
+	
+	/**
+	 * Creates two CSV files based on this design, one for instances and one 
+	 * for nets.
+	 * @param fileName
+	 */
+	public void toCSV(String fileName){
+		String nl = System.getProperty("line.separator");
+		try {
+			BufferedWriter bw = new BufferedWriter(new FileWriter(fileName + ".instances.csv"));
+			bw.write("\"Name\",\"Type\",\"Site\",\"Tile\",\"#Pins\"" + nl);
+			
+			for(Instance i : instances.values()){
+				bw.write("\"" + i.getName() + "\",\"" + 
+								i.getType() + "\",\"" + 
+								i.getPrimitiveSiteName() + "\",\"" + 
+								i.getTile()+ "\",\"" +
+								i.getPinMap().size()+ "\"" + nl);
+			}
+			bw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		try {
+			BufferedWriter bw = new BufferedWriter(new FileWriter(fileName + ".nets.csv"));
+			bw.write("\"Name\",\"Type\",\"Fanout\"" + nl);
+			
+			for(Net n : nets.values()){
+				bw.write("\"" + n.getName() + "\",\"" + 
+								n.getType() + "\",\"" + 
+								n.getFanOut()+ "\"" + nl);
+			}
+			bw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }
