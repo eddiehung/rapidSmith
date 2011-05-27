@@ -162,6 +162,18 @@ public class Instance implements Serializable{
 	}
 	
 	/**
+	 * Gets and removes the attribute specified by the physical name given.
+	 * Note that if this is a multi-valued attribute, the caller will have
+	 * to separate the attribute into its separate parts using
+	 * Attribute.multiValueSeparator.
+	 * @param physicalName Name of the attribute to remove
+	 * @return The removed attribute, null if none such attribute exists.
+	 */
+	public Attribute removeAttribute(String physicalName){
+		return attributes.remove(physicalName);
+	}
+	
+	/**
 	 * Sets the map of attributes for this instance.
 	 * @param attributes The new list of attributes to associate with this
 	 * instance.
