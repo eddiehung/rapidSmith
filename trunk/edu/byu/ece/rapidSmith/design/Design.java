@@ -500,11 +500,13 @@ public class Design implements Serializable{
 		for(Pin p : instance.getPins()){
 			// TODO - We can sort through PIPs to only remove those that need
 			// to be removed, we just need a method to do that
-			p.getNet().unroute(); 
-			if(p.getNet().getPins().size() == 1){
-				nets.remove(p.getNet().getName());
-			}else{
-				p.getNet().removePin(p);				
+			if(p.getNet() != null){
+				p.getNet().unroute(); 
+				if(p.getNet().getPins().size() == 1){
+					nets.remove(p.getNet().getName());
+				}else{
+					p.getNet().removePin(p);				
+				}				
 			}
 		}
 		instances.remove(instance.getName());
