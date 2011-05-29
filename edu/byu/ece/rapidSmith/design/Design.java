@@ -465,7 +465,7 @@ public class Design implements Serializable{
 	public void removeNet(Net net){
 		for(Pin p : net.getPins()){
 			p.getInstance().getNetList().remove(net);
-			if(p.getNet().equals(net)){
+			if(net.equals(p.getNet())){
 				p.setNet(null);
 			}
 		}
