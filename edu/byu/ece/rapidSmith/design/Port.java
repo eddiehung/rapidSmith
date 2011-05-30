@@ -157,4 +157,8 @@ public class Port implements Serializable, Cloneable{
 		return true;
 	}
 	
+	@Override
+	public String toString(){
+		return "  port \"" + name + "\" \"" + pin.getInstanceName() + "\" \"" + pin.getName() +"\";";
+	}
 }
