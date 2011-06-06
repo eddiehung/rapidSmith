@@ -111,6 +111,15 @@ public class Port implements Serializable, Cloneable{
 	}
 
 	/**
+	 * Simply looks at the pin of the port to determine
+	 * its direction.
+	 * @return True if this port is an output, false otherwise.
+	 */
+	public boolean isOutPort(){
+		return pin.isOutPin();
+	}
+	
+	/**
 	 * Generates hashCode for this port based on instance name, port name, and pin name.
 	 */
 	@Override
