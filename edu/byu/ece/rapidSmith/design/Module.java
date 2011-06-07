@@ -418,6 +418,34 @@ public class Module implements Serializable{
 	}
 
 	/**
+	 * @return the externalInputNames
+	 */
+	public String[] getExternalInputNames() {
+		return externalInputNames;
+	}
+
+	/**
+	 * @param externalInputNames the externalInputNames to set
+	 */
+	public void setExternalInputNames(String[] externalInputNames) {
+		this.externalInputNames = externalInputNames;
+	}
+
+	/**
+	 * @return the externalOutputNames
+	 */
+	public String[] getExternalOutputNames() {
+		return externalOutputNames;
+	}
+
+	/**
+	 * @param externalOutputNames the externalOutputNames to set
+	 */
+	public void setExternalOutputNames(String[] externalOutputNames) {
+		this.externalOutputNames = externalOutputNames;
+	}
+
+	/**
 	 * @param minClkPeriod the minClkPeriod to set
 	 */
 	public void setMinClkPeriod(float minClkPeriod) {
