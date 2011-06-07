@@ -85,9 +85,9 @@ public class Module implements Serializable{
 	private PortMap[] gndSinks;
 	/** All sinks that should be driven by vcc */
 	private PortMap[] vccSinks;
-	
+	/** Names of the external signal name inputs on the external block */
 	private String[] externalInputNames;
-	
+	/** Names of the external signal name outputs on the external block */
 	private String[] externalOutputNames;
 	
 	/** Keeps track of the minimum clock period of this module */
@@ -666,11 +666,70 @@ public class Module implements Serializable{
 				//pointer back to this
 			}
 			
-			if(externalPortMap != null){
-				//TODO FileTools.writeStringMultiMap(hos, externalPortMap);
-				hos.writeDouble(minClkPeriod);
+			// Minimum Clk Period
+			hos.writeDouble(minClkPeriod);
+			
+			/* 
+			 * For the list of sources on the external block that potentially drive a module,
+			 * this maps to sinks on the module and also sinks on the external block.  The index
+			 * in the ArrayList is the signal index on the the external block.  The index in the 
+			 * PortMap array is the bit index in the signal.
+			 * */
+			//private ArrayList<PortMap[]> externalPortMap;
+			
+
+			hos.writeInt(externalPortMap.size());
+			for(PortMap[] mapArray : externalPortMap){
+				hos.writeInt(mapArray.length);
+				for(PortMap pm : mapArray){
+					writePortMap(hos, pm, stringPool);
+				}
 			}
 			
+			
+			
+			/*
+			 * This represents a list of sources on the module itself and maps to the sinks which
+			 * it drives. The module will never drive a sink on the module itself.
+			 */
+			//private HashMap<Port, ExternalPortSignal[]> modulePortMap;
+			hos.writeInt(modulePortMap.size());
+			for(Port port : modulePortMap.keySet()){
+				ExternalPortSignal[] array = modulePortMap.get(port);
+				hos.writeInt(stringPool.getEnumerationValue(port.getName()));
+				hos.writeInt(array.length);
+				for(ExternalPortSignal eps : array){
+					hos.writeInt(eps.portIndex);
+					hos.writeInt(eps.bitIndex);
+				}
+			}
+			
+			/* All sinks that should be driven by gnd */
+			//private PortMap[] gndSinks;
+			
+			hos.writeInt(gndSinks.length);
+			for(PortMap pm : gndSinks){
+				writePortMap(hos, pm, stringPool);
+			}
+			
+			/* All sinks that should be driven by vcc */
+			//private PortMap[] vccSinks;
+			
+			hos.writeInt(vccSinks.length);
+			for(PortMap pm : vccSinks){
+				writePortMap(hos, pm, stringPool);
+			}
+			
+			/* Names of the external signal name inputs on the external block */
+			//private String[] externalInputNames;
+			
+			FileTools.writeStringArray(hos, externalInputNames);
+			
+			/* Names of the external signal name outputs on the external block */
+			//private String[] externalOutputNames;
+			
+			FileTools.writeStringArray(hos, externalOutputNames);
+						
 			hos.close();
 			fos.close();
 			
@@ -679,6 +738,62 @@ public class Module implements Serializable{
 		} catch(IOException e){
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Writes a PortMap object to the stream hos for a hard macro. This should
+	 * only be used if the accompanying readPortMap() is also used.
+	 * @param hos The output stream to write to.
+	 * @param portMap The PortMap object to write out 
+	 * @param stringPool Used to find port names
+	 */
+	private void writePortMap(Hessian2Output hos, PortMap portMap, HashPool<String> stringPool){
+		try{
+			//public Port[] sinks; 
+			hos.writeInt(portMap.sinks.length);
+			for(Port p : portMap.sinks){
+				hos.writeInt(stringPool.getEnumerationValue(p.getName()));
+			}
+
+			//public ExternalPortSignal[] externalSinks;
+			hos.writeInt(portMap.externalSinks.length);
+			for(ExternalPortSignal signal : portMap.externalSinks){
+				hos.writeInt(signal.portIndex);
+				hos.writeInt(signal.bitIndex);
+			}
+		} 
+		catch(IOException e){
+			e.printStackTrace();
+		}
+	}
+	
+	private PortMap readPortMap(Hessian2Input his, String[] names){
+		PortMap pm = new PortMap();
+		
+		try{
+			//public Port[] sinks;
+			int size = his.readInt();
+			pm.sinks = new Port[size];
+			for (int i = 0; i < size; i++) {
+				int portNameIndex = his.readInt();
+				pm.sinks[i] = getPort(names[portNameIndex]);
+				// TODO - Remove later
+				if(pm.sinks[i] == null) MessageGenerator.briefError("ERROR: Port not recognized when loading from compressed file");
+			}
+			
+			//public ExternalPortSignal[] externalSinks;
+			size = his.readInt();
+			pm.externalSinks = new ExternalPortSignal[size];
+			for (int i = 0; i < size; i++) {
+				pm.externalSinks[i].portIndex = his.readInt();
+				pm.externalSinks[i].bitIndex = his.readInt();
+			}
+		} 
+		catch(IOException e){
+			e.printStackTrace();
+		}
+		
+		return pm;
 	}
 	
 	public boolean checkVersion(String fileName) throws IOException{
@@ -907,11 +1022,75 @@ public class Module implements Serializable{
 				// constructing HashMap
 				netMap.put(net.getName(), net);
 			}
+
+			// Read minimum clk period
+			this.minClkPeriod = (float) his.readDouble();
+
 			
-			if(!his.isEnd()){
-				//TODO setExternalPortMap(FileTools.readStringMultiMap(his));
-				if(!his.isEnd())this.minClkPeriod = (float) his.readDouble();
+			/* 
+			 * For the list of sources on the external block that potentially drive a module,
+			 * this maps to sinks on the module and also sinks on the external block.  The index
+			 * in the ArrayList is the signal index on the the external block.  The index in the 
+			 * PortMap array is the bit index in the signal.
+			 * */
+			//private ArrayList<PortMap[]> externalPortMap;
+			int size = his.readInt();
+			externalPortMap = new ArrayList<PortMap[]>(size);
+			for(int i = 0; i < size; i++){
+				int arrayLength = his.readInt();
+				PortMap[] array = new PortMap[arrayLength];
+				for(int j = 0; j < arrayLength; j++){
+					array[j] = readPortMap(his, strings);
+				}
+				externalPortMap.add(array);
 			}
+			
+			
+			/*
+			 * This represents a list of sources on the module itself and maps to the sinks which
+			 * it drives. The module will never drive a sink on the module itself.
+			 */
+			//private HashMap<Port, ExternalPortSignal[]> modulePortMap;
+			size = his.readInt();
+			modulePortMap = new HashMap<Port, ExternalPortSignal[]>(size);
+			for(int i = 0; i < size; i++){
+				Port p = getPort(strings[his.readInt()]);
+				// TODO - Remove later
+				if(p == null) MessageGenerator.briefError("ERROR: Port not recognized when loading from compressed file");
+				int arrayLength = his.readInt();
+				ExternalPortSignal[] array = new ExternalPortSignal[arrayLength];
+				for(int j = 0; j < arrayLength; j++){
+					array[j].portIndex = his.readInt();
+					array[j].bitIndex = his.readInt();
+				}
+				modulePortMap.put(p, array);
+			}
+			
+			
+			/* All sinks that should be driven by gnd */
+			//private PortMap[] gndSinks;
+			size = his.readInt();
+			gndSinks = new PortMap[size];
+			for(int i = 0; i < size; i++){
+				gndSinks[i] = readPortMap(his, strings);
+			}
+			
+			
+			/* All sinks that should be driven by vcc */
+			//private PortMap[] vccSinks;
+			size = his.readInt();
+			vccSinks = new PortMap[size];
+			for(int i = 0; i < size; i++){
+				vccSinks[i] = readPortMap(his, strings);
+			}
+			
+			/* Names of the external signal name inputs on the external block */
+			//private String[] externalInputNames;
+			externalInputNames = FileTools.readStringArray(his);
+			
+			/* Names of the external signal name outputs on the external block */
+			//private String[] externalOutputNames;
+			externalOutputNames = FileTools.readStringArray(his);
 			
 			his.close();
 			
