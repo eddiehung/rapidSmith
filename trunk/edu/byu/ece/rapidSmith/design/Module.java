@@ -34,6 +34,7 @@ import com.caucho.hessian.io.Deflation;
 import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;
 
+import edu.byu.ece.rapidSmith.design.PortMap.ExternalPortSignal;
 import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.PrimitiveType;
@@ -68,8 +69,27 @@ public class Module implements Serializable{
 	private HashMap<String,Instance> instanceMap;
 	/** Nets of the module */
 	private HashMap<String,Net> netMap;
-	/** This provides meta data for scenarios where inputs map directly to outputs in hard macros */
-	private HashMap<String, ArrayList<String>> externalPortMap = null;
+	/** 
+	 * For the list of sources on the external block that potentially drive a module,
+	 * this maps to sinks on the module and also sinks on the external block.  The index
+	 * in the ArrayList is the signal index on the the external block.  The index in the 
+	 * PortMap array is the bit index in the signal.
+	 * */
+	private ArrayList<PortMap[]> externalPortMap;
+	/**
+	 * This represents a list of sources on the module itself and maps to the sinks which
+	 * it drives. The module will never drive a sink on the module itself.
+	 */
+	private HashMap<Port, ExternalPortSignal[]> modulePortMap;
+	/** All sinks that should be driven by gnd */
+	private PortMap[] gndSinks;
+	/** All sinks that should be driven by vcc */
+	private PortMap[] vccSinks;
+	
+	private String[] externalInputNames;
+	
+	private String[] externalOutputNames;
+	
 	/** Keeps track of the minimum clock period of this module */
 	private float minClkPeriod = Float.MAX_VALUE; 
 	/**
@@ -335,17 +355,59 @@ public class Module implements Serializable{
 	}
 	
 	/**
+	 * @return the externalPortMap
+	 */
+	public ArrayList<PortMap[]> getExternalPortMap() {
+		return externalPortMap;
+	}
+
+	/**
 	 * @param externalPortMap the externalPortMap to set
 	 */
-	public void setExternalPortMap(HashMap<String, ArrayList<String>> externalPortMap) {
+	public void setExternalPortMap(ArrayList<PortMap[]> externalPortMap) {
 		this.externalPortMap = externalPortMap;
 	}
 
 	/**
-	 * @return the externalPortMap
+	 * @return the modulePortMap
 	 */
-	public HashMap<String, ArrayList<String>> getExternalPortMap() {
-		return externalPortMap;
+	public HashMap<Port, ExternalPortSignal[]> getModulePortMap() {
+		return modulePortMap;
+	}
+
+	/**
+	 * @param modulePortMap the modulePortMap to set
+	 */
+	public void setModulePortMap(HashMap<Port, ExternalPortSignal[]> modulePortMap) {
+		this.modulePortMap = modulePortMap;
+	}
+
+	/**
+	 * @return the gndSinks
+	 */
+	public PortMap[] getGndSinks() {
+		return gndSinks;
+	}
+
+	/**
+	 * @param gndSinks the gndSinks to set
+	 */
+	public void setGndSinks(PortMap[] gndSinks) {
+		this.gndSinks = gndSinks;
+	}
+
+	/**
+	 * @return the vccSinks
+	 */
+	public PortMap[] getVccSinks() {
+		return vccSinks;
+	}
+
+	/**
+	 * @param vccSinks the vccSinks to set
+	 */
+	public void setVccSinks(PortMap[] vccSinks) {
+		this.vccSinks = vccSinks;
 	}
 
 	/**
@@ -605,7 +667,7 @@ public class Module implements Serializable{
 			}
 			
 			if(externalPortMap != null){
-				FileTools.writeStringMultiMap(hos, externalPortMap);
+				//TODO FileTools.writeStringMultiMap(hos, externalPortMap);
 				hos.writeDouble(minClkPeriod);
 			}
 			
@@ -847,7 +909,7 @@ public class Module implements Serializable{
 			}
 			
 			if(!his.isEnd()){
-				setExternalPortMap(FileTools.readStringMultiMap(his));
+				//TODO setExternalPortMap(FileTools.readStringMultiMap(his));
 				if(!his.isEnd())this.minClkPeriod = (float) his.readDouble();
 			}
 			
