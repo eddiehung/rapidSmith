@@ -18,16 +18,15 @@
  * get a copy of the license at <http://www.gnu.org/licenses/>.
  * 
  */
-package edu.byu.ece.rapidSmith.design;
+package edu.byu.ece.rapidSmith.design.helper;
+
+import java.util.ArrayList;
+
+import edu.byu.ece.rapidSmith.design.Port;
 
 public class PortMap {
 	
-	public Port[] sinks;
+	public ArrayList<Port> sinks;
 	
-	public ExternalPortSignal[] externalSinks;
-	
-	public class ExternalPortSignal{
-		public int portIndex;
-		public int bitIndex;
-	}
+	public ArrayList<ExternalPortSignal> externalSinks;
 }

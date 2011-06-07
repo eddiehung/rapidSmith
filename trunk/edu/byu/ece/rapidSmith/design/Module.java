@@ -34,7 +34,8 @@ import com.caucho.hessian.io.Deflation;
 import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;
 
-import edu.byu.ece.rapidSmith.design.PortMap.ExternalPortSignal;
+import edu.byu.ece.rapidSmith.design.helper.PortMap;
+import edu.byu.ece.rapidSmith.design.helper.ExternalPortSignal;
 import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.PrimitiveType;
@@ -75,16 +76,16 @@ public class Module implements Serializable{
 	 * in the ArrayList is the signal index on the the external block.  The index in the 
 	 * PortMap array is the bit index in the signal.
 	 * */
-	private ArrayList<PortMap[]> externalPortMap;
+	private ArrayList<ArrayList<PortMap>> externalPortMap;
 	/**
 	 * This represents a list of sources on the module itself and maps to the sinks which
 	 * it drives. The module will never drive a sink on the module itself.
 	 */
-	private HashMap<Port, ExternalPortSignal[]> modulePortMap;
+	private HashMap<Port, ArrayList<ExternalPortSignal>> modulePortMap;
 	/** All sinks that should be driven by gnd */
-	private PortMap[] gndSinks;
+	private ArrayList<PortMap> gndSinks;
 	/** All sinks that should be driven by vcc */
-	private PortMap[] vccSinks;
+	private ArrayList<PortMap> vccSinks;
 	/** Names of the external signal name inputs on the external block */
 	private String[] externalInputNames;
 	/** Names of the external signal name outputs on the external block */
@@ -357,56 +358,57 @@ public class Module implements Serializable{
 	/**
 	 * @return the externalPortMap
 	 */
-	public ArrayList<PortMap[]> getExternalPortMap() {
+	public ArrayList<ArrayList<PortMap>> getExternalPortMap() {
 		return externalPortMap;
 	}
 
 	/**
 	 * @param externalPortMap the externalPortMap to set
 	 */
-	public void setExternalPortMap(ArrayList<PortMap[]> externalPortMap) {
+	public void setExternalPortMap(ArrayList<ArrayList<PortMap>> externalPortMap) {
 		this.externalPortMap = externalPortMap;
 	}
 
 	/**
 	 * @return the modulePortMap
 	 */
-	public HashMap<Port, ExternalPortSignal[]> getModulePortMap() {
+	public HashMap<Port, ArrayList<ExternalPortSignal>> getModulePortMap() {
 		return modulePortMap;
 	}
 
 	/**
 	 * @param modulePortMap the modulePortMap to set
 	 */
-	public void setModulePortMap(HashMap<Port, ExternalPortSignal[]> modulePortMap) {
+	public void setModulePortMap(
+			HashMap<Port, ArrayList<ExternalPortSignal>> modulePortMap) {
 		this.modulePortMap = modulePortMap;
 	}
 
 	/**
 	 * @return the gndSinks
 	 */
-	public PortMap[] getGndSinks() {
+	public ArrayList<PortMap> getGndSinks() {
 		return gndSinks;
 	}
 
 	/**
 	 * @param gndSinks the gndSinks to set
 	 */
-	public void setGndSinks(PortMap[] gndSinks) {
+	public void setGndSinks(ArrayList<PortMap> gndSinks) {
 		this.gndSinks = gndSinks;
 	}
 
 	/**
 	 * @return the vccSinks
 	 */
-	public PortMap[] getVccSinks() {
+	public ArrayList<PortMap> getVccSinks() {
 		return vccSinks;
 	}
 
 	/**
 	 * @param vccSinks the vccSinks to set
 	 */
-	public void setVccSinks(PortMap[] vccSinks) {
+	public void setVccSinks(ArrayList<PortMap> vccSinks) {
 		this.vccSinks = vccSinks;
 	}
 
@@ -707,9 +709,9 @@ public class Module implements Serializable{
 			
 
 			hos.writeInt(externalPortMap.size());
-			for(PortMap[] mapArray : externalPortMap){
-				hos.writeInt(mapArray.length);
-				for(PortMap pm : mapArray){
+			for(ArrayList<PortMap> mapList : externalPortMap){
+				hos.writeInt(mapList.size());
+				for(PortMap pm : mapList){
 					writePortMap(hos, pm, stringPool);
 				}
 			}
@@ -723,9 +725,9 @@ public class Module implements Serializable{
 			//private HashMap<Port, ExternalPortSignal[]> modulePortMap;
 			hos.writeInt(modulePortMap.size());
 			for(Port port : modulePortMap.keySet()){
-				ExternalPortSignal[] array = modulePortMap.get(port);
+				ArrayList<ExternalPortSignal> array = modulePortMap.get(port);
 				hos.writeInt(stringPool.getEnumerationValue(port.getName()));
-				hos.writeInt(array.length);
+				hos.writeInt(array.size());
 				for(ExternalPortSignal eps : array){
 					hos.writeInt(eps.portIndex);
 					hos.writeInt(eps.bitIndex);
@@ -735,7 +737,7 @@ public class Module implements Serializable{
 			/* All sinks that should be driven by gnd */
 			//private PortMap[] gndSinks;
 			
-			hos.writeInt(gndSinks.length);
+			hos.writeInt(gndSinks.size());
 			for(PortMap pm : gndSinks){
 				writePortMap(hos, pm, stringPool);
 			}
@@ -743,7 +745,7 @@ public class Module implements Serializable{
 			/* All sinks that should be driven by vcc */
 			//private PortMap[] vccSinks;
 			
-			hos.writeInt(vccSinks.length);
+			hos.writeInt(vccSinks.size());
 			for(PortMap pm : vccSinks){
 				writePortMap(hos, pm, stringPool);
 			}
@@ -778,13 +780,13 @@ public class Module implements Serializable{
 	private void writePortMap(Hessian2Output hos, PortMap portMap, HashPool<String> stringPool){
 		try{
 			//public Port[] sinks; 
-			hos.writeInt(portMap.sinks.length);
+			hos.writeInt(portMap.sinks.size());
 			for(Port p : portMap.sinks){
 				hos.writeInt(stringPool.getEnumerationValue(p.getName()));
 			}
 
 			//public ExternalPortSignal[] externalSinks;
-			hos.writeInt(portMap.externalSinks.length);
+			hos.writeInt(portMap.externalSinks.size());
 			for(ExternalPortSignal signal : portMap.externalSinks){
 				hos.writeInt(signal.portIndex);
 				hos.writeInt(signal.bitIndex);
@@ -801,20 +803,23 @@ public class Module implements Serializable{
 		try{
 			//public Port[] sinks;
 			int size = his.readInt();
-			pm.sinks = new Port[size];
+			pm.sinks = new ArrayList<Port>(size);
 			for (int i = 0; i < size; i++) {
 				int portNameIndex = his.readInt();
-				pm.sinks[i] = getPort(names[portNameIndex]);
+				Port sink = getPort(names[portNameIndex]);
 				// TODO - Remove later
-				if(pm.sinks[i] == null) MessageGenerator.briefError("ERROR: Port not recognized when loading from compressed file");
+				if(sink == null) MessageGenerator.briefError("ERROR: Port not recognized when loading from compressed file");
+				pm.sinks.add(sink);
 			}
 			
 			//public ExternalPortSignal[] externalSinks;
 			size = his.readInt();
-			pm.externalSinks = new ExternalPortSignal[size];
+			pm.externalSinks = new ArrayList<ExternalPortSignal>(size);
 			for (int i = 0; i < size; i++) {
-				pm.externalSinks[i].portIndex = his.readInt();
-				pm.externalSinks[i].bitIndex = his.readInt();
+				ExternalPortSignal extPortSignal = new ExternalPortSignal();
+				extPortSignal.portIndex = his.readInt();
+				extPortSignal.bitIndex = his.readInt();
+				pm.externalSinks.add(extPortSignal);
 			}
 		} 
 		catch(IOException e){
@@ -1063,12 +1068,12 @@ public class Module implements Serializable{
 			 * */
 			//private ArrayList<PortMap[]> externalPortMap;
 			int size = his.readInt();
-			externalPortMap = new ArrayList<PortMap[]>(size);
+			externalPortMap = new ArrayList<ArrayList<PortMap>>(size);
 			for(int i = 0; i < size; i++){
 				int arrayLength = his.readInt();
-				PortMap[] array = new PortMap[arrayLength];
+				ArrayList<PortMap> array = new ArrayList<PortMap>(arrayLength);
 				for(int j = 0; j < arrayLength; j++){
-					array[j] = readPortMap(his, strings);
+					array.add(readPortMap(his, strings));
 				}
 				externalPortMap.add(array);
 			}
@@ -1080,16 +1085,18 @@ public class Module implements Serializable{
 			 */
 			//private HashMap<Port, ExternalPortSignal[]> modulePortMap;
 			size = his.readInt();
-			modulePortMap = new HashMap<Port, ExternalPortSignal[]>(size);
+			modulePortMap = new HashMap<Port, ArrayList<ExternalPortSignal>>(size);
 			for(int i = 0; i < size; i++){
 				Port p = getPort(strings[his.readInt()]);
 				// TODO - Remove later
 				if(p == null) MessageGenerator.briefError("ERROR: Port not recognized when loading from compressed file");
 				int arrayLength = his.readInt();
-				ExternalPortSignal[] array = new ExternalPortSignal[arrayLength];
+				ArrayList<ExternalPortSignal> array = new ArrayList<ExternalPortSignal>(arrayLength);
 				for(int j = 0; j < arrayLength; j++){
-					array[j].portIndex = his.readInt();
-					array[j].bitIndex = his.readInt();
+					ExternalPortSignal extPortSignal = new ExternalPortSignal();
+					extPortSignal.portIndex = his.readInt();
+					extPortSignal.bitIndex = his.readInt();
+					array.add(extPortSignal);
 				}
 				modulePortMap.put(p, array);
 			}
@@ -1098,18 +1105,18 @@ public class Module implements Serializable{
 			/* All sinks that should be driven by gnd */
 			//private PortMap[] gndSinks;
 			size = his.readInt();
-			gndSinks = new PortMap[size];
+			gndSinks = new ArrayList<PortMap>(size);
 			for(int i = 0; i < size; i++){
-				gndSinks[i] = readPortMap(his, strings);
+				gndSinks.add(readPortMap(his, strings));
 			}
 			
 			
 			/* All sinks that should be driven by vcc */
 			//private PortMap[] vccSinks;
 			size = his.readInt();
-			vccSinks = new PortMap[size];
+			vccSinks = new ArrayList<PortMap>(size);
 			for(int i = 0; i < size; i++){
-				vccSinks[i] = readPortMap(his, strings);
+				vccSinks.add(readPortMap(his, strings));
 			}
 			
 			/* Names of the external signal name inputs on the external block */
