@@ -83,9 +83,9 @@ public class Module implements Serializable{
 	 */
 	private HashMap<Port, ArrayList<ExternalPortSignal>> modulePortMap;
 	/** All sinks that should be driven by gnd */
-	private ArrayList<PortMap> gndSinks;
+	private PortMap gndSinks;
 	/** All sinks that should be driven by vcc */
-	private ArrayList<PortMap> vccSinks;
+	private PortMap vccSinks;
 	/** Names of the external signal name inputs on the external block */
 	private String[] externalInputNames;
 	/** Names of the external signal name outputs on the external block */
@@ -387,28 +387,28 @@ public class Module implements Serializable{
 	/**
 	 * @return the gndSinks
 	 */
-	public ArrayList<PortMap> getGndSinks() {
+	public PortMap getGndSinks() {
 		return gndSinks;
 	}
 
 	/**
 	 * @param gndSinks the gndSinks to set
 	 */
-	public void setGndSinks(ArrayList<PortMap> gndSinks) {
+	public void setGndSinks(PortMap gndSinks) {
 		this.gndSinks = gndSinks;
 	}
 
 	/**
 	 * @return the vccSinks
 	 */
-	public ArrayList<PortMap> getVccSinks() {
+	public PortMap getVccSinks() {
 		return vccSinks;
 	}
 
 	/**
 	 * @param vccSinks the vccSinks to set
 	 */
-	public void setVccSinks(ArrayList<PortMap> vccSinks) {
+	public void setVccSinks(PortMap vccSinks) {
 		this.vccSinks = vccSinks;
 	}
 
@@ -737,18 +737,14 @@ public class Module implements Serializable{
 			/* All sinks that should be driven by gnd */
 			//private PortMap[] gndSinks;
 			
-			hos.writeInt(gndSinks.size());
-			for(PortMap pm : gndSinks){
-				writePortMap(hos, pm, stringPool);
-			}
+			writePortMap(hos, gndSinks, stringPool);
+			
 			
 			/* All sinks that should be driven by vcc */
 			//private PortMap[] vccSinks;
 			
-			hos.writeInt(vccSinks.size());
-			for(PortMap pm : vccSinks){
-				writePortMap(hos, pm, stringPool);
-			}
+			writePortMap(hos, vccSinks, stringPool);
+
 			
 			/* Names of the external signal name inputs on the external block */
 			//private String[] externalInputNames;
@@ -1104,20 +1100,12 @@ public class Module implements Serializable{
 			
 			/* All sinks that should be driven by gnd */
 			//private PortMap[] gndSinks;
-			size = his.readInt();
-			gndSinks = new ArrayList<PortMap>(size);
-			for(int i = 0; i < size; i++){
-				gndSinks.add(readPortMap(his, strings));
-			}
+			gndSinks = readPortMap(his, strings);
 			
 			
 			/* All sinks that should be driven by vcc */
 			//private PortMap[] vccSinks;
-			size = his.readInt();
-			vccSinks = new ArrayList<PortMap>(size);
-			for(int i = 0; i < size; i++){
-				vccSinks.add(readPortMap(his, strings));
-			}
+			vccSinks = readPortMap(his, strings);
 			
 			/* Names of the external signal name inputs on the external block */
 			//private String[] externalInputNames;
