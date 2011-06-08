@@ -23,4 +23,13 @@ package edu.byu.ece.rapidSmith.design.helper;
 public class ExternalPortSignal {
 	public int portIndex;
 	public int bitIndex;
+	
+	public ExternalPortSignal(){
+		
+	}
+	
+	public ExternalPortSignal(int portIndex, int bitIndex){
+		this.portIndex = portIndex;
+		this.bitIndex = bitIndex;
+	}
 }

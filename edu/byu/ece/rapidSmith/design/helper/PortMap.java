@@ -27,6 +27,11 @@ import edu.byu.ece.rapidSmith.design.Port;
 public class PortMap {
 	
 	public ArrayList<Port> sinks;
-	
 	public ArrayList<ExternalPortSignal> externalSinks;
+	
+	public PortMap(){
+		this.sinks = new ArrayList<Port>();
+		this.externalSinks = new ArrayList<ExternalPortSignal>();
+	}
+	
 }
