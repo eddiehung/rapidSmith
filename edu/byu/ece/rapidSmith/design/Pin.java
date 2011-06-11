@@ -188,6 +188,15 @@ public class Pin implements Serializable, Cloneable {
 	public Net getNet() {
 		return net;
 	}
+	
+	/**
+	 * Get the concatenated primitiveSiteName.PinName (ex. SLICE_X1Y2.C1)
+	 * name for the pin.  This pin name is unique throughout the device.
+	 * @return The primitive site name . pin name
+	 */
+	public String getPrimitiveSitePinName(){
+		return instance.getPrimitiveSiteName() + "." + name;
+	}
 
 	/**
 	 * Generates an equivalent XDL string representation of the pin.
