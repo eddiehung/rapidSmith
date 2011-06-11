@@ -182,7 +182,6 @@ public class TraceReportParser{
 		// Clock Uncertainty:    0.000ns
 		parts = getNextLineTokens();
 		curr.setClockUncertainty(Float.parseFloat(parts[3].substring(0, parts[3].length()-2)));
-
 		curr.setMaxDataPath(parsePathElements());
 
 		return curr;
@@ -204,6 +203,8 @@ public class TraceReportParser{
 			String pinName = parts[1].substring(parts[1].indexOf('.')+1);
 			if(parts.length > 2){
 				if(parts[2].equals("net")){
+					String primitiveSiteName = parts[1].substring(0, parts[1].indexOf('.'));
+
 					currElement = new RoutingPathElement();
 					currElement.setType("net");
 					int offset = 0;
@@ -219,9 +220,8 @@ public class TraceReportParser{
 							"\" is null.");
 						}
 						((RoutingPathElement)currElement).setNet(net);
-
 						for(Pin p : net.getPins()){
-							if(p.getName().equals(pinName)){
+							if(p.getName().equals(pinName) && p.getInstance().getPrimitiveSiteName().equals(primitiveSiteName)){
 								currElement.setPin(p);
 								break;
 							}
