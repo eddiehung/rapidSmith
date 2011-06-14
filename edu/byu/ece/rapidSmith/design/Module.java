@@ -70,6 +70,8 @@ public class Module implements Serializable{
 	private HashMap<String,Instance> instanceMap;
 	/** Nets of the module */
 	private HashMap<String,Net> netMap;
+	/** Provides a catch-all map to store information about hard macro */
+	private HashMap<String, ArrayList<String>> metaDataMap;
 	/** 
 	 * For the list of sources on the external block that potentially drive a module,
 	 * this maps to sinks on the module and also sinks on the external block.  The index
@@ -355,6 +357,20 @@ public class Module implements Serializable{
 		this.instanceMap.put(inst.getName(), inst);
 	}
 	
+	/**
+	 * @return the metaDataMap
+	 */
+	public HashMap<String, ArrayList<String>> getMetaDataMap() {
+		return metaDataMap;
+	}
+
+	/**
+	 * @param metaDataMap the metaDataMap to set
+	 */
+	public void setMetaDataMap(HashMap<String, ArrayList<String>> metaDataMap) {
+		this.metaDataMap = metaDataMap;
+	}
+
 	/**
 	 * @return the externalPortMap
 	 */
@@ -803,8 +819,6 @@ public class Module implements Serializable{
 			for (int i = 0; i < size; i++) {
 				int portNameIndex = his.readInt();
 				Port sink = getPort(names[portNameIndex]);
-				// TODO - Remove later
-				if(sink == null) MessageGenerator.briefError("ERROR: Port not recognized when loading from compressed file");
 				pm.sinks.add(sink);
 			}
 			
@@ -1084,8 +1098,6 @@ public class Module implements Serializable{
 			modulePortMap = new HashMap<Port, ArrayList<ExternalPortSignal>>(size);
 			for(int i = 0; i < size; i++){
 				Port p = getPort(strings[his.readInt()]);
-				// TODO - Remove later
-				if(p == null) MessageGenerator.briefError("ERROR: Port not recognized when loading from compressed file");
 				int arrayLength = his.readInt();
 				ArrayList<ExternalPortSignal> array = new ArrayList<ExternalPortSignal>(arrayLength);
 				for(int j = 0; j < arrayLength; j++){
