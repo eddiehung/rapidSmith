@@ -21,7 +21,6 @@
 package edu.byu.ece.rapidSmith.design.explorer;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import com.trolltech.qt.core.QAbstractItemModel;
 import com.trolltech.qt.core.QModelIndex;
