@@ -94,6 +94,22 @@ public class Node implements Comparable<Node>{
 	}
 	
 	/**
+	 * A quick population constructor.
+	 * @param tile The tile of the new node.
+	 * @param wire The wire of the new node.
+	 * @param parent The parent of the new node, or null if none.
+	 * @param level The number of nodes between this node and the source node.
+	 * @param isPIP A flag indicating that this node and its parent for a PIP.
+	 */
+	public Node(Tile tile, int wire, Node parent, int level, boolean isPIP){
+		setTile(tile);
+		setWire(wire);
+		setParent(parent);
+		setLevel(level);
+		setPIP(isPIP);
+	}
+	
+	/**
 	 * A quick setter method for the tile and wire.
 	 * @param tile The new tile of the node.
 	 * @param wire The new wire of the node.
@@ -192,6 +208,20 @@ public class Node implements Comparable<Node>{
 	 */
 	public void setHistory(int history) {
 		this.history = history;
+	}
+
+	/**
+	 * @return the isPIP
+	 */
+	public boolean isPIP() {
+		return isPIP;
+	}
+
+	/**
+	 * @param isPIP the isPIP to set
+	 */
+	public void setPIP(boolean isPIP) {
+		this.isPIP = isPIP;
 	}
 
 	public SinkPin getSinkPin(){
