@@ -76,11 +76,15 @@ public class WireConnection implements Serializable, Comparable<WireConnection>{
 	}
 	
 	public Node createNode(Node srcNode){
-		return new Node(getTile(srcNode.getTile()), wire, srcNode, srcNode.getLevel()+1);
+		return new Node(getTile(srcNode.getTile()), wire, srcNode, srcNode.getLevel()+1, isPIP);
 	}
 	
 	public Node createNode(Tile currTile){
-		return new Node(getTile(currTile), wire, null, 0);
+		return new Node(getTile(currTile), wire, null, 0, isPIP);
+	}
+	
+	public Node createNode(Tile currTile, Node parent){
+		return new Node(getTile(currTile), wire, parent, 0, isPIP);
 	}
 	
 	/**
