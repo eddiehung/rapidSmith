@@ -230,6 +230,11 @@ public class Net implements Comparable<Net>, Serializable {
 		}
 		pins.add(pin);
 		pin.setNet(this);
+		if(pips.size() > 0){
+			// TODO - Possibly add a state to each net that determines if it is 
+			// routed or not
+			unroute();
+		}
 		return true;
 	}
 	/**

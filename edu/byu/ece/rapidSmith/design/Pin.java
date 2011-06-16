@@ -141,6 +141,10 @@ public class Pin implements Serializable, Cloneable {
 	public void setInstance(Instance instance){
 		if(this.instance != null){
 			this.instance.removePin(this);
+			if(net != null && net.getPIPs().size() > 0){
+				// TODO - Unroute only PIPs that are needed
+				net.unroute();
+			}
 		}
 		this.instance = instance;
 		if(name != null && instance != null){
