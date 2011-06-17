@@ -67,6 +67,10 @@ public class Frame {
 		return data;
 	}
 	
+	public void setData(FrameData data){
+		this.data = data;
+	}
+	
 	public String toString() {
 		StringBuffer string = new StringBuffer();
 		if (!configured) {
