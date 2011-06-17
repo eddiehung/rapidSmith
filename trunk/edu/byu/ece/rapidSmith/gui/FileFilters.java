@@ -33,4 +33,6 @@ public class FileFilters {
 	public static Filter pdfFilter = new Filter("Portable Document Format Files (*.pdf)");
 	/** Xilinx Trace Report File Filter */
 	public static Filter twrFilter = new Filter("Xilinx Trace Report Files (*.twr)");
+	/** EDK Microprocessor Hardware Specification File Filter */
+	public static Filter mhsFilter = new Filter("Microprocessor Hardware Specification Files (*.mhs)");
 }
