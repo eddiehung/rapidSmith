@@ -21,6 +21,7 @@
 package edu.byu.ece.rapidSmith.bitstreamTools.configuration;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -54,11 +55,12 @@ public class FPGA {
 		//configData = new FrameData[frameAddress.getNumberOfFrames()];
 		configData = new Frame[FrameAddressRegister.getNumberOfFrames(spec)];
 		int frameSize = spec.getFrameSize();
-
+		frameMap = new HashMap<Integer, Integer>();
 		frameAddress.setFAR(0);
 		for (int i = 0; i < configData.length; i++) {
 			int currentFAR = frameAddress.getAddress();
 			configData[i] = new Frame(frameSize,currentFAR);
+			frameMap.put(currentFAR, i);
 			frameAddress.incrementFAR();
 		    //configData[i] = new FrameData(frameSize);
 		}
@@ -233,22 +235,23 @@ public class FPGA {
 	}
 
 	/**
-	 * Return the frame specified by the farAddrses parameter.
+	 * Return the frame specified by the farAddress parameter.
 	 * This method will have to
 	 * perform a frame address to sequential address translation.
-	 * TODO - This method has some serious performance issues.
 	 */
 	public Frame getFrame(int farAddress) {
-		int index = FrameAddressRegister.getConsecutiveAddress(spec,farAddress);
+		//int index = FrameAddressRegister.getConsecutiveAddress(spec,farAddress);
+		int index = frameMap.get(new Integer(farAddress));
 		if (index >= configData.length)
 			return null;
 		return configData[index];
 	}
 	
 	/**
-	 * TODO - This method has some serious performance issues.
-	 * @param far 
-	 * @return
+	 * Returns the frame from the address set in the FrameAddressRegister.
+	 * @param far The FAR containing the address of the frame to get.
+	 * @return The frame object with the requested far, or null if the
+	 * far is invalid.
 	 */
 	public Frame getFrame(FrameAddressRegister far) {
 		return getFrame(far.getAddress());
@@ -374,5 +377,6 @@ public class FPGA {
 	protected final Frame[] configData;
 	protected FrameAddressRegister frameAddress;
 	protected XilinxConfigurationSpecification spec;
+	private HashMap<Integer, Integer> frameMap;
 	
 }
