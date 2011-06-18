@@ -236,6 +236,7 @@ public class FPGA {
 	 * Return the frame specified by the farAddrses parameter.
 	 * This method will have to
 	 * perform a frame address to sequential address translation.
+	 * TODO - This method has some serious performance issues.
 	 */
 	public Frame getFrame(int farAddress) {
 		int index = FrameAddressRegister.getConsecutiveAddress(spec,farAddress);
@@ -244,6 +245,11 @@ public class FPGA {
 		return configData[index];
 	}
 	
+	/**
+	 * TODO - This method has some serious performance issues.
+	 * @param far 
+	 * @return
+	 */
 	public Frame getFrame(FrameAddressRegister far) {
 		return getFrame(far.getAddress());
 	}
