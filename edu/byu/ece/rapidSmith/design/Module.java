@@ -93,6 +93,8 @@ public class Module implements Serializable{
 	/** Names of the external signal name outputs on the external block */
 	private String[] externalOutputNames;
 	
+	private ArrayList<PrimitiveSite> validPlacements;
+	
 	/** Keeps track of the minimum clock period of this module */
 	private float minClkPeriod = Float.MAX_VALUE; 
 	/**
@@ -105,6 +107,7 @@ public class Module implements Serializable{
 		portMap = new HashMap<String, Port>();
 		instanceMap = new HashMap<String,Instance>();
 		netMap = new HashMap<String,Net>();
+		validPlacements = new ArrayList<PrimitiveSite>();
 	}
 	
 	/**
@@ -771,7 +774,13 @@ public class Module implements Serializable{
 			//private String[] externalOutputNames;
 			
 			FileTools.writeStringArray(hos, externalOutputNames);
-						
+			
+			String[] validAnchorPlacements = new String[validPlacements.size()];
+			for (int i = 0; i < validAnchorPlacements.length; i++) {
+				validAnchorPlacements[i] = validPlacements.get(i).getName();
+			}
+			FileTools.writeStringArray(hos, validAnchorPlacements);
+			
 			hos.close();
 			fos.close();
 			
@@ -1127,6 +1136,11 @@ public class Module implements Serializable{
 			//private String[] externalOutputNames;
 			externalOutputNames = FileTools.readStringArray(his);
 			
+			String[] validSites = FileTools.readStringArray(his);
+			for(String siteName : validSites){
+				validPlacements.add(dev.getPrimitiveSite(siteName));
+			}
+			
 			his.close();
 			
 		} catch(IOException e){
@@ -1140,17 +1154,25 @@ public class Module implements Serializable{
 	 * can be placed.
 	 * @return A list of valid anchor sites for the module to be placed.
 	 */
-	public ArrayList<PrimitiveSite> getAllValidPlacements(Device dev){
+	public ArrayList<PrimitiveSite> calculateAllValidPlacements(Device dev){
+		if(getAnchor() == null) return null;
 		ArrayList<PrimitiveSite> validSites = new ArrayList<PrimitiveSite>();
-		
 		PrimitiveSite[] sites = dev.getAllCompatibleSites(getAnchor().getType());
 		for(PrimitiveSite newAnchorSite : sites){
 			if(isValidPlacement(newAnchorSite, dev)){
 				validSites.add(newAnchorSite);
 			}
 		}
-				
+		this.validPlacements = validSites;
 		return validSites;
+	}
+	
+	/**
+	 * Gets the previously calculated valid placement locations for this particular module.
+	 * @return A list of anchor primitive sites which are valid for this module.
+	 */
+	public ArrayList<PrimitiveSite> getAllValidPlacements(){
+		return this.validPlacements;
 	}
 	
 	public boolean isValidPlacement(PrimitiveSite proposedAnchorSite, Device dev){
