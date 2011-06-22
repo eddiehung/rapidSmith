@@ -99,7 +99,7 @@ public class Node implements Comparable<Node>{
 	 * @param wire The wire of the new node.
 	 * @param parent The parent of the new node, or null if none.
 	 * @param level The number of nodes between this node and the source node.
-	 * @param isPIP A flag indicating that this node and its parent for a PIP.
+	 * @param isPIP A flag indicating that this node and its parent form a PIP.
 	 */
 	public Node(Tile tile, int wire, Node parent, int level, boolean isPIP){
 		setTile(tile);

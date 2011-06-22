@@ -261,18 +261,19 @@ public class PrimitiveSite implements Serializable{
 		if(getClass() != obj.getClass())
 			return false;
 		PrimitiveSite other = (PrimitiveSite) obj;
-		if(name == null){
-			if(other.name != null)
-				return false;
-		}
-		else if(!name.equals(other.name))
-			return false;
 		if(type == null){
 			if(other.type != null)
 				return false;
 		}
 		else if(!type.equals(other.type))
 			return false;
+		if(name == null){
+			if(other.name != null)
+				return false;
+		}
+		else if(!name.equals(other.name))
+			return false;
+
 		return true;
 	}
 	
