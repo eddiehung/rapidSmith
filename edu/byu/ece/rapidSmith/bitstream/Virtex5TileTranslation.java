@@ -29,6 +29,7 @@ import edu.byu.ece.rapidSmith.bitstreamTools.configurationSpecification.V5Config
 import edu.byu.ece.rapidSmith.bitstreamTools.configurationSpecification.XilinxConfigurationSpecification;
 import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.Tile;
+import edu.byu.ece.rapidSmith.device.TileType;
 import edu.byu.ece.rapidSmith.util.FileTools;
 import edu.byu.ece.rapidSmith.util.MessageGenerator;
 
@@ -40,6 +41,7 @@ public class Virtex5TileTranslation {
 	
 	private int clkColumnIndex = -1;
 	
+	//this seems to be correct
 	public int getTopBottom(XilinxConfigurationSpecification spec, Tile tile){
 		int row = tile.getTileYCoordinate() / 20;
 		if(row < spec.getBottomNumberOfRows()){
@@ -52,6 +54,7 @@ public class Virtex5TileTranslation {
 		}
 	}
 	
+	//this seems to be correct.
 	public int getConfigurationRow(XilinxConfigurationSpecification spec, Tile tile){
 		int row = tile.getTileYCoordinate() / 20;
 		
@@ -66,18 +69,26 @@ public class Virtex5TileTranslation {
 		return row;
 	}
 	
+	//this seems to be correct
 	public int getConfigurationColumn(XilinxConfigurationSpecification spec, Tile tile){
-		if(tile.getTileXCoordinate() > (2*getClkColumnIndex(spec)+10)){
-			System.out.println("Clk Element like SYSMON Error is Possible"); 
-			return (getClkColumnIndex(spec));
+		//TODO not sure what this was for
+//		if(tile.getTileXCoordinate() > (2*getClkColumnIndex(spec)+10)){
+//			System.out.println("Clk Element like SYSMON Error is Possible"); 
+//			return (getClkColumnIndex(spec));
+//		}
+		
+		if(tile.getType().equals(TileType.CLK_HROW)){
+			return getClkColumnIndex(spec);
+		}else{
+			if(tile.getTileXCoordinate() >= getClkColumnIndex(spec)){
+				return tile.getTileXCoordinate() + 1;
+			}
+			return tile.getTileXCoordinate();
 		}
 
-		if(tile.getTileXCoordinate() >= getClkColumnIndex(spec)){
-			return tile.getTileXCoordinate() + 1;
-		}
-		return tile.getTileXCoordinate();
 	}
 	
+	//this seems to be correct.
 	public int getClkColumnIndex(XilinxConfigurationSpecification spec){
 		if(clkColumnIndex != -1){
 			return clkColumnIndex;
