@@ -246,6 +246,17 @@ public class StaticSourceHandler{
 			net.unroute();
 			MessageGenerator.briefError("Unrouting Net: " + net.getName());
 			MessageGenerator.briefError("  For Critical Resource: " + n.toString(we));
+			ArrayList<Node> reservedNodes = reserveCriticalNodes(net);
+			if(!reservedNodes.isEmpty()){
+				ArrayList<Node> nodes = router.reservedNodes.get(net);
+				if(nodes == null){
+					nodes = reservedNodes;
+					router.reservedNodes.put(net, nodes);
+				}else {
+					nodes.addAll(reservedNodes);						
+				}
+				router.usedNodes.addAll(reservedNodes);
+			}
 		}
 	}
 	
@@ -258,6 +269,7 @@ public class StaticSourceHandler{
 	 */
 	private ArrayList<Node> reserveCriticalNodes(Net net){
 		ArrayList<Node> reservedNodes = new ArrayList<Node>();
+		
 		for(Pin p : net.getPins()){
 			if(p.isOutPin()) continue; // Skip outpins
 			int extPin = dev.getPrimitiveExternalPin(p);
@@ -277,7 +289,7 @@ public class StaticSourceHandler{
 					addReservedNode(reserved, net);
 				}
 				else{
-					reservedNodes.add(reserved);					
+					reservedNodes.add(reserved);		
 				}
 
 			}
