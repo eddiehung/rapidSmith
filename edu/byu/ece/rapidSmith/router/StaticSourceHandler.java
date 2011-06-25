@@ -634,16 +634,15 @@ public class StaticSourceHandler{
 				for(StaticSink ss : ps.useTIEOFF){
 					String[] fans = fanBounceMap.get(we.getWireName(ss.switchMatrixSink.wire));
 					Node newNode = null;
-					
+
 					for(String fan : fans){
 						tempNode.setTile(tile);
 						tempNode.setWire(we.getWireEnum(fan));
 						
-						
 						boolean ableToReserveResource = (!router.usedNodes.contains(tempNode)) || 
 												(reservedGNDVCCResources.get(tempNode) != null && 
 												reservedGNDVCCResources.get(tempNode).equals(ss.pin)); 
-						
+
 						// Add this to reserved
 						if(ableToReserveResource){
 							newNode = new Node(tile, we.getWireEnum(fan), null, 0);
@@ -723,7 +722,6 @@ public class StaticSourceHandler{
 		for(PinSorter ps : pinSwitchMatrixMap.values()){
 			ssLoop : for(StaticSink ss : ps.useTIEOFF){
 				Instance inst = updateTIEOFF(ss.switchMatrixSink.tile, ss.pin.getNet(), true);
-				
 				if(dev.getFamilyType().equals(FamilyType.VIRTEX5)){				
 					String[] fanWireNames = null;
 					if((fanWireNames = fanBounceMap.get(we.getWireName(ss.switchMatrixSink.wire))) != null){
@@ -1020,30 +1018,19 @@ public class StaticSourceHandler{
 							return returnMe;							
 						}
 						else if(isVirtex5){
+							// Check all the LUTs in this slice
 							Instance i = router.design.getInstanceAtPrimitiveSite(site);
-							if(i.testAttributeValue("A5LUT", "#OFF") && i.testAttributeValue("A6LUT", "#OFF") && !i.hasAttribute(srcTypeString)){
-								i.addAttribute(new Attribute(new Attribute(srcTypeString,"","A")));
-								currStaticSourcePin = new Pin(true, "A", i);
-								i.addPin(currStaticSourcePin);
-								return i;
-							}
-							else if(i.testAttributeValue("B5LUT", "#OFF") && i.testAttributeValue("B6LUT", "#OFF") && !i.hasAttribute(srcTypeString)){
-								i.addAttribute(new Attribute(new Attribute(srcTypeString,"","B")));
-								currStaticSourcePin = new Pin(true, "B", i);
-								i.addPin(currStaticSourcePin);
-								return i;
-							}
-							else if(i.testAttributeValue("C5LUT", "#OFF") && i.testAttributeValue("C6LUT", "#OFF") && !i.hasAttribute(srcTypeString)){
-								i.addAttribute(new Attribute(new Attribute(srcTypeString,"","C")));
-								currStaticSourcePin = new Pin(true, "C", i);
-								i.addPin(currStaticSourcePin);
-								return i;
-							}
-							else if(i.testAttributeValue("D5LUT", "#OFF") && i.testAttributeValue("D6LUT", "#OFF") && !i.hasAttribute(srcTypeString)){
-								i.addAttribute(new Attribute(new Attribute(srcTypeString,"","D")));
-								currStaticSourcePin = new Pin(true, "D", i);
-								i.addPin(currStaticSourcePin);
-								return i;
+							String[] letters = {"A","B","C","D"};
+							for(String letter : letters){
+								if(i.testAttributeValue(letter+"5LUT", "#OFF") &&
+								   i.testAttributeValue(letter+"6LUT", "#OFF") &&
+								   !i.hasAttribute("_GND_SOURCE") &&
+								   !i.hasAttribute("_VCC_SOURCE")){
+									i.addAttribute(new Attribute(new Attribute(srcTypeString,"",letter)));
+									currStaticSourcePin = new Pin(true, letter, i);
+									i.addPin(currStaticSourcePin);
+									return i;
+								}
 							}
 						}
 					}	
