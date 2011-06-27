@@ -1084,6 +1084,134 @@ public class Design implements Serializable{
 				fileName + File.separator + e.getMessage());
 		}
 	}
+	
+	public void saveXDLFileWithoutPIPs(String fileName){
+		String nl = System.getProperty("line.separator");
+		try{
+			BufferedWriter bw = new BufferedWriter(new FileWriter(fileName));
+				
+			if(!isHardMacro){
+				bw.write("design \"" + name + "\" " + partName + " " + NCDVersion + " ,"+nl);
+				bw.write("  cfg \"");
+				for(Attribute attr : attributes){
+					bw.write(nl+"\t" + attr.toString());
+				}
+				bw.write("\";"+nl+nl+nl);
+			}
+			else{
+				bw.write("design \"" + name + "\" " + partName + ";"+nl+nl);
+			}
+			
+			
+			if(modules.size() > 0){
+
+				for(String moduleName : modules.keySet()){
+					Module module = modules.get(moduleName);
+					
+					if(module.getAnchor() == null){
+						continue;
+					}
+					
+					bw.write("module "+"\""+moduleName+"\" "+"\""+module.getAnchor().getName()+"\" , cfg \"");
+					
+					for(Attribute attr : module.getAttributes()){
+						bw.write(attr.toString()+" ");
+					}
+					bw.write("\";" + nl);
+					for(Port port : module.getPorts()){
+						bw.write("  port \"" + port.getName() +"\" \"" + port.getInstanceName() +"\" \"" + port.getPinName()+"\";" + nl);
+					}
+					for(Instance inst : module.getInstances()){
+						String placed = inst.isPlaced() ? "placed " + inst.getTile() + " " + inst.getPrimitiveSiteName() : "unplaced";
+						bw.write("  inst \"" + inst.getName() + "\" \"" + inst.getType() +"\"," + placed +"  ," +nl);
+						bw.write("    cfg \"");
+						for(Attribute attr : inst.getAttributes()){
+							bw.write(" " + attr.toString());
+						}
+						bw.write(" \"" + nl + "    ;" + nl);
+					}
+					for(Net net : module.getNets()){
+						bw.write("  net \"" + net.getName() + "\" ," );
+						if(net.getAttributes() != null){
+							bw.write(" cfg \"");
+							for(Attribute attr : net.getAttributes()){
+								bw.write(" " + attr.toString());
+							}
+							bw.write("\",");
+						}
+						bw.write(nl);
+						for(Pin pin : net.getPins()){
+							if(pin.isOutPin()){
+								bw.write("    outpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
+							}else {
+								bw.write("    inpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
+							}
+						}
+						for(PIP pip : net.getPIPs()){
+							bw.write("    pip " + pip.getTile() +" "+ pip.getStartWireName(we) + " -> " + pip.getEndWireName(we) + " ," + nl);
+						}
+						bw.write("    ;" + nl);
+					}
+					bw.write("endmodule \""+moduleName+"\" ;" + nl + nl);
+				}
+			}
+			if(!isHardMacro){
+				for(Instance inst : getInstances()){
+					String placed = inst.isPlaced() ? "placed " + inst.getTile() +
+							" " + inst.getPrimitiveSiteName() : "unplaced";
+					String module = inst.getModuleInstanceName()==null ? "" : "module \"" + 
+							inst.getModuleInstanceName() +"\" \"" + inst.getModuleTemplate().getName() + "\" \"" +
+							inst.getModuleTemplateInstance().getName() + "\" ,";
+					bw.write("inst \"" + inst.getName() + "\" \"" + inst.getType() +"\"," + placed + "  ," + module + nl);
+					bw.write("  cfg \"");
+					for(Attribute attr : inst.getAttributes()){
+						if(attr.getPhysicalName().charAt(0) == '_'){
+							bw.write(nl + "      ");
+						}
+						bw.write(" " + attr.toString());
+					}
+					bw.write(" \"" + nl + "  ;" + nl);
+				}
+				bw.write(nl);				
+
+				for(Net net : getNets()){
+					String type = net.getType().equals(NetType.WIRE) ? "" : net.getType().toString().toLowerCase();
+					bw.write("  net \"" + net.getName() + "\" "+type+"," );
+					if(net.getAttributes() != null){
+						bw.write(" cfg \"");
+						for(Attribute attr : net.getAttributes()){
+							bw.write(" " + attr.toString());
+						}
+						bw.write("\",");
+					}
+					bw.write(nl);
+					for(Pin pin : net.getPins()){
+						if(pin.isOutPin()){
+							bw.write("    outpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
+						}else {
+							bw.write("    inpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
+						}
+					}
+					//TODO need to know what nets to keep routed for ACE
+					if(net.getName().equals("clk_BUFGP/IBUFG")){
+						for(PIP pip : net.getPIPs()){
+							bw.write("    pip " + pip.getTile() +" "+ pip.getStartWireName(we) + " -> " + pip.getEndWireName(we) + " ," + nl);
+						}
+					}
+					bw.write("    ;" + nl);
+				}
+				
+				bw.write(nl);
+
+			}
+			
+			bw.close();
+		}
+		catch(IOException e){
+			MessageGenerator.briefErrorAndExit("Error writing XDL file: " +
+				fileName + File.separator + e.getMessage());
+		}
+	}
 
 	public void saveComparableXDLFile(String fileName){
 		String nl = System.getProperty("line.separator");
