@@ -421,7 +421,7 @@ public class Instance implements Serializable{
 	 */
 	public void place(PrimitiveSite site){
 		if(this.site != null && design != null){
-			design.releasePrimitiveSite(site);
+			design.releasePrimitiveSite(this.site);
 		}
 		setPrimitiveSite(site);
 		setBonded(null);
