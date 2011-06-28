@@ -441,7 +441,7 @@ public class Instance implements Serializable{
 	 * @param site The desired site where this instance is to reside.
 	 */
 	private void setPrimitiveSite(PrimitiveSite site){
-		if(site == null){
+		if(site != null){
 			this.site = site;
 			if(design != null) design.setPrimitiveSiteUsed(site, this);
 			return;
