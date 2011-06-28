@@ -583,6 +583,13 @@ public class Design implements Serializable{
 	}
 	
 	/**
+	 * Clears out all the used sites in the design, use with caution.
+	 */
+	public void clearUsedPrimitiveSites(){
+		usedPrimitiveSites.clear();
+	}
+	
+	/**
 	 * Gets and returns all of the modules of the design.
 	 * @return All the modules of the design.
 	 */
