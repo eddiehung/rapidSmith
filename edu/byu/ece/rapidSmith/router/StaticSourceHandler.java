@@ -632,12 +632,21 @@ public class StaticSourceHandler{
 			// Virtex 5 has some special pins that we should reserve
 			if(dev.getFamilyType().equals(FamilyType.VIRTEX5)){
 				for(StaticSink ss : ps.useTIEOFF){
-					String[] fans = fanBounceMap.get(we.getWireName(ss.switchMatrixSink.wire));
+					String ssWireName = we.getWireName(ss.switchMatrixSink.wire);
+					String[] fans = fanBounceMap.get(ssWireName);
 					Node newNode = null;
 
 					for(String fan : fans){
 						tempNode.setTile(tile);
 						tempNode.setWire(we.getWireEnum(fan));
+						
+						if(ssWireName.startsWith("CLK_") && router.usedNodes.contains(tempNode)){
+							LinkedList<Net> net = router.usedNodesMap.get(tempNode);
+							if(net.size() == 1){
+								unRouteNetForCriticalNode(tempNode);
+								break;
+							}
+						}
 						
 						boolean ableToReserveResource = (!router.usedNodes.contains(tempNode)) || 
 												(reservedGNDVCCResources.get(tempNode) != null && 
