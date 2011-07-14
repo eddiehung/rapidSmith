@@ -133,7 +133,7 @@ public class RunXilinxTools {
 	 */
 	public static float getMinClkPeriodFromTRCE(String ncdFileName){
 		String twrFileName = ncdFileName.replace(".ncd", ".twr");
-		String cmd = "trce " + ncdFileName + " -o " + twrFileName;
+		String cmd = "trce -a -v 100 " + ncdFileName + " -o " + twrFileName;
 		int returnValue = runCommand(cmd, false);
 		if(returnValue != 0){
 			MessageGenerator.briefError("trce command failed: " + cmd);
