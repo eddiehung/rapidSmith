@@ -640,13 +640,13 @@ public class StaticSourceHandler{
 						tempNode.setTile(tile);
 						tempNode.setWire(we.getWireEnum(fan));
 						
-						if(ssWireName.startsWith("CLK_") && router.usedNodes.contains(tempNode)){
+						/*if(ssWireName.startsWith("CLK_") && router.usedNodes.contains(tempNode)){
 							LinkedList<Net> net = router.usedNodesMap.get(tempNode);
 							if(net.size() == 1){
 								unRouteNetForCriticalNode(tempNode);
 								break;
 							}
-						}
+						}*/
 						
 						boolean ableToReserveResource = (!router.usedNodes.contains(tempNode)) || 
 												(reservedGNDVCCResources.get(tempNode) != null && 
