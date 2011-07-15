@@ -236,7 +236,12 @@ public class StaticSourceHandler{
 	}
 	
 	private void unRouteNetForCriticalNode(Node n){
-		LinkedList<Net> nets = new LinkedList<Net>(router.usedNodesMap.get(n));
+		LinkedList<Net> previous = router.usedNodesMap.get(n);
+		if(previous == null){
+			MessageGenerator.briefError("ERROR: Failure to unroute net for node: " + n.toString(we));
+			return;
+		}
+		LinkedList<Net> nets = new LinkedList<Net>(previous);
 		for(Net net : nets){
 			for(PIP p : net.getPIPs()){
 				router.setWireAsUnused(p.getTile(), p.getStartWire(), net);
