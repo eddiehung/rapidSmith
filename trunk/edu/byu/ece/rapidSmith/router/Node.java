@@ -48,8 +48,6 @@ public class Node implements Comparable<Node>{
 	protected int level;
 	/** This is the combined cost of a node when it is used, and used multiple times */
 	protected int history;
-	/** Determines if this node connected to the node after it creates a PIP */
-	protected boolean isPIP;
 	/** Keeps track of the wires that this node connects to */
 	protected WireConnection[] wires;
 	
@@ -64,7 +62,6 @@ public class Node implements Comparable<Node>{
 		cost = -1;
 		level = 0;
 		history = 0;
-		isPIP = false;
 	}
 	
 	/**
@@ -91,22 +88,6 @@ public class Node implements Comparable<Node>{
 		setWire(wire);
 		setParent(parent);
 		setLevel(level);
-	}
-	
-	/**
-	 * A quick population constructor.
-	 * @param tile The tile of the new node.
-	 * @param wire The wire of the new node.
-	 * @param parent The parent of the new node, or null if none.
-	 * @param level The number of nodes between this node and the source node.
-	 * @param isPIP A flag indicating that this node and its parent form a PIP.
-	 */
-	public Node(Tile tile, int wire, Node parent, int level, boolean isPIP){
-		setTile(tile);
-		setWire(wire);
-		setParent(parent);
-		setLevel(level);
-		setPIP(isPIP);
 	}
 	
 	/**
@@ -208,20 +189,6 @@ public class Node implements Comparable<Node>{
 	 */
 	public void setHistory(int history) {
 		this.history = history;
-	}
-
-	/**
-	 * @return the isPIP
-	 */
-	public boolean isPIP() {
-		return isPIP;
-	}
-
-	/**
-	 * @param isPIP the isPIP to set
-	 */
-	public void setPIP(boolean isPIP) {
-		this.isPIP = isPIP;
 	}
 
 	public SinkPin getSinkPin(){
