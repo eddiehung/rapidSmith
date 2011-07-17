@@ -160,7 +160,7 @@ public class RunXilinxTools {
 				if(secondLine){
 					String[] parts = line.split("\\s+");
 					br.close();
-					return Float.parseFloat(parts[2].substring(0, parts[2].length() - 2));				
+					return Float.parseFloat(parts[2].substring(0, parts[2].indexOf('|')));				
 				}
 				if(nextLine){
 					secondLine = true;
