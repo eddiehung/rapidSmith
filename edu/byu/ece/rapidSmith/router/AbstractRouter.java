@@ -37,40 +37,6 @@ import edu.byu.ece.rapidSmith.device.WireConnection;
 import edu.byu.ece.rapidSmith.device.WireEnumerator;
 import edu.byu.ece.rapidSmith.device.WireType;
 
-interface NodeFactory<N extends Node> {
-	public N newNode();
-	public N newNode(Tile t, int i, Node parent, int depth);
-}
-
-class DefaultNodeFactory implements NodeFactory<Node> {
-
-	public Node newNode() {
-		return new Node();
-	}
-
-	public Node newNode(Tile t, int i, Node parent, int depth) {
-		return new Node(t,i,parent,depth);
-	}
-	
-}
-
-class NewNode extends Node {
-	public NewNode() { super(); }
-	public NewNode(Tile t, int i, Node parent, int depth) { super(t,i,parent,depth); }
-	protected int newNodeInfo;
-}
-
-class NewNodeFactory implements NodeFactory<NewNode> {
-
-	public NewNode newNode() {
-		return new NewNode();
-	}
-
-	public NewNode newNode(Tile t, int i, Node parent, int depth) {
-		return new NewNode(t,i,parent,depth);
-	}
-	
-}
 
 public abstract class AbstractRouter{
 
@@ -321,6 +287,17 @@ public abstract class AbstractRouter{
 				}
 			}
 		}
+	}	
+}
+
+class DefaultNodeFactory implements NodeFactory<Node> {
+
+	public Node newNode() {
+		return new Node();
+	}
+
+	public Node newNode(Tile t, int i, Node parent, int depth) {
+		return new Node(t,i,parent,depth);
 	}
 	
 }
