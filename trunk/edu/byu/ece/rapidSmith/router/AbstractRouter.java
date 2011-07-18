@@ -37,6 +37,41 @@ import edu.byu.ece.rapidSmith.device.WireConnection;
 import edu.byu.ece.rapidSmith.device.WireEnumerator;
 import edu.byu.ece.rapidSmith.device.WireType;
 
+interface NodeFactory<N extends Node> {
+	public N newNode();
+	public N newNode(Tile t, int i, Node parent, int depth);
+}
+
+class DefaultNodeFactory implements NodeFactory<Node> {
+
+	public Node newNode() {
+		return new Node();
+	}
+
+	public Node newNode(Tile t, int i, Node parent, int depth) {
+		return new Node(t,i,parent,depth);
+	}
+	
+}
+
+class NewNode extends Node {
+	public NewNode() { super(); }
+	public NewNode(Tile t, int i, Node parent, int depth) { super(t,i,parent,depth); }
+	protected int newNodeInfo;
+}
+
+class NewNodeFactory implements NodeFactory<NewNode> {
+
+	public NewNode newNode() {
+		return new NewNode();
+	}
+
+	public NewNode newNode(Tile t, int i, Node parent, int depth) {
+		return new NewNode(t,i,parent,depth);
+	}
+	
+}
+
 public abstract class AbstractRouter{
 
 	/** The XDL object that holds the input design to route */
@@ -88,10 +123,16 @@ public abstract class AbstractRouter{
 	protected int nodesProcessed;
 	/** Counts the number of times the router failed to route a connection */
 	protected int failedConnections;
+	NodeFactory<? extends Node> factory;
 	
 	public AbstractRouter() {
+		this(new DefaultNodeFactory());
+	}
+	
+	public AbstractRouter(NodeFactory<? extends Node> n) {
+		factory = n;
 		// Initialize variables
-		tempNode = new Node();
+		tempNode = factory.newNode();
 		usedNodes = new HashSet<Node>();
 		usedNodesMap = new HashMap<Node, LinkedList<Net>>();
 		reservedNodes = new HashMap<Net, ArrayList<Node>>();
@@ -103,7 +144,7 @@ public abstract class AbstractRouter{
 		totalNodesProcessed = 0;
 		nodesProcessed = 0;
 		failedConnections = 0;
-		currSink = new Node();
+		currSink = factory.newNode();
 	}
 	
 	public Design getDesign(){
@@ -119,7 +160,7 @@ public abstract class AbstractRouter{
 	 * @return The node that was set as used.
 	 */
 	protected Node setWireAsUsed(Tile t, int wire, Net net){
-		Node n = new Node(t, wire, null, 0);
+		Node n = factory.newNode(t, wire, null, 0);
 		usedNodes.add(n);
 		addUsedWireMapping(net, n);	
 		return n;
@@ -134,7 +175,7 @@ public abstract class AbstractRouter{
 	 * @return The node that was set as unused.
 	 */
 	protected Node setWireAsUnused(Tile t, int wire, Net net){
-		Node n = new Node(t, wire, null, 0);
+		Node n = factory.newNode(t, wire, null, 0);
 		usedNodes.remove(n);
 		removeUsedWireMapping(net, n);		
 		return n;
@@ -222,8 +263,8 @@ public abstract class AbstractRouter{
 	public ArrayList<Node> getSourcesFromPIPs(ArrayList<PIP> pips){
 		ArrayList<Node> sources = new ArrayList<Node>(pips.size()*2);
 		for(PIP pip : pips){
-			sources.add(new Node(pip.getTile(), pip.getStartWire(), null, 0));
-			sources.add(new Node(pip.getTile(), pip.getEndWire(), null, 0));
+			sources.add(factory.newNode(pip.getTile(), pip.getStartWire(), null, 0));
+			sources.add(factory.newNode(pip.getTile(), pip.getEndWire(), null, 0));
 		}
 		return sources;
 	}
