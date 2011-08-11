@@ -282,6 +282,7 @@ public class BasicRouter extends AbstractRouter{
 			// Let's add these PIPs to the actual net, to be included in the design
 			currNet.setPIPs(netPIPs);
 		}
+		design.setNets(netList);
 		return design;
 	}	
 	
