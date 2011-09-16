@@ -28,27 +28,23 @@ import edu.byu.ece.rapidSmith.util.MessageGenerator;
 public class RandomPlacer{
   public static void main(String[] args){
     // Create and load a design
-    Design design = new Design();
-    design.loadXDLFile(args[0]);
-    design.flattenDesign();
-    if(design.getModuleInstances().size() > 0)
-    	MessageGenerator.briefErrorAndExit("Sorry, module instances unsupported.");
+    Design design = new Design(args[0]);
 
     // Create a random number generator
-    Random rng = new Random(1234567890);
+    Random rng = new Random(0);
 
     // Place all unplaced instances
     for(Instance i : design.getInstances()){
-      if(i.isPlaced()) continue;
-        PrimitiveSite[] sites = design.getDevice().getAllPrimitiveSitesOfType(i.getType());
-        int idx = rng.nextInt(sites.length);
-        int watchDog = 0;
-        // Find a free primitive site
-        while(design.isPrimitiveSiteUsed(sites[idx])){
-        	if(++idx > sites.length) idx = 0;
-        	if(++watchDog > sites.length) MessageGenerator.briefErrorAndExit("Placement failed.");
-        }
-        i.place(sites[idx]);
+	    if(i.isPlaced()) continue;
+	    PrimitiveSite[] sites = design.getDevice().getAllCompatibleSites(i.getType());
+	    int idx = rng.nextInt(sites.length);
+	    int watchDog = 0;
+	    // Find a free primitive site
+	    while(design.isPrimitiveSiteUsed(sites[idx])){
+	    	if(++idx > sites.length) idx = 0;
+	    	if(++watchDog > sites.length) MessageGenerator.briefErrorAndExit("Placement failed.");
+	    }
+	    i.place(sites[idx]);
     }
     
     // Save the placed design
