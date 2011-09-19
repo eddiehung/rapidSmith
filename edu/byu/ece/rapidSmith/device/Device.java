@@ -158,6 +158,14 @@ public class Device implements Serializable{
 	}
 	
 	/**
+	 * Gets the corresponding wire enumerator object for this device.
+	 * @return The wire enumerator for this device.
+	 */
+	public WireEnumerator getWireEnumerator(){
+		return WireEnumerator.getInstance(getFamilyType());
+	}
+	
+	/**
 	 * Initializes the tile array and wire pool.  This is done after the tile dimensions have
 	 * been parsed from the .xdlrc file.
 	 */

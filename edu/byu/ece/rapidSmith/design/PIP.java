@@ -21,8 +21,10 @@
 package edu.byu.ece.rapidSmith.design;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 
 import edu.byu.ece.rapidSmith.device.Tile;
+import edu.byu.ece.rapidSmith.device.WireConnection;
 import edu.byu.ece.rapidSmith.device.WireEnumerator;
 
 /**
@@ -124,6 +126,17 @@ public class PIP implements Comparable<Object>, Serializable{
 	}
 
 	/**
+	 * This method will return an array of all possible wire connections that
+	 * can be made from the start wire of this PIP.  Keep in mind that some 
+	 * of the wire connections that leave the tile are not PIPs.
+	 * @return An array of all possible end wire connections from the PIP's 
+	 * start wire.   
+	 */
+	public WireConnection[] getAllPossibleEndWires(){
+		return tile.getWireConnections(startWire);
+	}
+	
+	/**
 	 * Sets the end wire of this PIP.
 	 * @param endWire the endWire to set.
 	 */
@@ -170,6 +183,17 @@ public class PIP implements Comparable<Object>, Serializable{
 		return (this.tile.getName() + this.getStartWire() + this.getEndWire()).compareTo(pip.tile.getName()+pip.getStartWire()+pip.getEndWire());
 	}
 
+	/**
+	 * Creates a string representation of the PIP using the WireEnumerator
+	 * class.  This method may be slower than toString(WireEnumerator).  
+	 * @return An XDL-compatible string of the PIP.
+	 */
+	public String toString(){
+		WireEnumerator we = tile.getDevice().getWireEnumerator();
+		return "  pip " + tile.getName() + " " + we.getWireName(startWire) +
+		" -> " + we.getWireName(endWire) + " ,  \n";		
+	}
+	
 	/**
 	 * Creates a string representation of the PIP using the WireEnumerator
 	 * class.
