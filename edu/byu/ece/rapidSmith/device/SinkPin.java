@@ -30,10 +30,10 @@ import java.io.Serializable;
 public class SinkPin implements Serializable{
 	
 	private static final long serialVersionUID = 741616772060187287L;
-
 	
 	/** Keeps track of the wire which drives this sink from the nearest switch matrix */
 	public int switchMatrixSinkWire;
+	
 	/** Keeps track of the switch matrix which drives this sink <31-16: X Tile Offset, 15-0: Y Tile Offset> */
 	public int switchMatrixTileOffset;
 	
@@ -46,6 +46,30 @@ public class SinkPin implements Serializable{
 		this.switchMatrixTileOffset = switchMatrixTileOffset;
 	}
 	
+	/**
+	 * Return the X offset of the switch matrix tile
+	 */
+	public int getXSwitchMatrixTileOffset() {
+		return switchMatrixTileOffset >> 16;
+	}
+	
+	/**
+	 * Return the Y offset of the switch matrix tile
+	 */
+	public int getYSwitchMatrixTileOffset() {
+		return switchMatrixTileOffset & 0xFFFF;
+	}
+
+	/**
+	 * Return the switch matrix tile (relative to the tile used as a parameter).
+	 */
+	public Tile getSwitchMatrixTile(Tile tile) {
+		int tileRow = tile.getRow()+getYSwitchMatrixTileOffset();
+		int tileColumn = tile.getColumn()+getXSwitchMatrixTileOffset();
+		Device dev = tile.getDevice();
+		return dev.getTile(tileRow, tileColumn);
+	}
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */
