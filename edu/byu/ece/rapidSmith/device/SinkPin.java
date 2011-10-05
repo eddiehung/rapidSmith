@@ -57,7 +57,10 @@ public class SinkPin implements Serializable{
 	 * Return the Y offset of the switch matrix tile
 	 */
 	public int getYSwitchMatrixTileOffset() {
-		return switchMatrixTileOffset & 0xFFFF;
+		// The Y tile offset is the lowest 16 bits. 
+		// This needs to be trimmed and signed extended
+		int y = (switchMatrixTileOffset << 16) >> 16; 
+		return y;
 	}
 
 	/**
