@@ -70,7 +70,7 @@ public class UCFParser {
 			boolean lineStart = true;
 			boolean inComment = false;
 			while((ch = reader.read()) != -1){
-				if(ch == '#' && lineStart){
+				if(ch == '#'){
 					inComment = true;
 				}
 				else if(ch == ';' && !inComment && idx > 0){
