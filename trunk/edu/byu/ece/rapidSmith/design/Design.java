@@ -268,6 +268,11 @@ public class Design implements Serializable{
 				net.setName(prefix+port.getName());
 			}
 			this.addNet(net);
+			if(templateNet.hasAttributes()){
+				for(Attribute a: templateNet.getAttributes()){
+					net.addAttribute(a);
+				}
+			}
 			for(Instance inst : instanceList){
 				inst.addToNetList(net);
 			}
