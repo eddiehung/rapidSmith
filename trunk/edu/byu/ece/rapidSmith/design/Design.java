@@ -270,7 +270,11 @@ public class Design implements Serializable{
 			this.addNet(net);
 			if(templateNet.hasAttributes()){
 				for(Attribute a: templateNet.getAttributes()){
-					net.addAttribute(a);
+					if(a.getPhysicalName().contains("BELSIG")){
+						net.addAttribute(new Attribute(a.getPhysicalName(), a.getLogicalName().replace(a.getValue(), modInst.getName() + "/" + a.getValue()), modInst.getName() + "/" + a.getValue()));
+					}else{
+						net.addAttribute(a);
+					}
 				}
 			}
 			for(Instance inst : instanceList){
