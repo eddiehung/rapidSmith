@@ -327,7 +327,7 @@ public class Net implements Comparable<Net>, Serializable {
 		this.source = null;
 	}
 	
-	protected void setSource(Pin source){
+	public void setSource(Pin source){
 		this.source = source;
 	}
 	
