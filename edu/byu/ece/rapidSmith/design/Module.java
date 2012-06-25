@@ -68,6 +68,8 @@ public class Module implements Serializable{
 	private HashMap<String,Instance> instanceMap;
 	/** Nets of the module */
 	private HashMap<String,Net> netMap;
+	/** Keeps track of the minimum clock period of this module */
+	private float minClkPeriod = Float.MAX_VALUE;
 	/** Provides a catch-all map to store information about hard macro */
 	private HashMap<String, ArrayList<String>> metaDataMap;
 	
@@ -348,6 +350,20 @@ public class Module implements Serializable{
 	 */
 	public void setMetaDataMap(HashMap<String, ArrayList<String>> metaDataMap) {
 		this.metaDataMap = metaDataMap;
+	}
+
+	/**
+	 * @param minClkPeriod the minClkPeriod to set
+	 */
+	public void setMinClkPeriod(float minClkPeriod) {
+		this.minClkPeriod = minClkPeriod;
+	}
+
+	/**
+	 * @return the minClkPeriod
+	 */
+	public float getMinClkPeriod() {
+		return minClkPeriod;
 	}
 
 	/**
