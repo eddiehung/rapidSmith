@@ -294,17 +294,17 @@ public class ArgsParser {
 	 * @return true if the user specified this option
 	 */
 	public boolean optionSpecified(char option) {
-		return optionDefined_work(option);
+		return optionSpecified_work(option);
 	}
 
 	/**
 	 * Long-option form of optionDefined.  See short form for details.
 	 */
-	public boolean optionDefined(String option) {
-		return optionDefined_work(option);
+	public boolean optionSpecified(String option) {
+		return optionSpecified_work(option);
 	}
 
-	private boolean optionDefined_work(Object option) {
+	private boolean optionSpecified_work(Object option) {
 		Option o = optionMap.get(option);
 		if (o == null)
 			throw new InvalidOptionException("No option " + option);
