@@ -38,6 +38,12 @@ public class Constraint{
 	/** Keeps the original string of the constraint */
 	private String constraint;
 	
+	/** Area group ranges are only set for instances with area groups */
+	/**NOTE!  WE ASSUME THAT THE AREA_GROUP IS DECLARED: 	e.g. "INST "inst_name" AREA_GROUP = "area_group_name";"
+	 * BEFORE AREA_GROUP CONSTRAINTS ARE DECLARED: 			e.g. "AREA_GROUP "area_group_name" RANGE=SLICE_X0Y0:SLICE_X43Y59;"
+	 */
+	private ArrayList<AreaGroupRange> areaGroupRanges;
+	
 	/**
 	 * Empty constructor
 	 */
@@ -70,23 +76,20 @@ public class Constraint{
 			e.printStackTrace();
 			return false;
 		}
-		
-		// Populate Name
-		name = tokens.get(1);
-		
 		String token = null;
 		switch(statementType){
 			case INST: 
 			case NET:
 			case PIN:
-				
+				// Populate Name
+				name = tokens.get(1);
 				// Populate the ConstraintType
 				token = tokens.get(2).toUpperCase();
 				if(token.equals("OFFSET")){
 					token = token + "_" + tokens.get(4).toUpperCase();
 				}
 				try{			
-					constraintType = ConstraintType.valueOf(token);			
+					constraintType = ConstraintType.valueOf(token);
 				}
 				catch(IllegalArgumentException e){
 					e.printStackTrace();
@@ -94,8 +97,7 @@ public class Constraint{
 					System.out.println(constraint);
 					System.exit(1);
 					return false;
-				}
-				
+				}				
 				// Check for the equals sign
 				if(tokens.size() >= 4){
 					token = tokens.get(3).toUpperCase();
@@ -105,14 +107,15 @@ public class Constraint{
 						values.add(tokens.get(i));							
 					}
 				}
-				
-				
-				
 				break;
 			case TIMEGRP:
+				// Populate Name
+				name = tokens.get(1);
 				// TODO
 				break;
 			case TIMESPEC:
+				// Populate Name
+				name = tokens.get(1);
 				// Check that name starts with TS
 				if(!name.toUpperCase().startsWith("TS"))return false;
 				
@@ -146,10 +149,21 @@ public class Constraint{
 				}
 				
 				break;
+			case AREA_GROUP:
+				name = tokens.get(2);
+				
+				try{			
+					constraintType = ConstraintType.valueOf(tokens.get(0));
+				}
+				catch(IllegalArgumentException e){
+					e.printStackTrace();
+					System.out.println(tokens.toString());
+					System.out.println(constraint);
+					System.exit(1);
+					return false;
+				}
+				break;
 		}
-		
-		
-		
 		return true;
 	}
 	
@@ -199,7 +213,6 @@ public class Constraint{
 		if(i > 0){
 			matchList.add(new String(token, 0, i));
 		}
-		
 		return matchList;
 	}
 	
@@ -266,6 +279,16 @@ public class Constraint{
 	 */
 	public void setValues(ArrayList<String> values) {
 		this.values = values;
+	}
+	
+	public void addAreaGroupRange(AreaGroupRange agr) {
+		if(areaGroupRanges == null)
+			areaGroupRanges = new ArrayList<AreaGroupRange>();
+		areaGroupRanges.add(agr);
+	}
+	
+	public ArrayList<AreaGroupRange> getAreaGroupRanges() {
+		return areaGroupRanges;
 	}
 
 	@Override

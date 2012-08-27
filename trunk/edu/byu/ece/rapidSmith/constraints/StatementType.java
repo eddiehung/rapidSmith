@@ -29,5 +29,6 @@ public enum StatementType {
 	NET,
 	PIN,
 	TIMEGRP,
-	TIMESPEC
+	TIMESPEC,
+	AREA_GROUP
 }
