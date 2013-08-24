@@ -460,6 +460,7 @@ public class PrimitiveSite implements Serializable{
 				case ARTIX7:
 				case KINTEX7:
 				case VIRTEX7:
+				case ZYNQ:
 					compatibleSites.put(PrimitiveType.BUFG,
 							new PrimitiveType[]{PrimitiveType.BUFGCTRL});
 					compatibleSites.put(PrimitiveType.FIFO36E1,

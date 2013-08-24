@@ -386,7 +386,7 @@ public class FilterWindow extends QWidget{
 				// Populate Pins
 				for(Pin pin : net.getPins()){
 					ArrayList<QStandardItem> items = new ArrayList<QStandardItem>();
-					items.add(new DesignItem(pin.isOutPin() ? "outpin" : "inpin", pin));
+					items.add(new DesignItem(pin.getPinType().toString().toLowerCase(), pin));
 					items.add(createNewHyperlinkItem(pin.getInstanceName(), pin)); 
 					items.add(new DesignItem(pin.getName(), pin));
 					subModels[0].appendRow(items);

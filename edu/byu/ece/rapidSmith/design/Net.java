@@ -500,7 +500,7 @@ public class Net implements Comparable<Net>, Serializable {
 		}
 		sb.append(nl);
 		for(Pin p : pins){
-			sb.append(p.isOutPin() ? "  outpin \"" : "  inpin \"");
+			sb.append("  "+p.getPinType().toString().toLowerCase()+" \"");
 			sb.append(p.getInstanceName());
 			sb.append("\" ");
 			sb.append(p.getName());

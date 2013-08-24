@@ -36,6 +36,7 @@ import edu.byu.ece.rapidSmith.design.Net;
 import edu.byu.ece.rapidSmith.design.NetType;
 import edu.byu.ece.rapidSmith.design.PIP;
 import edu.byu.ece.rapidSmith.design.Pin;
+import edu.byu.ece.rapidSmith.design.PinType;
 import edu.byu.ece.rapidSmith.design.Port;
 import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
@@ -58,6 +59,7 @@ public class DesignParser{
 	public static String PORT = "port";
 	public static String INST = "inst";
 	public static String INPIN = "inpin";
+	public static String INOUT = "inout";
 	public static String POWER = "power";
 	public static String PLACED = "placed";
 	public static String BONDED = "bonded";
@@ -439,6 +441,13 @@ public class DesignParser{
 					state = ParserState.PIN_INSTANCE_NAME;
 					break;
 				}
+				else if(token.equals(INOUT)){
+					currPin = new Pin();
+					currPin.setPinType(PinType.INOUT);
+					currNet.addPin(currPin);
+					state = ParserState.PIN_INSTANCE_NAME;
+					break;
+				}
 				else{
 					expect("wire, vcc or power, gnd or ground or ,",token, ParserState.NET_TYPE);
 				}
@@ -466,6 +475,13 @@ public class DesignParser{
 					}
 					currNet.addPin(currPin);
 					state = ParserState.PIN_INSTANCE_NAME;
+				}
+				else if(token.equals(INOUT)){
+					currPin = new Pin();
+					currPin.setPinType(PinType.INOUT);
+					currNet.addPin(currPin);
+					state = ParserState.PIN_INSTANCE_NAME;
+					break;
 				}
 				else if(token.equals(SEMICOLON)){
 					state = ParserState.XDL_STATEMENT;

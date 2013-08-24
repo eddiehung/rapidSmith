@@ -27,6 +27,7 @@ package edu.byu.ece.rapidSmith.util;
  * @author Chris Lavin
  */
 public enum FamilyType{
+	AARTIX7,
 	ARTIX7,
 	ARTIX7L,
 	ASPARTAN2E,
@@ -35,10 +36,12 @@ public enum FamilyType{
 	ASPARTAN3ADSP,
 	ASPARTAN3E,
 	ASPARTAN6,
+	AZYNQ,
 	KINTEX7,
 	KINTEX7L,
 	QARTIX7,
 	QKINTEX7,
+	QKINTEX7L,
 	QRVIRTEX,
 	QRVIRTEX2,
 	QRVIRTEX4,
@@ -53,8 +56,10 @@ public enum FamilyType{
 	QVIRTEX4,
 	QVIRTEX5,
 	QVIRTEX6,
+	QVIRTEX6L,
 	QVIRTEX7,
 	QVIRTEXE,
+	QZYNQ,
 	SPARTAN2,
 	SPARTAN2E,
 	SPARTAN3,
@@ -72,5 +77,6 @@ public enum FamilyType{
 	VIRTEX6L,
 	VIRTEX7,
 	VIRTEX7L,
-	VIRTEXE
+	VIRTEXE,
+	ZYNQ
 }

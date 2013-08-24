@@ -66,7 +66,7 @@ public class Device implements Serializable{
 	/** Serializable Version */
 	private static final long serialVersionUID = 6336619462392618775L;
 	/** The current release of the tools */
-	public static final String rapidSmithVersion = "0.5.1";
+	public static final String rapidSmithVersion = "0.5.2";
 	/** This is the current device file version (saved in file to ensure proper compatibility) */
 	public static final String deviceFileVersion = "0.4";
 	
@@ -1376,6 +1376,8 @@ public class Device implements Serializable{
 		int start = fileName.lastIndexOf(File.separator, end-1);
 		FamilyType familyType = FamilyType.valueOf(fileName.substring(start+1, end).toUpperCase());
 		switch(familyType){
+			case ARTIX7:
+				return 50309;
 			case KINTEX7:
 				return 42123;
 			case SPARTAN2:
@@ -1408,6 +1410,8 @@ public class Device implements Serializable{
 				return 53331;
 			case VIRTEXE:
 				return 4224;
+			case ZYNQ:
+				return 67919;
 			default:
 				return 0;
 		}

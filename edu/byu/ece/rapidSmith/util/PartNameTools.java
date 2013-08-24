@@ -206,6 +206,8 @@ public class PartNameTools{
 					return FamilyType.ARTIX7;
 				}else if(tokens[2].startsWith("k")){
 					return FamilyType.KINTEX7;
+				}else if(tokens[2].startsWith("z")){
+					return FamilyType.ZYNQ;
 				}
 			}
 		}else if(tokens[0].equals("xa")){
@@ -313,6 +315,7 @@ public class PartNameTools{
 	 */
 	public static FamilyType getBaseTypeFromFamilyType(FamilyType type){
 		switch(type){
+			case AARTIX7: return FamilyType.ARTIX7;
 			case ARTIX7: return FamilyType.ARTIX7;
 			case ARTIX7L: return FamilyType.ARTIX7;
 			case ASPARTAN2E: return FamilyType.SPARTAN2E;
@@ -321,10 +324,12 @@ public class PartNameTools{
 			case ASPARTAN3ADSP: return FamilyType.SPARTAN3ADSP;
 			case ASPARTAN3E: return FamilyType.SPARTAN3E;
 			case ASPARTAN6: return FamilyType.SPARTAN6;
+			case AZYNQ: return FamilyType.ZYNQ;
 			case KINTEX7: return FamilyType.KINTEX7;
 			case KINTEX7L: return FamilyType.KINTEX7;
 			case QARTIX7: return FamilyType.ARTIX7;
 			case QKINTEX7: return FamilyType.KINTEX7;
+			case QKINTEX7L: return FamilyType.KINTEX7;
 			case QRVIRTEX: return FamilyType.VIRTEX;
 			case QRVIRTEX2: return FamilyType.VIRTEX2;
 			case QRVIRTEX4: return FamilyType.VIRTEX4;
@@ -339,8 +344,10 @@ public class PartNameTools{
 			case QVIRTEX4: return FamilyType.VIRTEX4;
 			case QVIRTEX5: return FamilyType.VIRTEX5;
 			case QVIRTEX6: return FamilyType.VIRTEX6;
+			case QVIRTEX6L: return FamilyType.VIRTEX6;
 			case QVIRTEX7: return FamilyType.VIRTEX7;
 			case QVIRTEXE: return FamilyType.VIRTEXE;
+			case QZYNQ: return FamilyType.ZYNQ;
 			case SPARTAN2: return FamilyType.SPARTAN2;
 			case SPARTAN2E: return FamilyType.SPARTAN2E;
 			case SPARTAN3: return FamilyType.SPARTAN3;
@@ -359,6 +366,7 @@ public class PartNameTools{
 			case VIRTEX7: return FamilyType.VIRTEX7;
 			case VIRTEX7L: return FamilyType.VIRTEX7;
 			case VIRTEXE: return FamilyType.VIRTEXE;
+			case ZYNQ: return FamilyType.ZYNQ;
 			default: return null;
 		}
 	}
@@ -455,6 +463,7 @@ public class PartNameTools{
 	 */
 	public static String getFormalFamilyNameFromType(FamilyType type){
 		switch(type){
+			case AARTIX7: return "Automotive Artix7";
 			case ARTIX7: return "Artix7";
 			case ARTIX7L: return "Artix7 Lower Power";
 			case ASPARTAN2E: return "Automotive Spartan2E";
@@ -463,13 +472,16 @@ public class PartNameTools{
 			case ASPARTAN3ADSP: return "Automotive Spartan-3A DSP";
 			case ASPARTAN3E: return "Automotive Spartan3E";
 			case ASPARTAN6: return "Automotive Spartan6";
+			case AZYNQ: return "Automotive Zynq";
 			case KINTEX7: return "Kintex7";
 			case KINTEX7L: return "Kintex7 Lower Power";
+			case QKINTEX7L: return "Defense-Grade Kintex-7Q Lower Power";
 			case QSPARTAN6: return "Defense-Grade Spartan-6Q";
 			case QSPARTAN6L: return "Defense-Grade Spartan-6Q Lower Power";
 			case QVIRTEX4: return "Defense-Grade Virtex-4Q";
 			case QVIRTEX5: return "Defense-Grade Virtex-5Q";
 			case QVIRTEX6: return "Defense-Grade Virtex-6Q";
+			case QVIRTEX6L: return "Defense-Grade Virtex-6Q Lower Power";
 			case QVIRTEX: return "QPro Virtex Hi-Rel";
 			case QRVIRTEX: return "QPro Virtex Rad-Hard";
 			case QVIRTEX2: return "QPro Virtex2 Military";
@@ -477,6 +489,7 @@ public class PartNameTools{
 			case QVIRTEX2P: return "QPro Virtex2P Hi-Rel";
 			case QVIRTEXE: return "QPro VirtexE Military";
 			case QRVIRTEX4: return "Space-Grade Virtex-4QV";
+			case QZYNQ: return "Defense-Grade Zynq";
 			case SPARTAN2: return "Spartan2";
 			case SPARTAN2E: return "Spartan2E";
 			case SPARTAN3: return "Spartan3";
@@ -495,6 +508,7 @@ public class PartNameTools{
 			case VIRTEX7: return "Virtex7";
 			case VIRTEX7L: return "Virtex7 Lower Power";
 			case VIRTEXE: return "VirtexE";
+			case ZYNQ: return "Zynq";
 			default: return null;
 		}
 	}

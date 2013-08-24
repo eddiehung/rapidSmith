@@ -897,11 +897,7 @@ public class Design implements Serializable{
 						}
 						bw.write(nl);
 						for(Pin pin : net.getPins()){
-							if(pin.isOutPin()){
-								bw.write("    outpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
-							}else {
-								bw.write("    inpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
-							}
+							bw.write("    "+pin.getPinType().toString().toLowerCase()+" \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
 						}
 						for(PIP pip : net.getPIPs()){
 							bw.write("    pip " + pip.getTile() +" "+ pip.getStartWireName(we) + " -> " + pip.getEndWireName(we) + " ," + nl);
@@ -1025,11 +1021,7 @@ public class Design implements Serializable{
 					}
 					bw.write(nl);
 					for(Pin pin : net.getPins()){
-						if(pin.isOutPin()){
-							bw.write("    outpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
-						}else {
-							bw.write("    inpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
-						}
+						bw.write("    "+pin.getPinType().toString().toLowerCase()+" \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
 					}
 					for(PIP pip : net.getPIPs()){
 						bw.write("    pip " + pip.getTile() +" "+ pip.getStartWireName(we) + " -> " + pip.getEndWireName(we) + " ," + nl);
@@ -1157,11 +1149,7 @@ public class Design implements Serializable{
 						}
 						bw.write(nl);
 						for(Pin pin : net.getPins()){
-							if(pin.isOutPin()){
-								bw.write("    outpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
-							}else {
-								bw.write("    inpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
-							}
+							bw.write("    "+pin.getPinType().toString().toLowerCase()+" \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
 						}
 						for(PIP pip : net.getPIPs()){
 							bw.write("    pip " + pip.getTile() +" "+ pip.getStartWireName(we) + " -> " + pip.getEndWireName(we) + " ," + nl);
@@ -1202,11 +1190,7 @@ public class Design implements Serializable{
 					}
 					bw.write(nl);
 					for(Pin pin : net.getPins()){
-						if(pin.isOutPin()){
-							bw.write("    outpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
-						}else {
-							bw.write("    inpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
-						}
+						bw.write("    "+pin.getPinType().toString().toLowerCase()+" \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
 					}
 					//TODO need to know what nets to keep routed for ACE
 					if(net.getName().equals("clk_BUFGP/IBUFG")){
@@ -1366,11 +1350,7 @@ public class Design implements Serializable{
 						String[] pins = new String[net.getPins().size()];
 						for(int k = 0; k < pins.length; k++){
 							Pin pin = net.getPins().get(k); 
-							if(pin.isOutPin()){
-								pins[k] = ("    outpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
-							}else{
-								pins[k] = ("    inpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
-							} 
+							bw.write("    "+pin.getPinType().toString().toLowerCase()+" \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl); 
 						}
 						Arrays.sort(pins);
 						for(int k = 0; k < pins.length; k++){
@@ -1547,11 +1527,7 @@ public class Design implements Serializable{
 					String[] pins = new String[net.getPins().size()];
 					for(int k = 0; k < pins.length; k++){
 						Pin pin = net.getPins().get(k); 
-						if(pin.isOutPin()){
-							pins[k] = ("    outpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
-						}else{
-							pins[k] = ("    inpin \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl);
-						} 
+						pins[k] = "    "+pin.getPinType().toString().toLowerCase()+" \"" + pin.getInstanceName() + "\" " + pin.getName() +" ," + nl;
 					}
 					Arrays.sort(pins);
 					for(int k = 0; k < pins.length; k++){
