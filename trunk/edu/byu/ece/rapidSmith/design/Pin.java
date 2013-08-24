@@ -34,8 +34,8 @@ public class Pin implements Serializable, Cloneable {
 
 	private static final long serialVersionUID = -6675131973998249758L;
 
-	/** A flag denoting if this pin is a source or outpin */
-	private boolean isOutputPin;
+	/** The type of pin (directionality), in/out/inout */
+	private PinType pinType;
 	/** The internal pin name on the instance this pin refers to */
 	private String name;
 	/** The instance where the pin is located */
@@ -49,7 +49,7 @@ public class Pin implements Serializable, Cloneable {
 	 * Constructor setting things to null and false.
 	 */
 	public Pin(){
-		this.isOutputPin = false;
+		this.pinType = null;
 		this.name = null;
 		this.setInstance(null);
 		this.port = null;
@@ -63,17 +63,30 @@ public class Pin implements Serializable, Cloneable {
 	 * @param instance The instance where the pin resides
 	 */
 	public Pin(boolean isOutputPin, String pinName, Instance instance){
-		this.isOutputPin = isOutputPin;
+		this.pinType = isOutputPin ? PinType.OUTPIN : PinType.INPIN;
 		this.name = pinName;
 		this.setInstance(instance);
 		this.port = null;
 	}
 
 	/**
+	 * Creates a pin from parameters
+	 * @param pinType Allows specification of an inout pin
+	 * @param pinName The name of the pin on the instance (internal name)
+	 * @param instance The instance where the pin resides
+	 */
+	public Pin(PinType pinType, String pinName, Instance instance){
+		this.pinType = pinType;
+		this.name = pinName;
+		this.setInstance(instance);
+		this.port = null;
+	}
+	
+	/**
 	 * @return True if the pin is an outpin, false otherwise.
 	 */
 	public boolean isOutPin(){
-		return this.isOutputPin;
+		return this.pinType == PinType.OUTPIN;
 	}
 	
 	/**
@@ -123,7 +136,7 @@ public class Pin implements Serializable, Cloneable {
 	 * @param dir The direction (true=outpin, false=inpin)
 	 */
 	public void setIsOutputPin(boolean dir){
-		this.isOutputPin = dir;
+		this.pinType = dir ? PinType.OUTPIN : PinType.INPIN;
 	}
 	
 	/**
@@ -207,7 +220,7 @@ public class Pin implements Serializable, Cloneable {
 	 */
 	@Override
 	public String toString(){
-		return (this.isOutputPin ? "  outpin \"" : "  inpin \"") + 
+		return this.pinType.toString().toLowerCase() + 
 			instance.getName() + "\" " + this.name + " ," + 
 			System.getProperty("line.separator");
 	}
@@ -220,7 +233,7 @@ public class Pin implements Serializable, Cloneable {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((instance == null) ? 0 : instance.hashCode());
-		result = prime * result + (isOutputPin ? 1231 : 1237);
+		result = prime * result + pinType.hashCode();
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		return result;
 	}
@@ -243,7 +256,7 @@ public class Pin implements Serializable, Cloneable {
 		}
 		else if(!instance.equals(other.instance))
 			return false;
-		if(isOutputPin != other.isOutputPin)
+		if(pinType != other.pinType)
 			return false;
 		if(name == null){
 			if(other.name != null)
@@ -252,5 +265,13 @@ public class Pin implements Serializable, Cloneable {
 		else if(!name.equals(other.name))
 			return false;
 		return true;
+	}
+
+	public PinType getPinType(){
+		return this.pinType;
+	}
+	
+	public void setPinType(PinType pinType){
+		this.pinType = pinType;
 	}
 }

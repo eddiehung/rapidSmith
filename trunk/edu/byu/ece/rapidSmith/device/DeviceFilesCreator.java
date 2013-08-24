@@ -137,10 +137,21 @@ public class DeviceFilesCreator{
 				partNames.add("xc7v450tffg1157");
 				partNames.add("xc7vx485tffg1157");
 				partNames.add("xc7v1500tfhg1157");
+				break;
 			case VIRTEXE:
 				partNames.add("xcv2600efg1156");
 				break;
+			case ZYNQ:
+				partNames.add("xc7z010clg400");
+				partNames.add("xc7z020clg400");
+				partNames.add("xc7z030fbg676");
+				partNames.add("xc7z045fbg676");
+				partNames.add("xc7z100ffg1156");
+				break;
 			case ARTIX7:
+				partNames.add("xc7a100tcsg324");
+				partNames.add("xc7a200tfbg484");
+				break;
 			default:
 				MessageGenerator.briefErrorAndExit("Sorry, the device family "+ familyType +
 				" is currently not supported.");

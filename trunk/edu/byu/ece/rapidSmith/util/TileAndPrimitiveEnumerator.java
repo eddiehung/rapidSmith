@@ -44,12 +44,13 @@ public class TileAndPrimitiveEnumerator{
 	/** Keeps all the unique instance names/types in a sorted set */
 	private SortedSet<String> primitiveSet;
 	/** Stores the names of the FPGA family names (Virtex4, Virtex5, ...)*/
-	private static final FamilyType[] families = {FamilyType.KINTEX7, FamilyType.SPARTAN2, 
+	private static final FamilyType[] families = {FamilyType.ARTIX7, 
+		FamilyType.KINTEX7, FamilyType.SPARTAN2, 
 		FamilyType.SPARTAN2E, FamilyType.SPARTAN3, FamilyType.SPARTAN3A,
 		FamilyType.SPARTAN3ADSP, FamilyType.SPARTAN3E, FamilyType.SPARTAN6,
 		FamilyType.VIRTEX, FamilyType.VIRTEX2, FamilyType.VIRTEX2P, 
 		FamilyType.VIRTEX4, FamilyType.VIRTEX5, FamilyType.VIRTEX6, 
-		FamilyType.VIRTEX7, FamilyType.VIRTEXE};
+		FamilyType.VIRTEX7, FamilyType.VIRTEXE, FamilyType.ZYNQ};
 	/** All of the part names to check */ 
 	public ArrayList<String> partNames;
 	/** List of all xdlrc file names generated */
