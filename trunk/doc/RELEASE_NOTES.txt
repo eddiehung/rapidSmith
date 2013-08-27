@@ -1,4 +1,10 @@
 Release Notes for BYU RapidSmith Tools
+=== Version 0.5.2 (26 AUG 2013) ===
+ + Adds preliminary support for Artix 7 and Zynq devices.
+ + Adds preliminary support for the inout pin type found in Zynq
+ device / XDL files.
+ + A few other bugs were fixed.  See SVN commit log for more details.
+ 
 === Version 0.5.1 (29 APR 2011) ===
  + Added new methods to the design package for more convenient handling of XDL 
    designs.
