@@ -146,14 +146,16 @@ public class BasicRouter extends AbstractRouter{
 					
 					// Check if this node has already been visited, if so don't add it
 					if(!(visitedNodes.contains(tmp))){
-						// Make sure we haven't used this node already
-						if(tmp.getConnections() != null){
-							// This looks like a possible candidate for our next node, we'll add it
-							setCost(tmp, dev.isRouteThrough(w));
-							visitedNodes.add(tmp);
-							queue.add(tmp);
-							if(currSources.contains(tmp)){
-								tmp.parent = null;
+						if(tmp.getConnections() != null && !usedNodes.contains(tmp)){
+							// Make sure we haven't used this node already
+							if(tmp.getConnections() != null){
+								// This looks like a possible candidate for our next node, we'll add it
+								setCost(tmp, dev.isRouteThrough(w));
+								visitedNodes.add(tmp);
+								queue.add(tmp);
+								if(currSources.contains(tmp)){
+									tmp.parent = null;
+								}
 							}
 						}
 					} 
