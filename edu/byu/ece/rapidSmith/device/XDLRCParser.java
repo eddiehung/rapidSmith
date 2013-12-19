@@ -341,6 +341,9 @@ public class XDLRCParser{
 
 		dev.createWireConnectionEnumeration();
 		dev.removeDuplicatePrimitivePinMaps();
+		for(Tile t : dev.getTileMap().values()){
+			t.setDevice(dev);
+		}
 		dev.populateSinkPins(we);
 		dev.removeDuplicateTileSinks(we);
 		dev.debugPoolCounts();
