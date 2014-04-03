@@ -354,6 +354,8 @@ public class Device implements Serializable{
 		if(switchMatrixTypes == null){
 			switchMatrixTypes = new HashSet<TileType>();
 			switchMatrixTypes.add(TileType.INT);
+			switchMatrixTypes.add(TileType.INT_R);
+			switchMatrixTypes.add(TileType.INT_L);
 			switchMatrixTypes.add(TileType.INT_SO);
 			switchMatrixTypes.add(TileType.INT_SO_DCM0);
 		}
