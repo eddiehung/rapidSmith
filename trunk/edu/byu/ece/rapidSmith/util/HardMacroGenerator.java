@@ -801,7 +801,7 @@ public class HardMacroGenerator {
 				Pin p = net.getPins().get(0);
 				//XDL_Pin p = pins.get(0); -- This is wrong here because we already removed this pin
 				Port newPort = new Port(pin.getInstance().getName()+"_inport",p);
-				hardMacro.getPorts().add(newPort);
+				hardMacro.addPort(newPort);
 				p.setPort(newPort);
 			}
 			else{
