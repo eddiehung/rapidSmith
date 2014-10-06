@@ -63,14 +63,16 @@ public class WireEnumerator implements Serializable {
 	private WireType[] wireTypeArray;
 	/** An array that returns the direction of a wire based on wire enumeration value */
 	private WireDirection[] wireDirectionArray;
-	/** Set of all pip wire names */
-	private HashSet<String> pipWireNames;
+	/** Set of all pip sink wires */
+	private HashSet<String> pipSinks;
+	/** Set of all pip sink wires */
+	private HashSet<String> pipSources;
 	/** Keeps track of unique copy in memory */
 	private static WireEnumerator singleton = null;
 	/** Xilinx FPGA family name (virtex4, virtex5, ...) */
 	private FamilyType familyType = null;
 	
-	public static final String wireEnumeratorVersion = "0.1";
+	public static final String wireEnumeratorVersion = "0.2";
 	
 	/**
 	 * Constructor, does not initialize anything
@@ -105,19 +107,18 @@ public class WireEnumerator implements Serializable {
 	 * @param outputFileName Name of the output wire enumerator file.
 	 */
 	public void parseXDLRCFiles(ArrayList<String> fileNames, String outputFileName){
-		SortedSet<String> wireSet = new TreeSet<String>();
+		SortedSet<String> wireSet = new TreeSet<>();
 		WireExpressions wireExp = new WireExpressions();
-		wireMap = new HashMap<String,Integer>();
-		pipWireNames = new HashSet<String>();
+		wireMap = new HashMap<>();
+		pipSinks = new HashSet<>();
+		pipSources = new HashSet<>();
 		BufferedReader in;
 		String line;
-		int lineCount = 0;
+		int lineCount;
 		int tileCount = 0;
 		int pipCount = 0;
-		HashSet<String> internalInpin = new HashSet<String>();
-		HashSet<String> internalOutpin = new HashSet<String>();
-		HashSet<String> externalInpin = new HashSet<String>();
-		HashSet<String> externalOutpin = new HashSet<String>();
+		HashSet<String> externalInpin = new HashSet<>();
+		HashSet<String> externalOutpin = new HashSet<>();
 		
 		for(String fileName : fileNames){
 		
@@ -129,52 +130,44 @@ public class WireEnumerator implements Serializable {
 				String [] tokens;
 				while(line != null){
 					tokens = line.split("\\s+");
+					if (tokens.length > 0 && tokens[0].equals("(primitive_defs"))
+						break;
 					if(tokens.length > 1){
-						if(tokens[1].equals("(pip")){
-							if(tokens[3].endsWith(")")){
-								wireSet.add(tokens[3].substring(0, tokens[3].length()-1));
-								pipWireNames.add(tokens[3].substring(0, tokens[3].length()-1));
-								pipCount++;
-							}
-							else{
+						switch (tokens[1]) {
+							case "(pip":
 								wireSet.add(tokens[3]);
-								pipWireNames.add(tokens[3]);
+								pipSources.add(tokens[3]);
 								pipCount++;
-							}
-							if(tokens[5].endsWith(")")){
-								wireSet.add(tokens[5].substring(0, tokens[5].length()-1));
-								pipWireNames.add(tokens[5].substring(0, tokens[5].length()-1));
-							}
-							else{
-								wireSet.add(tokens[5]);
-								pipWireNames.add(tokens[5]);
-							}
-						}
-						else if(tokens[1].equals("(wire")){
-							if(tokens[2].charAt(tokens[2].length()-1) == ')'){
-								wireSet.add(tokens[2].substring(0, tokens[2].length()-1));
-							}
-							else{
-								wireSet.add(tokens[2]);
-							}					
-						}
-						else if(tokens[1].equals("(conn")){
-							if(tokens[3].charAt(tokens[3].length()-1) == ')'){
-								wireSet.add(tokens[3].substring(0, tokens[3].length()-1));
-							}
-							else{
-								wireSet.add(tokens[3]);
-							}					
-						}
-						else if(tokens[1].equals("(pinwire")){
-							if(tokens[3].equals("input")){
-								internalInpin.add(tokens[2]);
-								externalInpin.add(tokens[4].substring(0, tokens[4].length()-1));
-							}
-							else{
-								internalOutpin.add(tokens[2]);
-								externalOutpin.add(tokens[4].substring(0, tokens[4].length()-1));
-							}
+
+								if (tokens[5].endsWith(")")) {
+									wireSet.add(tokens[5].substring(0, tokens[5].length() - 1));
+									pipSinks.add(tokens[5].substring(0, tokens[5].length() - 1));
+								} else {
+									wireSet.add(tokens[5]);
+									pipSinks.add(tokens[5]);
+								}
+								break;
+							case "(wire":
+								if (tokens[2].charAt(tokens[2].length() - 1) == ')') {
+									wireSet.add(tokens[2].substring(0, tokens[2].length() - 1));
+								} else {
+									wireSet.add(tokens[2]);
+								}
+								break;
+							case "(conn":
+								if (tokens[3].charAt(tokens[3].length() - 1) == ')') {
+									wireSet.add(tokens[3].substring(0, tokens[3].length() - 1));
+								} else {
+									wireSet.add(tokens[3]);
+								}
+								break;
+							case "(pinwire":
+								if (tokens[3].equals("input")) {
+									externalInpin.add(tokens[4].substring(0, tokens[4].length() - 1));
+								} else {
+									externalOutpin.add(tokens[4].substring(0, tokens[4].length() - 1));
+								}
+								break;
 						}
 					}
 					
@@ -220,16 +213,8 @@ public class WireEnumerator implements Serializable {
 			wireMap.put(str, i);
 			wireArray[i] = str;
 			
-			if(internalInpin.contains(str) || internalOutpin.contains(str) || externalInpin.contains(str) || externalOutpin.contains(str)){			
-				if(internalInpin.contains(str)){
-					wireTypeArray[i] = WireType.SITE_SINK;
-					wireDirectionArray[i] = WireDirection.INTERNAL;
-				}
-				else if(internalOutpin.contains(str)){
-					wireTypeArray[i] = WireType.SITE_SOURCE;
-					wireDirectionArray[i] = WireDirection.INTERNAL;
-				}
-				else if(externalInpin.contains(str)){
+			if(externalInpin.contains(str) || externalOutpin.contains(str)){
+				if(externalInpin.contains(str)){
 					wireTypeArray[i] = WireType.SITE_SINK;
 					wireDirectionArray[i] = WireDirection.EXTERNAL;
 				}
@@ -327,9 +312,9 @@ public class WireEnumerator implements Serializable {
 			//=======================================================//
 			/* private HashSet<String> pipWireNames;                 */
 			//=======================================================//
-			int[] pips = new int[pipWireNames.size()];
+			int[] pips = new int[pipSources.size()];
 			int j=0;
-			for(String s : pipWireNames){
+			for(String s : pipSources){
 				pips[j] = getWireEnum(s);
 				j++;
 			}
@@ -337,7 +322,18 @@ public class WireEnumerator implements Serializable {
 				System.out.println("Failed to write out pipWires.");
 				return false;
 			}
-			
+
+			pips = new int[pipSinks.size()];
+			j=0;
+			for(String s : pipSinks){
+				pips[j] = getWireEnum(s);
+				j++;
+			}
+			if(!FileTools.writeIntArray(hos, pips)){
+				System.out.println("Failed to write out pipWires.");
+				return false;
+			}
+
 			hos.close();
 		} catch (IOException e){
 			MessageGenerator.briefErrorAndExit("Error writing to file: " + fileName);
@@ -357,15 +353,15 @@ public class WireEnumerator implements Serializable {
 			/* public static final String wireEnumeratorVersion;     */
 			//=======================================================//
 			String check = his.readString();
-			if(!check.equals(wireEnumeratorVersion)){
-				MessageGenerator.briefErrorAndExit("Error, the current version " +
-					"of RAPIDSMITH is not compatible with the wire enumerator " +
-					"file(s) present on this installation.  Delete the 'device' " +
-					"directory and run the Installer again to regenerate new wire" +
-					" enumerator files.\nCurrent RAPIDSMITH wire enumerator file " +
-					"version: " + wireEnumeratorVersion +", existing device file " +
-					"version: " + check + ".");
-			}
+//			if(!check.equals(wireEnumeratorVersion)){
+//				MessageGenerator.briefErrorAndExit("Error, the current version " +
+//					"of RAPIDSMITH is not compatible with the wire enumerator " +
+//					"file(s) present on this installation.  Delete the 'device' " +
+//					"directory and run the Installer again to regenerate new wire" +
+//					" enumerator files.\nCurrent RAPIDSMITH wire enumerator file " +
+//					"version: " + wireEnumeratorVersion +", existing device file " +
+//					"version: " + check + ".");
+//			}
 			
 			//=======================================================//
 			/* private String[] wireArray;                           */
@@ -375,7 +371,7 @@ public class WireEnumerator implements Serializable {
 			//=======================================================//
 			/* private HashMap<String,Integer> wireMap;              */
 			//=======================================================//
-			wireMap = new HashMap<String,Integer>();
+			wireMap = new HashMap<>();
 			for(int i=0; i < wireArray.length; i++){
 				wireMap.put(wireArray[i], i);
 			}
@@ -395,13 +391,22 @@ public class WireEnumerator implements Serializable {
 			}
 			
 			//=======================================================//
-			/* private HashSet<String> pipWireNames;                 */
+			/* private HashSet<String> pipSources;                 */
 			//=======================================================//
-			pipWireNames = new HashSet<String>();
+			pipSources = new HashSet<>();
 			for(int i : FileTools.readIntArray(his)){
-				pipWireNames.add(wireArray[i]);
-			}		
+				pipSources.add(wireArray[i]);
+			}
 
+			if (check.equals("0.2")) {
+				//=======================================================//
+			/* private HashSet<String> pipSinks;                 */
+				//=======================================================//
+				pipSinks = new HashSet<>();
+				for (int i : FileTools.readIntArray(his)) {
+					pipSinks.add(wireArray[i]);
+				}
+			}
 			his.close();
 		} catch (FileNotFoundException e){
 			MessageGenerator.briefErrorAndExit("Error: could not find file: " + fileName);
@@ -454,110 +459,39 @@ public class WireEnumerator implements Serializable {
 	}
 	
 	/**
-	 * Checks if a particular wire is part of a PIP (both start or end wire)
+	 * Checks if a particular wire is the source of a PIP
 	 * @param wire The name of the wire to check if it is a PIP
-	 * @return True if the wire is part of a PIP, false otherwise.
+	 * @return True if the wire is the source of a PIP, false otherwise.
 	 */
-	public boolean isPIPWire(String wire){
-		return pipWireNames.contains(wire);
+	public boolean isPIPSourceWire(String wire){
+		return pipSources.contains(wire);
 	}
-	public boolean isPIPWire(int wire){
-		return pipWireNames.contains(getWireName(wire));
+	public boolean isPIPSourceWire(int wire){
+		return pipSources.contains(getWireName(wire));
 	}
-	
+
+	/**
+	 * Checks if a particular wire is the sink of a PIP
+	 * @param wire The name of the wire to check if it is a PIP
+	 * @return True if the wire is the sink of a PIP, false otherwise.
+	 */
+	public boolean isPIPSinkWire(String wire){
+		return pipSinks.contains(wire);
+	}
+	public boolean isPIPSinkWire(int wire){
+		return pipSinks.contains(getWireName(wire));
+	}
+
+	public boolean isPIPWire(String wire) {
+		return isPIPSinkWire(wire) || isPIPSourceWire(wire);
+	}
+
+	public boolean isPIPWire(int wire) {
+		return isPIPSinkWire(wire) || isPIPSourceWire(wire);
+	}
+
 	public String[] getWires() {
 		return wireArray;
-	}
-	//========================================================================//
-	// Test Methods
-	//========================================================================//
-	public void writeDebugFile(String fileName){
-		try {
-			BufferedWriter bw = new BufferedWriter(new FileWriter(fileName));
-			bw.write("=== Wire Enumerations ===\n");
-			for(int i=0; i < wireArray.length; i++){
-				bw.write(i + " " 
-						+ wireArray[i] + " " 
-						+ getWireEnum(wireArray[i]) + " " 
-						+ getWireType(i) + " " 
-						+ getWireDirection(i) + " " 
-						+ isPIPWire(wireArray[i]) 
-						+ "\n");
-			}
-			
-			bw.write("=== Wire PIPs ===\n");
-			String[] sortedPips = new String[pipWireNames.size()];
-			sortedPips = pipWireNames.toArray(sortedPips);
-			Arrays.sort(sortedPips);
-			for(String s : sortedPips){
-				bw.write(getWireEnum(s) + " " + s + " " +  getWireType(getWireEnum(s)) +
-						" " + getWireDirection(getWireEnum(s)) + "\n");
-			}
-			
-			bw.write("wires=" + wireArray.length + " pips=" + pipWireNames.size());
-			bw.close();			
-		} catch (IOException e){
-			MessageGenerator.briefErrorAndExit("Error: could not write out debug file: " + fileName);
-		}
-	}
-	
-	@SuppressWarnings("unused")
-	public void performanceTest(){
-		int testSize = 10000000;
-		Integer tmpWire;
-		String tmpName;
-		WireType tmpWireType;
-		WireDirection tmpWireDirection;
-		long start, stop;
-		Random generator = new Random();
-		int[] randomNumbers = new int[testSize];
-		String[] randomWires = new String[testSize];
-		for(int i : randomNumbers){
-			i = generator.nextInt(wireArray.length);
-		}
-		for(String s : randomWires){
-			s = getWireName(generator.nextInt(wireArray.length));
-		}
-		
-		System.out.print("Testing getWireEnum(String name)...");
-		start = System.nanoTime();
-		for(String s : randomWires){
-			tmpWire = this.getWireEnum(s);
-		}
-		stop = System.nanoTime();
-		System.out.print("DONE!\n");
-		System.out.println("  TOTAL:" + (stop-start) + "ns");
-		System.out.println("  PER  :" + (((double)stop-(double)start)/(double)testSize) + "ns");
-
-		System.out.print("Testing getWireName(Integer wire)...");
-		start = System.nanoTime();
-		for(Integer i: randomNumbers){
-			tmpName = this.getWireName(i);
-		}
-		stop = System.nanoTime();
-		System.out.print("DONE!\n");
-		System.out.println("  TOTAL:" + (stop-start) + "ns");
-		System.out.println("  PER  :" + (((double)stop-(double)start)/(double)testSize) + "ns");
-
-		System.out.print("Testing getWireType(Integer wire)...");
-		start = System.nanoTime();
-		for(Integer i: randomNumbers){
-			tmpWireType = this.getWireType(i);
-		}
-		stop = System.nanoTime();
-		System.out.print("DONE!\n");
-		System.out.println("  TOTAL:" + (stop-start) + "ns");
-		System.out.println("  PER  :" + (((double)stop-(double)start)/(double)testSize) + "ns");
-
-		System.out.print("Testing getWireDirection(Integer wire)...");
-		start = System.nanoTime();
-		for(Integer i: randomNumbers){
-			tmpWireDirection = this.getWireDirection(i);
-		}
-		stop = System.nanoTime();
-		System.out.print("DONE!\n");
-		System.out.println("  TOTAL:" + (stop-start) + "ns");
-		System.out.println("  PER  :" + (((double)stop-(double)start)/(double)testSize) + "ns");		
 	}
 	
 	public static void main(String[] args){

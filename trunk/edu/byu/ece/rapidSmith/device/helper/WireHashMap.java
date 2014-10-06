@@ -1,39 +1,40 @@
 /*
- * Copyright (c) 2010-2011 Brigham Young University
- * 
+ * Copyright (c) 2010 Brigham Young University
+ *
  * This file is part of the BYU RapidSmith Tools.
- * 
- * BYU RapidSmith Tools is free software: you may redistribute it 
- * and/or modify it under the terms of the GNU General Public License 
- * as published by the Free Software Foundation, either version 2 of 
+ *
+ * BYU RapidSmith Tools is free software: you may redistribute it
+ * and/or modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation, either version 2 of
  * the License, or (at your option) any later version.
- * 
- * BYU RapidSmith Tools is distributed in the hope that it will be 
+ *
+ * BYU RapidSmith Tools is distributed in the hope that it will be
  * useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * A copy of the GNU General Public License is included with the BYU 
- * RapidSmith Tools. It can be found at doc/gpl2.txt. You may also 
+ *
+ * A copy of the GNU General Public License is included with the BYU
+ * RapidSmith Tools. It can be found at doc/gpl2.txt. You may also
  * get a copy of the license at <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 package edu.byu.ece.rapidSmith.device.helper;
 
+import edu.byu.ece.rapidSmith.device.WireConnection;
+
 import java.io.Serializable;
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-
-import edu.byu.ece.rapidSmith.device.WireConnection;
 
 /**
  * DO NOT USE THIS CLASS!  This class was specially developed for the Device 
  * wire connections hash map.  It is specifically optimized for that purpose.
  * Created on: Mar 18, 2011
  */
-public class WireHashMap implements Serializable{
-
+public class WireHashMap implements Serializable {
     /**
 	 * 
 	 */
@@ -70,7 +71,19 @@ public class WireHashMap implements Serializable{
      * The number of key-value mappings contained in this map.
      */
     transient int size;
-    
+
+	// These variables are used to track the whether the caches are up to date.
+	// A cache is up to date if it is equivalent to the wireHashMapModification
+	// value.  Any put operation updates the wireHashMapModification value
+	private transient int wireHashMapModification = 0;
+	private transient int keySetCacheModification = -1; // initialize as out of date
+	private transient int valuesCacheModification = -1; // initialize as out of date
+
+	// Caches are stored as soft references to avoid being a memory drain
+	// when not in use.
+	private transient SoftReference<Set<Integer>> keySetCache;
+	private transient SoftReference<ArrayList<WireConnection[]>> valuesCache;
+
     /**
      * The next size value at which to resize (capacity * load factor).
      * @serial
@@ -84,10 +97,9 @@ public class WireHashMap implements Serializable{
      */
     final float loadFactor;
 
-	/**
-	 * This map requires an initial capacity.  This map will not grow.
-	 * @param capacity
-	 */
+	private Integer hash;
+
+	/** This map requires an initial capacity.  This map will not grow. */
     public WireHashMap(int capacity, float loadFactor){
         if (capacity < 0)
             throw new IllegalArgumentException("Illegal initial capacity: " +
@@ -104,7 +116,8 @@ public class WireHashMap implements Serializable{
         threshold = (int)(finalCapacity * loadFactor);
         
         keys = new int[finalCapacity];
-        values = new WireConnection[finalCapacity][];
+	    Arrays.fill(keys, -1);
+	    values = new WireConnection[finalCapacity][];
         size = 0;
     }
     
@@ -115,8 +128,15 @@ public class WireHashMap implements Serializable{
     public WireHashMap(){
     	this(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR);
     }
-    
-    /**
+
+	public WireHashMap(WireHashMap other) {
+		this(other.threshold, other.loadFactor);
+		for (Integer i : other.keySet()) {
+			put(i, other.get(i));
+		}
+	}
+
+	/**
      * Returns index for hash code h.
      */
     static int indexFor(int h, int length) {
@@ -136,27 +156,30 @@ public class WireHashMap implements Serializable{
     public boolean isEmpty() {
         return size == 0;
     }
-    
+
+	private int indexFor(int key) {
+		int i = key & (keys.length-1);
+		while(keys[i] != key && keys[i] != -1){
+			i+=3;
+			if(i >= keys.length) i=i&3;
+		}
+		return i;
+	}
     
     public WireConnection[] get(int key){
-        
-        int i = key & (keys.length-1);//indexFor(key.intValue(), keys.length);
-        while(values[i] != null && keys[i] != key){
-        	i+=3;
-        	if(i >= keys.length) i=i&3;
-        }
+	    int i = indexFor(key);
+	    if (keys[i] == -1)
+		    return null;
         return values[i];
     } 
 
     public void put(int key, WireConnection[] value){
-        int i = key & (keys.length-1);//indexFor(key.intValue(), keys.length);
-        while(values[i] != null && keys[i] != key){
-        	i+=3;
-        	if(i >= keys.length) i=i&3;
-        }
-        if(keys[i] == 0) size++;
+		int i = indexFor(key);
+        if(keys[i] == -1)
+	        size++;
         keys[i] = key;
         values[i] = value;
+	    wireHashMapModification++;
 
         if(size > threshold){
         	grow();
@@ -169,29 +192,80 @@ public class WireHashMap implements Serializable{
     	int[] oldKeys = keys;
     	WireConnection[][] oldValues = values;
         keys = new int[newCapacity];
+	    Arrays.fill(keys, -1);
         values = new WireConnection[newCapacity][];
         size = 0;
-        for(int i=0; i < oldValues.length; i++){
-			if(oldValues[i] != null){
+        for(int i=0; i < oldKeys.length; i++){
+			if(oldKeys[i] != -1){
 				put(oldKeys[i], oldValues[i]);
 			}
 		}
     }
     
     public Set<Integer> keySet(){
-    	HashSet<Integer> keySet = new HashSet<Integer>();
-    	for(int i=0; i < keys.length; i++)
-			if(values[i] != null) 
-				keySet.add(keys[i]);
+	    // check if the cached keySets are current
+	    Set<Integer> keySet = keySetCache == null ? null : keySetCache.get();
+	    if (keySet != null && keySetCacheModification == wireHashMapModification)
+		    return keySet;
+	    keySetCacheModification = wireHashMapModification;
+
+	    // build the keyset cache
+	    keySet = new HashSet<>();
+	    for (int key : keys) {
+		    if (key != -1)
+			    keySet.add(key);
+	    }
+	    keySetCache = new SoftReference<>(keySet);
     	return keySet;
     }
     
     public ArrayList<WireConnection[]> values(){
-    	ArrayList<WireConnection[]> valueList = new ArrayList<WireConnection[]>(size);
-    	for (int i = 0; i < values.length; i++) {
-			if(values[i] != null)
-				valueList.add(values[i]);
+	    // check if the cached values are current;
+	    ArrayList<WireConnection[]> valuesList = valuesCache == null ? null : valuesCache.get();
+	    if (valuesList != null && valuesCacheModification == wireHashMapModification)
+		    return valuesList;
+	    valuesCacheModification = wireHashMapModification;
+
+	    // build the values cache
+	    valuesList = new ArrayList<>(size);
+    	for (int i = 0; i < keys.length; i++) {
+			if(keys[i] != -1)
+				valuesList.add(values[i]);
 		}
-    	return valueList;
+	    valuesCache = new SoftReference<>(valuesList);
+    	return valuesList;
     }
+
+	@Override
+	public int hashCode() {
+		if (hash != null)
+			return hash;
+		hash = 0;
+		for (Integer i : keySet()) {
+			hash += i * 7;
+			if (get(i) != null) {
+				hash += Arrays.deepHashCode(get(i)) * 13;
+			}
+		}
+		return hash;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if ((obj == null) || (getClass() != obj.getClass()))
+			return false;
+
+		WireHashMap other = (WireHashMap) obj;
+		if (!keySet().equals(other.keySet())) {
+			return false;
+		}
+		for (Integer key : keySet()) {
+			if (!Arrays.deepEquals(get(key), other.get(key))) {
+				return false;
+			}
+		}
+		return true;
+	}
 }

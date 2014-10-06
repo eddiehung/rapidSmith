@@ -20,20 +20,16 @@
  */
 package edu.byu.ece.rapidSmith.device;
 
+import edu.byu.ece.rapidSmith.device.helper.Connection;
+import edu.byu.ece.rapidSmith.device.helper.HashPool;
+import edu.byu.ece.rapidSmith.device.helper.WireHashMap;
+import edu.byu.ece.rapidSmith.util.*;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-
-import edu.byu.ece.rapidSmith.device.helper.Connection;
-import edu.byu.ece.rapidSmith.util.FileTools;
-import edu.byu.ece.rapidSmith.util.MessageGenerator;
-import edu.byu.ece.rapidSmith.util.PartNameTools;
-import edu.byu.ece.rapidSmith.util.RunXilinxTools;
-import edu.byu.ece.rapidSmith.util.FamilyType;
+import java.util.*;
 
 /**
  * This class has a number of static methods to create Device and WireEnumerator objects from
@@ -76,11 +72,11 @@ public class DeviceFilesCreator{
 			return we;
 		}
 		
-		ArrayList<String> partNames = new ArrayList<String>();
+		ArrayList<String> partNames = new ArrayList<>();
 		switch(familyType){
 			case KINTEX7:
-				partNames.add("xc7k30tfbg484");
 				partNames.add("xc7k160tfbg676");
+				partNames.add("xc7k355tffg901");
 				break;
 			case SPARTAN2:
 				partNames.add("xc2s100tq144");
@@ -134,9 +130,8 @@ public class DeviceFilesCreator{
 				partNames.add("xc6vcx75tff484");			
 				break;
 			case VIRTEX7:
-				partNames.add("xc7v450tffg1157");
+				partNames.add("xc7vx330tffg1157");
 				partNames.add("xc7vx485tffg1157");
-				partNames.add("xc7v1500tfhg1157");
 				break;
 			case VIRTEXE:
 				partNames.add("xcv2600efg1156");
@@ -159,7 +154,7 @@ public class DeviceFilesCreator{
 
 		
 		// Create XDLRC files for the wireEnumerator
-		ArrayList<String> fileNames = new ArrayList<String>();
+		ArrayList<String> fileNames = new ArrayList<>();
 		for(String name : partNames){
 			fileNames.add(createXDLRC(name));
 		}
@@ -182,14 +177,14 @@ public class DeviceFilesCreator{
 	 */
 	public static HashMap<String,Integer> createDeviceTileMap(String partName){
 		partName = PartNameTools.removeSpeedGrade(partName);
-		HashMap<String,Integer> tileMap = new HashMap<String, Integer>();
+		HashMap<String,Integer> tileMap = new HashMap<>();
 		String xdlrcFileName = partName + "_brief.xdlrc";
 		if(!RunXilinxTools.generateBriefXDLRCFile(partName, xdlrcFileName)){
 			return null;
 		}
 		try{
 			BufferedReader br = new BufferedReader(new FileReader(xdlrcFileName));
-			String line = null;
+			String line;
 			while((line = br.readLine()) != null) {
 				String[] tokens = line.split("\\s+");
 				if(tokens.length > 1 && tokens[1].equals("(tile")){
@@ -295,7 +290,7 @@ public class DeviceFilesCreator{
 		}
 		return newArray;
 	}
-	
+
 	/**
 	 * This method will read in a device files and remove backward edges from the wire
 	 * connections in each tile.  This makes routing easier as it removes edges that don't
@@ -305,59 +300,43 @@ public class DeviceFilesCreator{
 	public static void removeBackwardsEdgesFromDevice(String partName){
 		Device dev = FileTools.loadDevice(partName);
 		WireEnumerator we = FileTools.loadWireEnumerator(partName);
-		
+
+		HashPool<WireHashMap> tileWiresPool = new HashPool<>();
+
 		// Traverse the entire device and find which wires to remove first
-		HashMap<Tile,ArrayList<Connection>> wiresToBeRemoved = new HashMap<Tile, ArrayList<Connection>>(); 
-		for(Tile[] tileArray : dev.getTiles()){
-			for(Tile t : tileArray){
-				if(t.getWireHashMap() == null) continue;
-				ArrayList<Connection> connectionsToRemove = new ArrayList<Connection>();
-				// Create a set of wires that can be driven by other wires within the tile
-				// We need this to do a fast look up later on
-				HashSet<Integer> wiresSourcedByTileWires = new HashSet<Integer>();
-				for(WireConnection[] wireArray : t.getWireHashMap().values()){
-					for(WireConnection w : wireArray){
-						if(w.getColumnOffset() == 0 && w.getRowOffset() == 0){
-							wiresSourcedByTileWires.add(w.getWire());
-						}
+		for(Tile tile : dev.getTileMap().values()) {
+			if (tile.getWireHashMap() == null) continue;
+
+			tileWiresPool.add(tile.getWireHashMap());
+			addMissingWireConnections(we, tile);
+
+			// Create a set of wires that can be driven by other wires within the tile
+			// We need this to do a fast look up later on
+			Set<Integer> sourceWires = getSourceWiresOfTile(we, tile);
+
+			Set<Integer> wires = new HashSet<>(tile.getWires());
+			List<Connection> wiresToBeRemoved = new ArrayList<>();
+			for (Integer wire : wires) {
+				for (WireConnection wc : tile.getWireConnections(wire)) {
+					// never remove PIPs
+					if (wc.isPIP())
+						continue;
+					if (!sourceWires.contains(wire) ||
+							!wireIsSink(we, wc.getTile(tile), wc.getWire())) {
+						wiresToBeRemoved.add(new Connection(wire, wc));
 					}
 				}
-				
-				for(Integer wire : t.getWires()){
-					for(WireConnection w : t.getWireConnections(wire)){
-						// Check if this wire has connections back to wire
-						Tile wireTile = w.getTile(t);
-						WireConnection[] wireConns = wireTile.getWireConnections(w.getWire());
-						if(wireConns == null) continue;
-						boolean backwardsConnection = false;
-						
-						for(WireConnection w2 : wireConns){
-							Tile check = w2.getTile(wireTile);
-							if(check.equals(t) && w2.getWire() == wire.intValue()){
-								backwardsConnection = !wiresSourcedByTileWires.contains(wire); 
-							}
-						}
-
-						// Long lines are the only bi-directional wires, keep those connections
-						if(we.getWireType(w.getWire()).equals(WireType.LONG)){
-							backwardsConnection = false;
-						}
-
-						if(backwardsConnection){
-							connectionsToRemove.add(new Connection(wire, w));
-						}
-					}
-				}
-				wiresToBeRemoved.put(t, connectionsToRemove);
 			}
-		}
-		
-		// Remove all backward edges from device
-		for(Tile t : wiresToBeRemoved.keySet()){
-			for(Connection c : wiresToBeRemoved.get(t)){
-				WireConnection[] currentWires = t.getWireHashMap().get(c.getWire());
-				currentWires = removeWire(currentWires, c.getDestinationWire());
-				t.getWireHashMap().put(c.getWire(), currentWires);
+
+			// Remove all unnecessary edges from device
+			if (!wiresToBeRemoved.isEmpty()) {
+				WireHashMap wireHashMap = new WireHashMap(tile.getWireHashMap());
+				for (Connection c : wiresToBeRemoved) {
+					WireConnection[] currentWires = wireHashMap.get(c.getWire());
+					currentWires = removeWire(currentWires, c.getDestinationWire());
+					wireHashMap.put(c.getWire(), currentWires);
+				}
+				tile.setWireHashMap(tileWiresPool.add(wireHashMap));
 			}
 		}
 		
@@ -393,7 +372,87 @@ public class DeviceFilesCreator{
 		// Overwrite old file
 		dev.writeDeviceToCompactFile(FileTools.getDeviceFileName(partName));
 	}
-	
+
+	private static Set<Integer> getSourceWiresOfTile(WireEnumerator we, Tile tile) {
+		Set<Integer> sourceWires = new HashSet<>();
+		for(Integer wire : tile.getWires()){
+			if (we.getWireType(wire) == WireType.SITE_SOURCE)
+				sourceWires.add(wire);
+			for(WireConnection wc : tile.getWireConnections(wire)){
+				if(wc.isPIP()){
+					sourceWires.add(wc.getWire());
+				}
+			}
+		}
+		return sourceWires;
+	}
+
+	private static void addMissingWireConnections(WireEnumerator we, Tile tile) {
+		WireHashMap whm = tile.getWireHashMap();
+		if (whm == null) return;
+		for (Integer wire : whm.keySet()) {
+			Set<WireConnection> checkedConnections = new HashSet<>();
+			Queue<WireConnection> connectionsToFollow = new LinkedList<>();
+			Set<WireConnection> wcToAdd = new HashSet<>();
+
+			// Add the wire to prevent building a connection back to itself
+			checkedConnections.add(new WireConnection(wire, 0, 0, false));
+			for (WireConnection wc : whm.get(wire)) {
+				if (!wc.isPIP()) {
+					checkedConnections.add(wc);
+					connectionsToFollow.add(wc);
+				}
+			}
+
+			while (!connectionsToFollow.isEmpty()) {
+				WireConnection midwc = connectionsToFollow.remove();
+				Tile midTile = midwc.getTile(tile);
+				Integer midWire = midwc.getWire();
+
+				if (midTile.getWireHashMap() == null || midTile.getWireConnections(midWire) == null)
+					continue;
+				for (WireConnection sinkwc : midTile.getWireConnections(midWire)) {
+					if (sinkwc.isPIP()) continue;
+
+					Integer sinkWire = sinkwc.getWire();
+					Tile sinkTile = sinkwc.getTile(midTile);
+					int colOffset = midwc.getColumnOffset() + sinkwc.getColumnOffset();
+					int rowOffset = midwc.getRowOffset() + sinkwc.getRowOffset();
+
+					WireConnection source2sink = new WireConnection(sinkWire, rowOffset, colOffset, false);
+					boolean wirePreviouslyChecked = !checkedConnections.add(source2sink);
+					if (wirePreviouslyChecked || !wireIsSink(we, sinkTile, sinkWire))
+						continue;
+					wcToAdd.add(source2sink);
+					connectionsToFollow.add(source2sink);
+				}
+			}
+
+			if (!wcToAdd.isEmpty()) {
+				List<WireConnection> newConnections = new ArrayList<>(Arrays.asList(whm.get(wire)));
+				newConnections.addAll(wcToAdd);
+				WireConnection[] arrView = newConnections.toArray(
+						new WireConnection[newConnections.size()]);
+				whm.put(wire, arrView);
+			}
+		}
+	}
+
+	// A wire is a sink if it is a site source (really should check in the tile sinks but
+	// the wire type check is easier and should be sufficient or the wire is the source of
+	// a PIP.
+	private static boolean wireIsSink(WireEnumerator we, Tile tile, Integer wire) {
+		if (we.getWireType(wire) == WireType.SITE_SINK)
+			return true;
+		if (tile.getWireHashMap() == null || tile.getWireConnections(wire) == null)
+			return false;
+		for (WireConnection wc : tile.getWireConnections(wire)) {
+			if (wc.isPIP())
+				return true;
+		}
+		return false;
+	}
+
 	/**
 	 * Main method for this class that ensures all part files are created for the 
 	 * partName given.
