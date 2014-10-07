@@ -1374,48 +1374,10 @@ public class Device implements Serializable{
 	}
 	
 	private int getFamilyWireCount(String fileName){
-		int end = fileName.lastIndexOf(File.separator);
-		int start = fileName.lastIndexOf(File.separator, end-1);
-		FamilyType familyType = FamilyType.valueOf(fileName.substring(start+1, end).toUpperCase());
-		switch(familyType){
-			case ARTIX7:
-				return 50309;
-			case KINTEX7:
-				return 42123;
-			case SPARTAN2:
-				return 4041;
-			case SPARTAN2E:
-				return 4693;
-			case SPARTAN3:
-				return 3901;
-			case SPARTAN3A:
-				return 6284;
-			case SPARTAN3ADSP:
-				return 8842;
-			case SPARTAN3E:
-				return 6745;
-			case SPARTAN6:
-				return 46932;
-			case VIRTEX:
-				return 4081;
-			case VIRTEX2:
-				return 5283;
-			case VIRTEX2P:
-				return 23497;
-			case VIRTEX4:
-				return 57631;
-			case VIRTEX5:
-				return 72523;
-			case VIRTEX6:
-				return 46781;
-			case VIRTEX7:
-				return 53331;
-			case VIRTEXE:
-				return 4224;
-			case ZYNQ:
-				return 67919;
-			default:
-				return 0;
-		}
+		// Return a large number.  We don't actually need the right number, just
+		// a sufficiently large number.  Largest devices tap out at under 70k wires
+		// so 100k should be plenty big without being onerous.  The alternative
+		// is to load the WireEnumerator and query it.
+		return 100000;
 	}
 }
