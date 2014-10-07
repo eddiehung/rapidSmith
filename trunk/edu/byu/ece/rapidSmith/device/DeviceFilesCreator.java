@@ -131,6 +131,7 @@ public class DeviceFilesCreator{
 				break;
 			case VIRTEX7:
 				partNames.add("xc7vx330tffg1157");
+				partNames.add("xc7vx415tffg1157");
 				partNames.add("xc7vx485tffg1157");
 				break;
 			case VIRTEXE:
@@ -240,10 +241,46 @@ public class DeviceFilesCreator{
 			
 			// Write the Device to File
 			parser.getDevice().writeDeviceToCompactFile(deviceFileName);
-			
+
+			// reload the device
+			Device dev = FileTools.loadDevice(partName);
+
 			// Remove backwards edges
-			removeBackwardsEdgesFromDevice(partName);
-			
+			addMissingWireConnections(dev, we);
+			removeBackwardsEdgesFromDevice(dev, we);
+
+			// Add all wires to wirePool for file creation
+			for(Tile[] tileArray : dev.tiles){
+				for(Tile t : tileArray){
+					if(t.getWireHashMap() == null) continue;
+					for(WireConnection[] wires : t.getWireHashMap().values()){
+						if(wires == null) continue;
+						for(int i = 0; i < wires.length; i++){
+							wires[i] = dev.wirePool.add(wires[i]);
+						}
+					}
+				}
+			}
+
+			// Rebuild pools for file creation
+			for(Tile[] tileArray : dev.tiles){
+				for(Tile t : tileArray){
+					dev.incrementalRemoveDuplicateTileResources(t, we);
+				}
+			}
+			for(WireConnection w : dev.routeThroughMap.keySet()){
+				PIPRouteThrough p = dev.routeThroughPool.add(dev.getRouteThrough(w));
+				dev.routeThroughMap.put(w, p);
+			}
+			dev.createWireConnectionEnumeration();
+			dev.removeDuplicatePrimitivePinMaps();
+			dev.populateSinkPins(we);
+			dev.removeDuplicateTileSinks(we);
+			dev.debugPoolCounts();
+
+			// Overwrite old file
+			dev.writeDeviceToCompactFile(FileTools.getDeviceFileName(partName));
+
 			// Delete XDLRC file
 			FileTools.deleteFile(xdlrcFileName);
 			
@@ -295,30 +332,30 @@ public class DeviceFilesCreator{
 	 * This method will read in a device files and remove backward edges from the wire
 	 * connections in each tile.  This makes routing easier as it removes edges that don't
 	 * exist in the FPGA.
-	 * @param partName Name of the part to remove edges from.
 	 */
-	public static void removeBackwardsEdgesFromDevice(String partName){
-		Device dev = FileTools.loadDevice(partName);
-		WireEnumerator we = FileTools.loadWireEnumerator(partName);
-
+	public static void removeBackwardsEdgesFromDevice(Device dev, WireEnumerator we){
 		HashPool<WireHashMap> tileWiresPool = new HashPool<>();
 
 		// Traverse the entire device and find which wires to remove first
 		for(Tile tile : dev.getTileMap().values()) {
-			if (tile.getWireHashMap() == null) continue;
+			if (tile.getWireHashMap() == null)
+				continue;
 
-			tileWiresPool.add(tile.getWireHashMap());
-			addMissingWireConnections(we, tile);
+			// create a safe wire map to modify
+			WireHashMap wireHashMap = new WireHashMap(tile.getWireHashMap());
 
 			// Create a set of wires that can be driven by other wires within the tile
 			// We need this to do a fast look up later on
 			Set<Integer> sourceWires = getSourceWiresOfTile(we, tile);
 
+			// Identify any wire connections that are not a "source" wire to "sink" wire
+			// connection.
 			Set<Integer> wires = new HashSet<>(tile.getWires());
 			List<Connection> wiresToBeRemoved = new ArrayList<>();
 			for (Integer wire : wires) {
 				for (WireConnection wc : tile.getWireConnections(wire)) {
-					// never remove PIPs
+					// never remove PIPs.  We only are searching for different names
+					// of the same wire.  A PIP connect unique wires.
 					if (wc.isPIP())
 						continue;
 					if (!sourceWires.contains(wire) ||
@@ -328,49 +365,16 @@ public class DeviceFilesCreator{
 				}
 			}
 
-			// Remove all unnecessary edges from device
-			if (!wiresToBeRemoved.isEmpty()) {
-				WireHashMap wireHashMap = new WireHashMap(tile.getWireHashMap());
-				for (Connection c : wiresToBeRemoved) {
-					WireConnection[] currentWires = wireHashMap.get(c.getWire());
-					currentWires = removeWire(currentWires, c.getDestinationWire());
-					wireHashMap.put(c.getWire(), currentWires);
-				}
-				tile.setWireHashMap(tileWiresPool.add(wireHashMap));
+			// Remove the edges by creating a new WireConnection arrays sans the
+			// connection of interest.
+			for (Connection c : wiresToBeRemoved) {
+				WireConnection[] currentWires = wireHashMap.get(c.getWire());
+				currentWires = removeWire(currentWires, c.getDestinationWire());
+				wireHashMap.put(c.getWire(), currentWires);
 			}
+			// Update the tile with the new wire map.  Search for possible reuse.
+			tile.setWireHashMap(tileWiresPool.add(wireHashMap));
 		}
-		
-		// Add all wires to wirePool for file creation
-		for(Tile[] tileArray : dev.tiles){
-			for(Tile t : tileArray){
-				if(t.getWireHashMap() == null) continue;
-				for(WireConnection[] wires : t.getWireHashMap().values()){
-					if(wires == null) continue;
-					for(int i = 0; i < wires.length; i++){
-						wires[i] = dev.wirePool.add(wires[i]);
-					}
-				}
-			}
-		}
-		
-		// Rebuild pools for file creation
-		for(Tile[] tileArray : dev.tiles){
-			for(Tile t : tileArray){
-				dev.incrementalRemoveDuplicateTileResources(t, we);
-			}
-		}
-		for(WireConnection w : dev.routeThroughMap.keySet()){
-			PIPRouteThrough p = dev.routeThroughPool.add(dev.getRouteThrough(w));
-			dev.routeThroughMap.put(w, p);
-		}
-		dev.createWireConnectionEnumeration();
-		dev.removeDuplicatePrimitivePinMaps();
-		dev.populateSinkPins(we);
-		dev.removeDuplicateTileSinks(we);
-		dev.debugPoolCounts();
-		
-		// Overwrite old file
-		dev.writeDeviceToCompactFile(FileTools.getDeviceFileName(partName));
 	}
 
 	private static Set<Integer> getSourceWiresOfTile(WireEnumerator we, Tile tile) {
@@ -387,53 +391,77 @@ public class DeviceFilesCreator{
 		return sourceWires;
 	}
 
-	private static void addMissingWireConnections(WireEnumerator we, Tile tile) {
-		WireHashMap whm = tile.getWireHashMap();
-		if (whm == null) return;
-		for (Integer wire : whm.keySet()) {
-			Set<WireConnection> checkedConnections = new HashSet<>();
-			Queue<WireConnection> connectionsToFollow = new LinkedList<>();
-			Set<WireConnection> wcToAdd = new HashSet<>();
+	private static void addMissingWireConnections(Device dev, WireEnumerator we) {
+		HashPool<WireHashMap> tileWiresPool = new HashPool<>();
 
-			// Add the wire to prevent building a connection back to itself
-			checkedConnections.add(new WireConnection(wire, 0, 0, false));
-			for (WireConnection wc : whm.get(wire)) {
-				if (!wc.isPIP()) {
-					checkedConnections.add(wc);
-					connectionsToFollow.add(wc);
+		for (Tile tile : dev.getTileMap().values()) {
+			if (tile.getWireHashMap() == null)
+				continue;
+
+			// Create a safe copy to playaround with without messing up any other tiles wires
+			WireHashMap whm = new WireHashMap(tile.getWireHashMap());
+
+			// Traverse all non-PIP wire connections starting at this source wire.  If any
+			// such wire connections lead to a sink wire that is not already a connection of
+			// the source wire, mark it to be added as a connection
+			for (Integer wire : whm.keySet()) {
+				Set<WireConnection> wcToAdd = new HashSet<>();
+				Set<WireConnection> checkedConnections = new HashSet<>();
+				Queue<WireConnection> connectionsToFollow = new LinkedList<>();
+
+				// Add the wire to prevent building a connection back to itself
+				checkedConnections.add(new WireConnection(wire, 0, 0, false));
+				for (WireConnection wc : whm.get(wire)) {
+					if (!wc.isPIP()) {
+						checkedConnections.add(wc);
+						connectionsToFollow.add(wc);
+					}
 				}
-			}
 
-			while (!connectionsToFollow.isEmpty()) {
-				WireConnection midwc = connectionsToFollow.remove();
-				Tile midTile = midwc.getTile(tile);
-				Integer midWire = midwc.getWire();
+				while (!connectionsToFollow.isEmpty()) {
+					WireConnection midwc = connectionsToFollow.remove();
+					Tile midTile = midwc.getTile(tile);
+					Integer midWire = midwc.getWire();
 
-				if (midTile.getWireHashMap() == null || midTile.getWireConnections(midWire) == null)
-					continue;
-				for (WireConnection sinkwc : midTile.getWireConnections(midWire)) {
-					if (sinkwc.isPIP()) continue;
-
-					Integer sinkWire = sinkwc.getWire();
-					Tile sinkTile = sinkwc.getTile(midTile);
-					int colOffset = midwc.getColumnOffset() + sinkwc.getColumnOffset();
-					int rowOffset = midwc.getRowOffset() + sinkwc.getRowOffset();
-
-					WireConnection source2sink = new WireConnection(sinkWire, rowOffset, colOffset, false);
-					boolean wirePreviouslyChecked = !checkedConnections.add(source2sink);
-					if (wirePreviouslyChecked || !wireIsSink(we, sinkTile, sinkWire))
+					// Dead end checks
+					if (midTile.getWireHashMap() == null || midTile.getWireConnections(midWire) == null)
 						continue;
-					wcToAdd.add(source2sink);
-					connectionsToFollow.add(source2sink);
-				}
-			}
 
-			if (!wcToAdd.isEmpty()) {
-				List<WireConnection> newConnections = new ArrayList<>(Arrays.asList(whm.get(wire)));
-				newConnections.addAll(wcToAdd);
-				WireConnection[] arrView = newConnections.toArray(
-						new WireConnection[newConnections.size()]);
-				whm.put(wire, arrView);
+					for (WireConnection sinkwc : midTile.getWireConnections(midWire)) {
+						if (sinkwc.isPIP()) continue;
+
+						Integer sinkWire = sinkwc.getWire();
+						Tile sinkTile = sinkwc.getTile(midTile);
+						int colOffset = midwc.getColumnOffset() + sinkwc.getColumnOffset();
+						int rowOffset = midwc.getRowOffset() + sinkwc.getRowOffset();
+
+						// This represents the wire connection from the original source to the sink wire
+						WireConnection source2sink = new WireConnection(sinkWire, rowOffset, colOffset, false);
+						boolean wirePreviouslyChecked = !checkedConnections.add(source2sink);
+
+						// Check if we've already processed this guy and process him if we haven't
+						if (wirePreviouslyChecked)
+							continue;
+						connectionsToFollow.add(source2sink);
+
+						// Only add the connection if the wire is a sink.  Other connections are
+						// useless for wire traversing.
+						if (wireIsSink(we, sinkTile, sinkWire))
+							wcToAdd.add(source2sink);
+					}
+				}
+
+				// If there are wires to add, add them here by creating a new WireConnection array
+				// combining the old and new wires.
+				if (!wcToAdd.isEmpty()) {
+					List<WireConnection> newConnections = new ArrayList<>(Arrays.asList(whm.get(wire)));
+					newConnections.addAll(wcToAdd);
+					WireConnection[] arrView = newConnections.toArray(
+							new WireConnection[newConnections.size()]);
+					whm.put(wire, arrView);
+				}
+				// Update the tile with the new wire hash map.  Reuse an existing map if possible.
+				tile.setWireHashMap(tileWiresPool.add(whm));
 			}
 		}
 	}
