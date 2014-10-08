@@ -102,25 +102,14 @@ public class XDLRCParser{
 		boolean tileWireIsSource =
 				we.getWireType(currTileWire) == WireType.SITE_SOURCE ||
 				we.isPIPSinkWire(currTileWire);
-		boolean tileWireIsPIPSource = we.isPIPSourceWire(currTileWire);
 		int wireConnCount = Integer.parseInt(parts[3].replace(")", ""));
 		for(int i = 0; i < wireConnCount; i++){
 			readLine();
 			int currWire = we.getWireEnum(parts[3].substring(0, parts[3].length()-1));
-			/*
-			    The important connections that need to be preserved are
-			      * site source -> site sink (I don't know if any of these even exist
-			      * site source -> PIP source
-			      * PIP sink -> PIP source
-			      * PIP sink -> site source
-			      * PIP source -> PIP source (a corner case.  Removing these can remove
-			      *   needed connections.  These will be removed later)
-			      * PIP source -> site source? I'm not sure but we'll handle it the same as above
-			 */
 			boolean currWireIsSiteSink = we.getWireType(currWire) == WireType.SITE_SINK;
 			boolean currWireIsPIPSource = we.isPIPSourceWire(currWire);
 			boolean currWireIsSink = currWireIsSiteSink || currWireIsPIPSource;
-			if((tileWireIsSource || tileWireIsPIPSource) && currWireIsSink) {
+			if(tileWireIsSource || currWireIsSink) {
 				Tile t = dev.getTile(parts[2]);
 				WireConnection wire = dev.wirePool.add(new WireConnection(currWire,
 									currTile.getRow() - t.getRow(),
