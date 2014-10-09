@@ -26,6 +26,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import edu.byu.ece.rapidSmith.device.helper.WireHashMap;
 import edu.byu.ece.rapidSmith.primitiveDefs.Connection;
@@ -64,7 +65,7 @@ public class XDLRCParser{
 	/** The current line buffer */
 	private String line;
 	/** The current line split into parts by whitespace */
-	private String[] parts;
+	private List<String> parts;
 	/** A collection of all unique Strings (to help save memory) */
 	private StringPool pool;
 	
@@ -83,34 +84,59 @@ public class XDLRCParser{
 	private String readLine(){
 		try{
 			line = br.readLine();
-			if(line != null){
-				parts = line.split("\\s+");				
-			}
 		}
 		catch(IOException e){
 			MessageGenerator.briefErrorAndExit("Error parsing XDLRC file.");
 		}
+		if(line != null){
+			parts = split(line);
+		}
 		return line;
 	}
-	
+
+	private static List<String> split(String line) {
+		List<String> parts = new ArrayList<>();
+		int startIndex = 0, endIndex;
+
+		if (line.length() > 0 && line.charAt(0) == '\t') {
+			parts.add("");
+			startIndex = 1;
+			while (line.length() > startIndex && line.charAt(startIndex) == '\t')
+				startIndex++;
+		}
+
+		while (line.length() > startIndex) {
+			endIndex = line.indexOf(" ", startIndex);
+			if (endIndex == -1) {
+				parts.add(line.substring(startIndex));
+				break;
+			} else if (endIndex != startIndex) {
+				parts.add(line.substring(startIndex, endIndex));
+			}
+			startIndex = endIndex + 1;
+		}
+
+		return parts;
+	}
+
 	/**
 	 * Parses the XDLRC Wire construct and populates connections and
 	 * wires accordingly.
 	 */
 	private void parseWire(){
-		int currTileWire = we.getWireEnum(parts[2]);
+		int currTileWire = we.getWireEnum(parts.get(2));
 		boolean tileWireIsSource =
 				we.getWireType(currTileWire) == WireType.SITE_SOURCE ||
 				we.isPIPSinkWire(currTileWire);
-		int wireConnCount = Integer.parseInt(parts[3].replace(")", ""));
+		int wireConnCount = Integer.parseInt(parts.get(3).replace(")", ""));
 		for(int i = 0; i < wireConnCount; i++){
 			readLine();
-			int currWire = we.getWireEnum(parts[3].substring(0, parts[3].length()-1));
+			int currWire = we.getWireEnum(parts.get(3).substring(0, parts.get(3).length() - 1));
 			boolean currWireIsSiteSink = we.getWireType(currWire) == WireType.SITE_SINK;
 			boolean currWireIsPIPSource = we.isPIPSourceWire(currWire);
 			boolean currWireIsSink = currWireIsSiteSink || currWireIsPIPSource;
 			if(tileWireIsSource || currWireIsSink) {
-				Tile t = dev.getTile(parts[2]);
+				Tile t = dev.getTile(parts.get(2));
 				WireConnection wire = dev.wirePool.add(new WireConnection(currWire,
 									currTile.getRow() - t.getRow(),
 									currTile.getColumn() - t.getColumn(),
@@ -127,15 +153,15 @@ public class XDLRCParser{
 	private void parsePrimitiveSite(){
 		PrimitiveSite currPrimitiveSite = new PrimitiveSite();
 		currPrimitiveSite.setTile(currTile);
-		currPrimitiveSite.setName(parts[2]);
-		currPrimitiveSite.setType(Utils.createPrimitiveType(parts[3]));
-		dev.primitiveSites.put(parts[2], currPrimitiveSite);
-		int pinWireCount = Integer.parseInt(parts[5]);
+		currPrimitiveSite.setName(parts.get(2));
+		currPrimitiveSite.setType(Utils.createPrimitiveType(parts.get(3)));
+		dev.primitiveSites.put(parts.get(2), currPrimitiveSite);
+		int pinWireCount = Integer.parseInt(parts.get(5));
 		for(int i = 0; i < pinWireCount; i++){
 			readLine();
-			String extPin = parts[4].substring(0, parts[4].length()-1);
-			currPrimitiveSite.addPin(pool.getUnique(parts[2]), we.getWireEnum(extPin));
-			if(parts[3].equals("input")){
+			String extPin = parts.get(4).substring(0, parts.get(4).length() - 1);
+			currPrimitiveSite.addPin(pool.getUnique(parts.get(2)), we.getWireEnum(extPin));
+			if(parts.get(3).equals("input")){
 				currTile.addSink(we.getWireEnum(extPin));
 			}
 			else{
@@ -151,46 +177,46 @@ public class XDLRCParser{
 	 */
 	private void parsePrimitiveDef(){
 		PrimitiveDef def = new PrimitiveDef();
-		def.setType(Utils.createPrimitiveType(parts[2]));
-		int pinCount = Integer.parseInt(parts[3]);
-		int elementCount = Integer.parseInt(parts[4]);
+		def.setType(Utils.createPrimitiveType(parts.get(2)));
+		int pinCount = Integer.parseInt(parts.get(3));
+		int elementCount = Integer.parseInt(parts.get(4));
 		ArrayList<PrimitiveDefPin> pins = new ArrayList<PrimitiveDefPin>(pinCount);
 		ArrayList<Element> elements = new ArrayList<Element>(elementCount);
 		for(int i = 0; i < pinCount; i++){
 			readLine();
 			PrimitiveDefPin p = new PrimitiveDefPin();
-			p.setExternalName(parts[2]);
-			p.setInternalName(parts[3]);
-			p.setOutput(parts[4].equals("output)"));
+			p.setExternalName(parts.get(2));
+			p.setInternalName(parts.get(3));
+			p.setOutput(parts.get(4).equals("output)"));
 			pins.add(p);
 		}
 		for(int i = 0; i < elementCount; i++){
 			readLine();
 			Element e = new Element();
-			e.setName(parts[2]);
-			int elementPinCount = Integer.parseInt(parts[3].replace(")", ""));
-			e.setBel(parts.length > 5 && parts[4].equals("#") && parts[5].equals("BEL"));
+			e.setName(parts.get(2));
+			int elementPinCount = Integer.parseInt(parts.get(3).replace(")", ""));
+			e.setBel(parts.size() > 5 && parts.get(4).equals("#") && parts.get(5).equals("BEL"));
 			
 			for(int j = 0; j < elementPinCount; j++){
 				readLine();
 				PrimitiveDefPin elementPin = new PrimitiveDefPin();
-				elementPin.setInternalName(parts[2]);
-				elementPin.setOutput(parts[3].equals("output)"));
+				elementPin.setInternalName(parts.get(2));
+				elementPin.setOutput(parts.get(3).equals("output)"));
 				e.addPin(elementPin);
 			}
 			while(!readLine().startsWith("\t\t)")){
 				if(line.startsWith("\t\t\t(cfg ")){
-					for(int k = 2; k < parts.length; k++){
-						e.addCfgOption(parts[k].replace(")", ""));
+					for(int k = 2; k < parts.size(); k++){
+						e.addCfgOption(parts.get(k).replace(")", ""));
 					}
 				}
 				else if(line.startsWith("\t\t\t(conn ")){
 					Connection c = new Connection();
-					c.setElement0(parts[2]);
-					c.setPin0(parts[3]);
-					c.setForwardConnection(parts[4].equals("==>"));
-					c.setElement1(parts[5]);
-					c.setPin1(parts[6].substring(0, parts[6].length()-1));
+					c.setElement0(parts.get(2));
+					c.setPin0(parts.get(3));
+					c.setForwardConnection(parts.get(4).equals("==>"));
+					c.setElement1(parts.get(5));
+					c.setPin1(parts.get(6).substring(0, parts.get(6).length() - 1));
 					e.addConnection(c);
 				}
 			}
@@ -225,16 +251,16 @@ public class XDLRCParser{
 			if(line.startsWith("\t\t(pip ")){
 				String endWire = null; 
 				WireConnection currWire = null;
-				if(parts[5].endsWith(")")){
-					endWire = parts[5].substring(0, parts[5].length()-1);
+				if(parts.get(5).endsWith(")")){
+					endWire = parts.get(5).substring(0, parts.get(5).length() - 1);
 					currWire = dev.wirePool.add(new WireConnection(we.getWireEnum(endWire), 0, 0, true));
 				}
 				else{ // This is a route-through PIP
-					endWire = parts[5];
+					endWire = parts.get(5);
 					currWire = dev.wirePool.add(new WireConnection(we.getWireEnum(endWire), 0, 0, true));
-					PrimitiveType type = Utils.createPrimitiveType(parts[7].substring(0, parts[7].length()-2));  
+					PrimitiveType type = Utils.createPrimitiveType(parts.get(7).substring(0, parts.get(7).length() - 2));
 					
-					String[] tokens = parts[6].split("-");
+					String[] tokens = parts.get(6).split("-");
 					int wire0 = we.getWireEnum(tokens[1]);
 					int wire1 = we.getWireEnum(tokens[2]);
 
@@ -242,7 +268,7 @@ public class XDLRCParser{
 					currRouteThrough = dev.routeThroughPool.add(currRouteThrough);
 				    dev.routeThroughMap.put(currWire, currRouteThrough);
 				}
-				currTile.addConnection(we.getWireEnum(parts[3]), currWire);
+				currTile.addConnection(we.getWireEnum(parts.get(3)), currWire);
 			}
 			/////////////////////////////////////////////////////////////////////
 			// 		(wire SECONDARY_LOGIC_OUTS7_INT 1
@@ -254,11 +280,11 @@ public class XDLRCParser{
 			//	(tile 1 48 CLB_X22Y63 CLB 4
 			/////////////////////////////////////////////////////////////////////
 			else if(line.startsWith("\t(tile ")){
-				int row = Integer.parseInt(parts[2]);
-				int col = Integer.parseInt(parts[3]);
+				int row = Integer.parseInt(parts.get(2));
+				int col = Integer.parseInt(parts.get(3));
 				currTile = dev.getTile(row, col);
-				currTile.setName(parts[4]);
-				currTile.setType(Utils.createTileType(parts[5]));
+				currTile.setName(parts.get(4));
+				currTile.setType(Utils.createTileType(parts.get(5)));
 				
 			  	int total = (dev.getRows()*dev.getColumns())/100;
 			  	if(!(currTile.getRow() == 0 && currTile.getColumn() == 0)){
@@ -300,8 +326,8 @@ public class XDLRCParser{
 			  	processedTiles++;
 			}
 			else if(line.startsWith("(tiles ")){
-				dev.setRows(Integer.parseInt(parts[1]));
-				dev.setColumns(Integer.parseInt(parts[2]));
+				dev.setRows(Integer.parseInt(parts.get(1)));
+				dev.setColumns(Integer.parseInt(parts.get(2)));
 				dev.createTileArray();
 				for(Tile[] tiles : dev.tiles){
 					for(Tile tile : tiles){
@@ -312,9 +338,8 @@ public class XDLRCParser{
 				dev.populateTileMap(DeviceFilesCreator.createDeviceTileMap(dev.getPartName()));
 			}
 			else if(line.startsWith("(xdl_resource_report ")){
-				parts = line.split("\\s");
-				dev.setPartName(PartNameTools.removeSpeedGrade(parts[2]));
-				we = FileTools.loadWireEnumerator(parts[2]);
+				dev.setPartName(PartNameTools.removeSpeedGrade(parts.get(2)));
+				we = FileTools.loadWireEnumerator(parts.get(2));
 			}
 			else if(line.startsWith("(primitive_defs ")){
 				// Switch to primitive_defs parsing while loop

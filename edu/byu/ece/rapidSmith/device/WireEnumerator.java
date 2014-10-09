@@ -20,20 +20,8 @@
  */
 package edu.byu.ece.rapidSmith.device;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.io.*;
+import java.util.*;
 
 import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;
@@ -71,6 +59,8 @@ public class WireEnumerator implements Serializable {
 	private static WireEnumerator singleton = null;
 	/** Xilinx FPGA family name (virtex4, virtex5, ...) */
 	private FamilyType familyType = null;
+
+	private List<String> tokens;
 	
 	public static final String wireEnumeratorVersion = "0.2";
 	
@@ -100,7 +90,50 @@ public class WireEnumerator implements Serializable {
 		}
 		return singleton;
 	}
-	
+
+	/**
+	 * Reads a line and splits it into parts.
+	 * @return The next line from the file, null if EOF.
+	 */
+	private String readLine(BufferedReader br){
+		String line = null;
+		try{
+			line = br.readLine();
+		}
+		catch(IOException e){
+			MessageGenerator.briefErrorAndExit("Error parsing XDLRC file.");
+		}
+		if(line != null){
+			tokens = split(line);
+		}
+		return line;
+	}
+
+	private static List<String> split(String line) {
+		List<String> parts = new ArrayList<>();
+		int startIndex = 0, endIndex;
+
+		if (line.length() > 0 && line.charAt(0) == '\t') {
+			parts.add("");
+			startIndex = 1;
+			while (line.length() > startIndex && line.charAt(startIndex) == '\t')
+				startIndex++;
+		}
+
+		while (line.length() > startIndex) {
+			endIndex = line.indexOf(" ", startIndex);
+			if (endIndex == -1) {
+				parts.add(line.substring(startIndex));
+				break;
+			} else if (endIndex != startIndex) {
+				parts.add(line.substring(startIndex, endIndex));
+			}
+			startIndex = endIndex + 1;
+		}
+
+		return parts;
+	}
+
 	/**
 	 * Parses the XDLRC files for all the wire names in a device architecture.
 	 * @param fileNames The name of the XDLRC file to parse
@@ -126,53 +159,49 @@ public class WireEnumerator implements Serializable {
 			lineCount = 0;
 			try {
 				in = new BufferedReader(new FileReader(fileName));
-				line = in.readLine();
-				String [] tokens;
-				while(line != null){
-					tokens = line.split("\\s+");
-					if (tokens.length > 0 && tokens[0].equals("(primitive_defs"))
+				while((line = readLine(in)) != null){
+					if (tokens.size() > 0 && tokens.get(0).equals("(primitive_defs"))
 						break;
-					if(tokens.length > 1){
-						switch (tokens[1]) {
+					if(tokens.size() > 1){
+						switch (tokens.get(1)) {
 							case "(pip":
-								wireSet.add(tokens[3]);
-								pipSources.add(tokens[3]);
+								wireSet.add(tokens.get(3));
+								pipSources.add(tokens.get(3));
 								pipCount++;
 
-								if (tokens[5].endsWith(")")) {
-									wireSet.add(tokens[5].substring(0, tokens[5].length() - 1));
-									pipSinks.add(tokens[5].substring(0, tokens[5].length() - 1));
+								if (tokens.get(5).endsWith(")")) {
+									wireSet.add(tokens.get(5).substring(0, tokens.get(5).length() - 1));
+									pipSinks.add(tokens.get(5).substring(0, tokens.get(5).length() - 1));
 								} else {
-									wireSet.add(tokens[5]);
-									pipSinks.add(tokens[5]);
+									wireSet.add(tokens.get(5));
+									pipSinks.add(tokens.get(5));
 								}
 								break;
 							case "(wire":
-								if (tokens[2].charAt(tokens[2].length() - 1) == ')') {
-									wireSet.add(tokens[2].substring(0, tokens[2].length() - 1));
+								if (tokens.get(2).charAt(tokens.get(2).length() - 1) == ')') {
+									wireSet.add(tokens.get(2).substring(0, tokens.get(2).length() - 1));
 								} else {
-									wireSet.add(tokens[2]);
+									wireSet.add(tokens.get(2));
 								}
 								break;
 							case "(conn":
-								if (tokens[3].charAt(tokens[3].length() - 1) == ')') {
-									wireSet.add(tokens[3].substring(0, tokens[3].length() - 1));
+								if (tokens.get(3).charAt(tokens.get(3).length() - 1) == ')') {
+									wireSet.add(tokens.get(3).substring(0, tokens.get(3).length() - 1));
 								} else {
-									wireSet.add(tokens[3]);
+									wireSet.add(tokens.get(3));
 								}
 								break;
 							case "(pinwire":
-								if (tokens[3].equals("input")) {
-									externalInpin.add(tokens[4].substring(0, tokens[4].length() - 1));
+								if (tokens.get(3).equals("input")) {
+									externalInpin.add(tokens.get(4).substring(0, tokens.get(4).length() - 1));
 								} else {
-									externalOutpin.add(tokens[4].substring(0, tokens[4].length() - 1));
+									externalOutpin.add(tokens.get(4).substring(0, tokens.get(4).length() - 1));
 								}
 								break;
 						}
 					}
 					
 					// Read next line
-					line = in.readLine();
 					lineCount++;
 					if(lineCount % 10000000 == 0){
 						System.out.println("  Processing line number " + lineCount + " of file " + fileName);
