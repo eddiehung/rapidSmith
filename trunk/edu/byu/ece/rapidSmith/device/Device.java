@@ -1378,6 +1378,6 @@ public class Device implements Serializable{
 		// a sufficiently large number.  Largest devices tap out at under 70k wires
 		// so 100k should be plenty big without being onerous.  The alternative
 		// is to load the WireEnumerator and query it.
-		return 100000;
+		return 200000;
 	}
 }
