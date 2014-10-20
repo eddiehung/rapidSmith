@@ -134,6 +134,7 @@ public class DeviceFilesCreator{
 				partNames.add("xc7vx415tffg1157");
 				partNames.add("xc7vx485tffg1157");
 				partNames.add("xc7vh580thcg1155");
+				partNames.add("xc7vh870thcg1931");
 				break;
 			case VIRTEXE:
 				partNames.add("xcv2600efg1156");
@@ -461,8 +462,6 @@ public class DeviceFilesCreator{
 							new WireConnection[newConnections.size()]);
 					whm.put(wire, arrView);
 				}
-				// Update the tile with the new wire hash map.  Reuse an existing map if possible.
-				tile.setWireHashMap(tileWiresPool.add(whm));
 			}
 		}
 	}
